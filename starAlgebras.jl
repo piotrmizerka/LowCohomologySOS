@@ -77,5 +77,5 @@ end
 # RG1, RADIUS, G1 = G1GroupRing()
 # println(RG1.mstructure)
 # groupRingOperations(RG1,RADIUS,G1)
-# RS3 = symmetricGroup()
-# println(RS3.mstructure)
+RS3 = S3GroupRing()
+println(RS3.mstructure)
