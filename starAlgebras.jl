@@ -85,3 +85,4 @@ function groupRingOperations(RG::StarAlgebra, summandFactorRadius, G::FPGroup)
     println(H)
     println(K)
 end
+
