@@ -2,8 +2,6 @@ using StarAlgebras
 using AbstractAlgebra
 using Groups
 using Test
-# using GAP
-# using PropertyT
 
 Base.:/(G::Groups.AbstractFPGroup, rels::AbstractVector{<:FPGroupElement}) = FPGroup(G, [r=>one(G) for r in rels])
 StarAlgebras.star(g::Groups.GroupElement) = inv(g)
@@ -27,15 +25,18 @@ function freeGroupRing(generatorsNumber, radius)
 end
 
 # Symmetric group ring
-function symmetricGroupRing(n)
-    # println("\n*********SYMMETRIC GROUP RING************\n")
-
+function symmetricGroupRing(n, displayMode = false)
     G = SymmetricGroup(n)
-    return StarAlgebra(G, StarAlgebras.Basis{UInt8}(collect(G)))
+    RG = StarAlgebra(G, StarAlgebras.Basis{UInt8}(collect(G)))
 
-    # println("GROUP DEFINING THE MODULE:\n",RG.object)
-    # println("\nBASIS:\n",RG.basis)
-    # println("\nMULTIPLICATION TABLE:\n",RG.mstructure)
+    if displayMode
+        println("\n*********SYMMETRIC GROUP RING************\n")
+        println("GROUP DEFINING THE MODULE:\n",RG.object)
+        println("\nBASIS:\n",RG.basis)
+        println("\nMULTIPLICATION TABLE:\n",RG.mstructure)
+    else
+        return RG
+    end
 end
 
 # Group ring of G_1 form the article of Fujiwara from 2017
@@ -84,10 +85,3 @@ function groupRingOperations(RG::StarAlgebra, summandFactorRadius, G::FPGroup)
     println(H)
     println(K)
 end
-
-# G1GroupRing(2, true)
-# println(RG1.mstructure)
-# groupRingOperations(RG1,RADIUS,G1)
-
-# symmetricGroupRing(3)
-# freeGroupRing(2,1)
