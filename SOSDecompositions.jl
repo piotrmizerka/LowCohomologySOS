@@ -6,6 +6,7 @@ ENV["JULIA_NUM_THREADS"] = 4
 LinearAlgebra.BLAS.set_num_threads(2)
 
 using JuMP
+using SCS
 
 include("starAlgebras.jl")
 
@@ -59,7 +60,6 @@ G1SOSOptimizationProblem = let
 end
 
 G1SOSSolution = let
-   using SCS
    with_scs = with_optimizer(SCS.Optimizer, eps=1e-8)
    set_optimizer(G1SOSOptimizationProblem, with_scs)
    optimize!(G1SOSOptimizationProblem)
@@ -77,7 +77,6 @@ S3SOSOptimizationProblem = let
 end
 
 S3SOSSolution = let
-   using SCS
    with_scs = with_optimizer(SCS.Optimizer, eps=1e-8)
    set_optimizer(S3SOSOptimizationProblem, with_scs)
    optimize!(S3SOSOptimizationProblem)
