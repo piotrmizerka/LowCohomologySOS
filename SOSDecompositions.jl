@@ -11,8 +11,8 @@ using SCS
 include("starAlgebras.jl")
 
  
-function constraints(pm::AbstractMatrix{I}, total_length=maximum(pm)) where {I<:Integer}
-   cnstrs = [Vector{I}() for _ in 1:total_length]
+function constraints(pm::AbstractMatrix{<:Integer}, total_length=maximum(pm))
+   cnstrs = [Vector{Int}() for _ in 1:total_length]
    li = LinearIndices(CartesianIndices(size(pm)))
    for i in eachindex(pm)
       push!(cnstrs[pm[i]], li[i])
