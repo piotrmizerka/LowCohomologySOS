@@ -65,7 +65,7 @@ function G1GroupRing(halfBasisLength = 1, displayMode = false)
         println("\nONE OF THE STAR ALGEBRA: ",one(RG1))
         println("\nONE OF THE STAR ALGEBRA (USING DIFFERENT CALL): ",RG1(1))
     else
-        return RG1
+        return RG1, ID
     end
 end
 

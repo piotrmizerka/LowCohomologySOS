@@ -50,12 +50,21 @@ function SOS_problem_primal(X::AlgebraElement, orderunit::AlgebraElement;
 end
 
 G1SOSOptimizationProblem = let 
-   RG1 = G1GroupRing(2)
+   RG1, ID = G1GroupRing(2)
    S = let s = gens(RG1.object)
       unique!([s; inv.(s)])
    end
-   Δ = RG1(length(S)) - sum(RG1(s) for s in S)
-   SOS_problem_primal(Δ^2, Δ, upper_bound=0.18)
+   a = S[1]
+   b = S[2]
+   c = S[3]
+   A = S[4]
+   B = S[5]
+   C = S[6]
+   X = 3*RG1(ID)+RG1(a)+RG1(A)+RG1(b)+RG1(B)+RG1(c)+RG1(C)
+   # Δ = RG1(length(S)) - sum(RG1(s) for s in S)
+   # SOS_problem_primal(Δ^2, Δ, upper_bound=0.18)
+   # SOS_problem_primal(Δ^2, Δ)
+   SOS_problem_primal(X^2, X)
 end
 
 G1SOSSolution = let
