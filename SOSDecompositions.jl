@@ -18,7 +18,7 @@ function constraints(pm::AbstractMatrix{<:Integer}, total_length=maximum(pm))
       push!(cnstrs[pm[i]], li[i])
    end
    return cnstrs
-end
+end;
 
 function SOS_problem_primal(X::AlgebraElement, orderunit::AlgebraElement;
    upper_bound::Float64=Inf)
@@ -48,7 +48,7 @@ function SOS_problem_primal(X::AlgebraElement, orderunit::AlgebraElement;
    JuMP.@objective(m, Max, λ)
 
    return m
-end
+end;
 
 G1SOSOptimizationProblem = let 
    RG1, ID = G1GroupRing(2)
@@ -62,11 +62,8 @@ G1SOSOptimizationProblem = let
    B = S[5]
    C = S[6]
    X = 3*RG1(ID)+RG1(a)+RG1(A)+RG1(b)+RG1(B)+RG1(c)+RG1(C)
-   # Δ = RG1(length(S)) - sum(RG1(s) for s in S)
-   # SOS_problem_primal(Δ^2, Δ, upper_bound=0.18)
-   # SOS_problem_primal(Δ^2, Δ)
    SOS_problem_primal(X^2, X)
-end
+end;
 
 λ, G1SOSSolution = let SOS_problem = G1SOSOptimizationProblem
    with_scs = with_optimizer(SCS.Optimizer, eps=1e-8)
@@ -78,12 +75,12 @@ end
    λ, P_G1
 end;
 
-S3SOSOptimizationProblem = let n = 3
-   RSn = symmetricGroupRing(n) # not working for S4, S5, etc.
+S3SOSOptimizationProblem = let n = 4
+   RSn = symmetricGroupRing(n)
    S = collect(RSn.object)
    Δ = RSn(length(S)) - sum(RSn(s) for s in S)
    SOS_problem_primal(Δ^2, Δ)
-end
+end;
 
 λ, S3SOSSolution = let SOS_problem = S3SOSOptimizationProblem
    with_scs = with_optimizer(SCS.Optimizer, eps=1e-8)

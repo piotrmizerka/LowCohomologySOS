@@ -22,7 +22,7 @@ function freeGroupRing(generatorsNumber, radius)
     println("\nGROUP DEFINING THE MODULE:\n",RG.object)
     println("\nBASIS:\n",RG.basis)
     println("\nMULTIPLICATION TABLE:\n",RG.mstructure)
-end
+end;
 
 # Symmetric group ring
 function symmetricGroupRing(n, displayMode = false)
@@ -37,7 +37,7 @@ function symmetricGroupRing(n, displayMode = false)
     else
         return RG
     end
-end
+end;
 
 # Group ring of G_1 form the article of Fujiwara from 2017
 function G1GroupRing(halfBasisLength = 1, displayMode = false)
@@ -47,8 +47,7 @@ function G1GroupRing(halfBasisLength = 1, displayMode = false)
     ε = one(F);
     G1 = FPGroup(F, [a^3 => ε, b^3 => ε, c^3 => ε, 
                      (a*b)^2 => b*a, (b*c)^2 => c*b, (c*a)^2 => a*c ], maxrules = 238)
-    S = Groups.gens(G1)
-    S = unique([S; inv.(S)])
+    S = unique(Groups.gens(G1))
     ID = one(G1)
     Bᵣ, sizes = Groups.wlmetric_ball(S, ID, radius = 2 * halfBasisLength)
     b = StarAlgebras.Basis{UInt32}(Bᵣ)
@@ -67,22 +66,4 @@ function G1GroupRing(halfBasisLength = 1, displayMode = false)
     else
         return RG1, ID
     end
-end
-
-# Basis group ring operations - intentionally computation of SOS for G1
-function groupRingOperations(RG::StarAlgebra, summandFactorRadius, G::FPGroup)
-    S = Groups.gens(G)
-    S = unique([S; inv.(S)])
-    ID = one(G1)
-    Bᵣ, sizes = Groups.wlmetric_ball(S, ID, radius = summandFactorRadius)
-    a, b, c = Bᵣ[2:4]
-    G = (one(RG) - RG(a))
-    H = (one(RG) - RG(b))
-    # K = *(RG(c)) * not working...
-    K = StarAlgebras.star(RG(c)+RG(c^2))
-
-    println(G^2==2*one(RG)-RG(a)-RG(a^3))
-    println(H)
-    println(K)
-end
-
+end;
