@@ -6,12 +6,13 @@ ENV["JULIA_NUM_THREADS"] = 4
 LinearAlgebra.BLAS.set_num_threads(2)
 
 using JuMP
+using SCS
 
 include("starAlgebras.jl")
 
  
-function constraints(pm::AbstractMatrix{I}, total_length=maximum(pm)) where {I<:Integer}
-   cnstrs = [Vector{I}() for _ in 1:total_length]
+function constraints(pm::AbstractMatrix{<:Integer}, total_length=maximum(pm))
+   cnstrs = [Vector{Int}() for _ in 1:total_length]
    li = LinearIndices(CartesianIndices(size(pm)))
    for i in eachindex(pm)
       push!(cnstrs[pm[i]], li[i])
@@ -67,31 +68,29 @@ G1SOSOptimizationProblem = let
    SOS_problem_primal(X^2, X)
 end
 
-G1SOSSolution = let
-   using SCS
+λ, G1SOSSolution = let SOS_problem = G1SOSOptimizationProblem
    with_scs = with_optimizer(SCS.Optimizer, eps=1e-8)
-   set_optimizer(G1SOSOptimizationProblem, with_scs)
-   optimize!(G1SOSOptimizationProblem)
-   [value(G1SOSOptimizationProblem[:λ]),value.(G1SOSOptimizationProblem[:P])]
-end
+   set_optimizer(SOS_problem, with_scs)
+   optimize!(SOS_problem)
+   status = termination_status(SOS_problem)
+   λ, P_G1 = value(SOS_problem[:λ]), value.(G1SOSOptimizationProblem[:P])
+   @info status λ
+   λ, P_G1
+end;
 
-G1SOSSolution[1]
-G1SOSSolution[2]
-
-S3SOSOptimizationProblem = let 
-   RS3 = symmetricGroupRing(3) # not working for S4, S5, etc.
-   S = collect(RS3.object)
-   Δ = RS3(length(S)) - sum(RS3(s) for s in S)
+S3SOSOptimizationProblem = let n = 3
+   RSn = symmetricGroupRing(n) # not working for S4, S5, etc.
+   S = collect(RSn.object)
+   Δ = RSn(length(S)) - sum(RSn(s) for s in S)
    SOS_problem_primal(Δ^2, Δ)
 end
 
-S3SOSSolution = let
-   using SCS
+λ, S3SOSSolution = let SOS_problem = S3SOSOptimizationProblem
    with_scs = with_optimizer(SCS.Optimizer, eps=1e-8)
-   set_optimizer(S3SOSOptimizationProblem, with_scs)
-   optimize!(S3SOSOptimizationProblem)
-   [value(S3SOSOptimizationProblem[:λ]),value.(S3SOSOptimizationProblem[:P])]
-end
-
-S3SOSSolution[1]
-S3SOSSolution[2]
+   set_optimizer(SOS_problem, with_scs)
+   optimize!(SOS_problem)
+   status = termination_status(SOS_problem)
+   λ, P_G1 = value(SOS_problem[:λ]), value.(G1SOSOptimizationProblem[:P])
+   @info status λ
+   λ, P_G1
+end;
