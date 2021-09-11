@@ -47,7 +47,8 @@ function G1GroupRing(halfBasisLength = 1, displayMode = false)
     ε = one(F);
     G1 = FPGroup(F, [a^3 => ε, b^3 => ε, c^3 => ε, 
                      (a*b)^2 => b*a, (b*c)^2 => c*b, (c*a)^2 => a*c ], maxrules = 238)
-    S = unique(Groups.gens(G1))
+    S = Groups.gens(G1)
+    S = unique([S; inv.(S)])
     ID = one(G1)
     Bᵣ, sizes = Groups.wlmetric_ball(S, ID, radius = 2 * halfBasisLength)
     b = StarAlgebras.Basis{UInt32}(Bᵣ)
