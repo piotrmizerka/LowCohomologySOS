@@ -68,3 +68,21 @@ function G1GroupRing(halfBasisLength = 1, displayMode = false)
         return RG1, ID
     end
 end;
+
+# Cyclic group ring
+function cyclicGroupRing(n)
+    A = Alphabet([:a, :A, :b, :B], [2,1,4,3])
+    F = FreeGroup(A)
+    a, b = Groups.gens(F)
+    e = one(F)
+    Cₙ = FPGroup(F, [a^n => e, b => e])
+    S = Groups.gens(Cₙ)
+    S = unique([S; inv.(S)])
+    ID = one(Cₙ)
+    Bᵣ, sizes = Groups.wlmetric_ball(S, ID, radius = n)
+    b = StarAlgebras.Basis{UInt32}(Bᵣ)
+    basis = StarAlgebras.Basis{UInt8}(b)
+    RCₙ = StarAlgebra(Cₙ, basis)
+
+    return RCₙ, ID
+end;

@@ -56,7 +56,12 @@ function SOS_problem_primal(X::AlgebraElement, orderunit::AlgebraElement;
    return m
 end
 
-G1SOSOptimizationProblem = let #change X for matrix and define appropriately
+test = let
+   RG1 = G1GroupRing(2)
+   @info RG1
+end; # semicolon 
+
+G1SOSOptimizationProblem = let # change X for matrix and define appropriately
    RG1, ID = G1GroupRing(2)
    S = let s = gens(RG1.object)
       unique!([s; inv.(s)])
@@ -81,19 +86,37 @@ end; # semicolon - the let block does not return anything - just computes the le
    λ, P_G1
 end;
 
-S3SOSOptimizationProblem = let n = 2
+SnSOSOptimizationProblem = let n = 4
    RSn = symmetricGroupRing(n)
    S = collect(RSn.object)
    Δ = RSn(length(S)) - sum(RSn(s) for s in S)
    SOS_problem_primal(Δ^2, Δ)
 end;
 
-λ, S3SOSSolution = let SOS_problem = S3SOSOptimizationProblem
+λ, SnSOSSolution = let SOS_problem = SnSOSOptimizationProblem
    with_scs = with_optimizer(SCS.Optimizer, eps=1e-8)
    set_optimizer(SOS_problem, with_scs)
    optimize!(SOS_problem)
    status = termination_status(SOS_problem)
-   λ, P_G1 = value(SOS_problem[:λ]), value.(S3SOSOptimizationProblem[:P])
+   λ, P_G1 = value(SOS_problem[:λ]), value.(SnSOSOptimizationProblem[:P])
    @info status λ
    λ, P_G1
 end;
+
+cyclicGroupOptimizationProblem = let n = 5
+   RCₙ, ID = cyclicGroupRing(n)
+   S = collect(RCₙ.basis)
+   a = S[1]
+   X = n*(sum(RCₙ(s) for s in S))+2*RCₙ(ID)-RCₙ(a)-RCₙ(inv(a))
+   SOS_problem_primal(X, RCₙ(ID))
+end;
+
+λ, cyclicGroupSolution = let SOS_problem = cyclicGroupOptimizationProblem
+   with_scs = with_optimizer(SCS.Optimizer, eps=1e-8)
+   set_optimizer(SOS_problem, with_scs)
+   optimize!(SOS_problem)
+   status = termination_status(SOS_problem)
+   λ, P_Cₙ = value(SOS_problem[:λ]), value.(cyclicGroupOptimizationProblem[:P])
+   @info status λ
+   λ, P_Cₙ
+end
