@@ -24,10 +24,15 @@ function freeGroupRing(generatorsNumber, radius)
     println("\nMULTIPLICATION TABLE:\n",RG.mstructure)
 end;
 
-# Symmetric group ring
+# Symmetric group ring - not working
 function symmetricGroupRing(n, displayMode = false)
     G = SymmetricGroup(n)
-    RG = StarAlgebra(G, StarAlgebras.Basis{UInt8}(collect(G)))
+    b = StarAlgebras.Basis{UInt32}(collect(G)) # this causes problems in the definition of tmstr
+
+    @info b
+
+    tmstr = StarAlgebras.MTable{true}(b, table_size = (factorial(n)/2, factorial(n)/2))
+    RG = StarAlgebra(G, b, tmstr)
 
     if displayMode
         println("\n*********SYMMETRIC GROUP RING************\n")
@@ -81,8 +86,8 @@ function cyclicGroupRing(n)
     ID = one(Cₙ)
     Bᵣ, sizes = Groups.wlmetric_ball(S, ID, radius = n)
     b = StarAlgebras.Basis{UInt32}(Bᵣ)
-    basis = StarAlgebras.Basis{UInt8}(b)
-    RCₙ = StarAlgebra(Cₙ, basis)
+    tmstr = StarAlgebras.MTable{true}(b, table_size = (n, n))
+    RCₙ = StarAlgebra(Cₙ, b, tmstr)
 
     return RCₙ, ID
 end;

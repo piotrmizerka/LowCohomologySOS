@@ -13,14 +13,10 @@ include("starAlgebras.jl")
  
 function constraints(pm::AbstractMatrix{<:Integer}, total_length=maximum(pm))
    cnstrs = [Vector{Int}() for _ in 1:total_length]
-   @info "Info from constraints function:"
-   @info cnstrs
    li = LinearIndices(CartesianIndices(size(pm)))
-   @info li
    for i in eachindex(pm)
       push!(cnstrs[pm[i]], li[i])
    end
-   @info cnstrs
    return cnstrs
 end
 
@@ -45,8 +41,6 @@ function SOS_problem_primal(X::AlgebraElement, orderunit::AlgebraElement;
       λ = JuMP.@variable(m, λ) # can stay
    end
 
-   @info Al.mstructure
-
    cnstrs = constraints(Al.mstructure)
    @assert length(cnstrs) == length(X.coeffs) == length(orderunit.coeffs)
    x, u = X.coeffs, orderunit.coeffs
@@ -56,10 +50,11 @@ function SOS_problem_primal(X::AlgebraElement, orderunit::AlgebraElement;
    return m
 end
 
-test = let
-   RG1 = G1GroupRing(2)
-   @info RG1
-end; # semicolon 
+function SOS(SOSProblem)
+   Q = real.(sqrt(value.(SOSProblem[:P])))
+   @info Q
+   return sum([AlgebraElement(collect(c),RCₙ)^2 for c in eachrow(Q)])
+end
 
 G1SOSOptimizationProblem = let # change X for matrix and define appropriately
    RG1, ID = G1GroupRing(2)
@@ -103,12 +98,15 @@ end;
    λ, P_G1
 end;
 
-cyclicGroupOptimizationProblem = let n = 5
+cyclicGroupOptimizationProblem, RCₙ = let n = 3
    RCₙ, ID = cyclicGroupRing(n)
    S = collect(RCₙ.basis)
-   a = S[1]
-   X = n*(sum(RCₙ(s) for s in S))+2*RCₙ(ID)-RCₙ(a)-RCₙ(inv(a))
-   SOS_problem_primal(X, RCₙ(ID))
+   a = S[2]
+   X = 2*RCₙ(ID)-RCₙ(a)-RCₙ(inv(a))+n*sum(RCₙ(s) for s in S)
+   
+   @info X
+
+   SOS_problem_primal(X, 1*RCₙ(ID)), RCₙ
 end;
 
 λ, cyclicGroupSolution = let SOS_problem = cyclicGroupOptimizationProblem
@@ -116,7 +114,8 @@ end;
    set_optimizer(SOS_problem, with_scs)
    optimize!(SOS_problem)
    status = termination_status(SOS_problem)
-   λ, P_Cₙ = value(SOS_problem[:λ]), value.(cyclicGroupOptimizationProblem[:P])
+   λ, P_Cₙ = value(SOS_problem[:λ]), value.(SOS_problem[:P])
    @info status λ
+   @info SOS(SOS_problem)
    λ, P_Cₙ
 end
