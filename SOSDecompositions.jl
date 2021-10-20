@@ -26,11 +26,13 @@ function SOS_problem_primal(X::AlgebraElement, orderunit::AlgebraElement;
 
    @assert parent(X) === parent(orderunit) # can stay
    Al = parent(X) # can stay
+   
+   @info "Multiplicative structure", Al.mstructure
 
-   N = size(Al.mstructure, 1) # mstructure has to be replaced with something else for matrices
+   N = size(Al.mstructure, 1) # ??
    m = JuMP.Model(); # can stay
 
-   JuMP.@variable(m, P[1:N, 1:N]) # can stay
+   JuMP.@variable(m, P[1:N, 1:N]) # N has to be replaced with N*M; N = matrix size, M = supp size
    JuMP.@SDconstraint(m, sdp, P >= 0) # can stay
 
    if iszero(StarAlgebras.aug(X)) && iszero(StarAlgebras.aug(orderunit)) # to replace
@@ -43,22 +45,59 @@ function SOS_problem_primal(X::AlgebraElement, orderunit::AlgebraElement;
    end
 
    cnstrs = constraints(Al.mstructure) # can stay provided "contraints" function will be customized appropriately
+   
+   @info "Constraints", cnstrs
+
    @assert length(cnstrs) == length(X.coeffs) == length(orderunit.coeffs) # as above
    x, u = X.coeffs, orderunit.coeffs # as above
+
+   @info "Coefficients of the group ring element to be certified", x
+   @info "Coefficients of the order unit", u
+   @info "Length of contraints", length(cnstrs)
+
    JuMP.@constraint(m, lincnstr[i=1:length(cnstrs)], x[i] - λ*u[i] == sum(P[cnstrs[i]])) # as above
    JuMP.@objective(m, Max, λ) # can stay
+
+   @info m
 
    return m
 end
 
-function SOS(SOSProblem, groupRing) # has to be customized for the matrixc case
+function SOS(SOSProblem, groupRing) # has to be customized for the matrix case
    Q = real.(sqrt(value.(SOSProblem[:P])))
-   @info size(Q)
-   Q = [round.(sort(r);digits=2) for r in eachrow(Q)]
-   # Q = [round.(r;digits=1) for r in eachrow(Q)]
+   Q = [round.(r;digits=1) for r in eachrow(Q)]
    @info Q
    @info groupRing.basis
-   # return sum([AlgebraElement(collect(c),groupRing)^2 for c in eachrow(Q)])
+end
+
+cyclicGroupOptimizationProblem, RCₙ = let n = 3
+   RCₙ, ID = cyclicGroupRing(n)
+   S = collect(RCₙ.basis)
+   a = S[2]
+   X = 2*RCₙ(ID)-RCₙ(a)-RCₙ(inv(a))+n*sum(RCₙ(s) for s in S)
+   
+   @info "Group ring element to be certified:"
+   @info X
+
+   SOS_problem_primal(X, 1*RCₙ(ID)), RCₙ
+end;
+
+λ, cyclicGroupSolutionProxSDP = let SOS_problem = cyclicGroupOptimizationProblem
+   with_ProxSDP = with_optimizer(ProxSDP.Optimizer, log_verbose=true, tol_gap=1e-4, tol_feasibility=1e-4)
+   set_optimizer(SOS_problem, with_ProxSDP)
+   optimize!(SOS_problem)
+   λ, P_Cₙ = value(SOS_problem[:λ]), value.(SOS_problem[:P])
+   Q = real.(sqrt(P_Cₙ))
+   λ, Q, svdvals(Q), svdvals(P_Cₙ)
+end;
+
+λ, cyclicGroupSolutionSCS = let SOS_problem = cyclicGroupOptimizationProblem
+   with_scs = with_optimizer(SCS.Optimizer, eps=1e-8)
+   set_optimizer(SOS_problem, with_scs)
+   optimize!(SOS_problem)
+   λ, P_Cₙ = value(SOS_problem[:λ]), value.(SOS_problem[:P])
+   Q = real.(sqrt(P_Cₙ))
+   λ, Q, svdvals(Q), svdvals(P_Cₙ)
 end
 
 G1SOSOptimizationProblem, RG₁ = let # change X for matrix and define appropriately
@@ -104,28 +143,90 @@ end;
    λ, P_G1
 end;
 
-cyclicGroupOptimizationProblem, RCₙ = let n = 3
-   RCₙ, ID = cyclicGroupRing(n)
-   S = collect(RCₙ.basis)
-   a = S[2]
-   X = 2*RCₙ(ID)-RCₙ(a)-RCₙ(inv(a))+n*sum(RCₙ(s) for s in S)
-   # X = 2*RCₙ(ID)-RCₙ(a)-RCₙ(inv(a))+0.01*sum(RCₙ(s) for s in S)
+function foxDerivative(relatorWord, generator, underlyingGroupRing, underlyingGroup)
+   relatorWordLength = length(relatorWord)
+   result = underlyingGroupRing(0)
+   multiplier = underlyingGroupRing(one(underlyingGroup))
+   generators = gens(underlyingGroup)
+
+   for i in 1:relatorWordLength
+      if relatorWord[i] == generator.word[1] # generator
+         result += multiplier
+      elseif relatorWord[i] == (generator.word[1]+1) # inverse of a generator
+         result -= (multiplier*underlyingGroupRing(inv(generator)))
+      end
+
+      if relatorWord[i]%2 == 1
+         multiplier *= underlyingGroupRing(generators[floor(Int, (relatorWord[i]+1)/2)])
+      else
+         multiplier *= underlyingGroupRing(inv(generators[floor(Int, relatorWord[i]/2)]))
+      end
+   end
+
+   return result
+end
+
+function jacobianMatrix(G, sufficientBallRadius)
+   RG = groupRing(G, sufficientBallRadius)
+
+   relations = G.relations
+   generators = filter(x -> x != one(G), gens(G))
+   relationsNumber = length(relations)
+   generatorsNumber = length(generators)
+
+
+   result = [RG(0) for i in collect(1:relationsNumber*generatorsNumber)]
+   result = reshape(result, relationsNumber, generatorsNumber)
+
+   for i in 1:relationsNumber
+      for j in 1:generatorsNumber
+         relator = relations[i].first*inv(relations[i].second)
+         result[i,j] = foxDerivative(relator.word, generators[j], RG, G)
+      end
+   end
+
+   return result
+end
+
+CₙJacobianMatrix = let n = 5
+   Cₙ = cyclicGroup(n)
+   jacobianMatrixx = jacobianMatrix(Cₙ, n)
+
+   @info jacobianMatrixx
+end
+
+SL₃ƵShorterPresentation = let maxRules = 50000
+   A = Alphabet([:x, :X, :y, :Y, :z, :Z], [2, 1, 4, 3, 6, 5])
+   F = FreeGroup(A)
+   x,y,z = Groups.gens(F)
+   ε = one(F);
+   G = FPGroup(F, [x^3 => ε, y^3 => ε, z^2 => ε, (x*z)^3 => ε, (y*z)^3 => ε, 
+                   (x^(-1)*z*x*y)^2 => ε, (y^(-1)*z*y*x)^2 => ε, (x*y)^6 => ε], maxrules = maxRules )
    
-   @info X
+   G
+end
 
-   SOS_problem_primal(X, 1*RCₙ(ID)), RCₙ
-end;
+SL₃ƵJacobianShorterPresentation = let supportSize = 4
+   jacobianMatrixx = jacobianMatrix(SL₃ƵShorterPresentation, supportSize)
 
-λ, cyclicGroupSolution = let SOS_problem = cyclicGroupOptimizationProblem
-   # with_scs = with_optimizer(SCS.Optimizer, eps=1e-8)
-   with_ProxSDP = with_optimizer(ProxSDP.Optimizer, log_verbose=true, tol_gap=1e-4, tol_feasibility=1e-4)
-   # set_optimizer(SOS_problem, with_scs)
-   set_optimizer(SOS_problem, with_ProxSDP)
-   optimize!(SOS_problem)
-   # status = termination_status(SOS_problem)
-   λ, P_Cₙ = value(SOS_problem[:λ]), value.(SOS_problem[:P])
-   # @info status λ
-   # @info SOS(SOS_problem,RCₙ)
-   # Q = real.(sqrt(P_Cₙ))
-   # λ, Q, svdvals(Q)
+   @info jacobianMatrixx
+end
+
+SL₃ƵElementaryMatrixPresentation = let maxRules = 50000
+   A = Alphabet([:e12, :E12, :e21, :E21, :e13, :E13, :e31, :E31, :e23, :E23, :e32, :E32], [2, 1, 4, 3, 6, 5, 8, 7, 10, 9, 12, 11])
+   F = FreeGroup(A)
+   e12, e21, e13, e31, e23, e32 = Groups.gens(F)
+   ε = one(F);
+   G = FPGroup(F, [e12*e13 => e13*e12, e12*e32 => e32*e12, e13*e23 => e23*e13, e23*e21 => e21*e23, e21*e31 => e31*e21, e31*e32 => e32*e31,
+                   e12*e23 => e13*e23*e12, e13*e32 => e12*e32*e13, e21*e13 => e23*e13*e21, e23*e31 => e21*e31*e23, 
+                   e31*e12 => e32*e12*e31, e32*e21 => e31*e21*e32,
+                   (e12*e21^(-1)*e12)^4 => ε], maxrules = maxRules )
+   
+   G
+end
+
+SL₃ƵJacobianElementaryMatrixPresentation = let supportSize = 4
+   jacobianMatrixx = jacobianMatrix(SL₃ƵElementaryMatrixPresentation, supportSize)
+
+   @info jacobianMatrixx
 end
