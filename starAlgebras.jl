@@ -74,20 +74,32 @@ function G1GroupRing(halfBasisLength = 1, displayMode = false)
     end
 end;
 
-# Cyclic group ring
-function cyclicGroupRing(n)
+function groupRing(G, supportSize, starMultiplication = false)
+    S = Groups.gens(G)
+    S = unique([S; inv.(S)])
+    ID = one(G)
+    Ball, sizes = Groups.wlmetric_ball(S, ID, radius = 2*supportSize)
+    b = StarAlgebras.Basis{UInt32}(Ball)
+    tmstr = StarAlgebras.MTable{starMultiplication}(b, table_size = (sizes[supportSize], sizes[supportSize]))
+    RG = StarAlgebra(G, b, tmstr)
+
+    return RG
+end;
+
+function cyclicGroup(n)
     A = Alphabet([:a, :A, :b, :B], [2,1,4,3])
     F = FreeGroup(A)
     a, b = Groups.gens(F)
     e = one(F)
     Cₙ = FPGroup(F, [a^n => e, b => e])
-    S = Groups.gens(Cₙ)
-    S = unique([S; inv.(S)])
-    ID = one(Cₙ)
-    Bᵣ, sizes = Groups.wlmetric_ball(S, ID, radius = n)
-    b = StarAlgebras.Basis{UInt32}(Bᵣ)
-    tmstr = StarAlgebras.MTable{true}(b, table_size = (n, n))
-    RCₙ = StarAlgebra(Cₙ, b, tmstr)
 
+    return Cₙ
+end;
+
+# Cyclic group ring
+function cyclicGroupRing(n)
+    Cₙ = cyclicGroup(n)
+    ID = one(Cₙ)
+    RCₙ = groupRing(Cₙ, n)
     return RCₙ, ID
 end;
