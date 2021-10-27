@@ -74,17 +74,49 @@ function G1GroupRing(halfBasisLength = 1, displayMode = false)
     end
 end;
 
-function groupRing(G, supportSize, starMultiplication = false)
+# Group ring with basis the whole ball
+function groupRing(G, supportSize::Int64, starMultiplication = false)
     S = Groups.gens(G)
     S = unique([S; inv.(S)])
     ID = one(G)
     Ball, sizes = Groups.wlmetric_ball(S, ID, radius = 2*supportSize)
+
+    # @info sizes
+
     b = StarAlgebras.Basis{UInt32}(Ball)
-    tmstr = StarAlgebras.MTable{starMultiplication}(b, table_size = (sizes[supportSize], sizes[supportSize]))
+    tmstr = StarAlgebras.CachedMTable{starMultiplication}(b, table_size = (sizes[supportSize], sizes[supportSize]))
     RG = StarAlgebra(G, b, tmstr)
+    # RG = StarAlgebra(G, b)
 
     return RG
 end;
+
+# Group ring with basis given by prescribed support - TODO
+function groupRing(G, support::AbstractVector{<:FPGroupElement}, starMultiplication = false)
+    basisElementsToAppend = []
+    inverseClosedSupport = unique([support; inv.(support)])
+    for i in 1:length(inverseClosedSupport)
+        for j in 1:length(inverseClosedSupport)
+            g = inverseClosedSupport[i]*inverseClosedSupport[j]
+            if !(g in inverseClosedSupport)
+                append!(basisElementsToAppend, [g])
+            end
+        end
+    end
+    basisElementsToAppend = unique(basisElementsToAppend)
+    basisElements = copy(inverseClosedSupport)
+    for g in basisElementsToAppend
+        append!(basisElements, [g])
+    end
+
+    # @info basisElements
+
+    groupRingBasis = StarAlgebras.Basis{UInt32}(basisElements)
+    tmstr = StarAlgebras.CachedMTable{starMultiplication}(groupRingBasis, table_size = (length(inverseClosedSupport), length(inverseClosedSupport)))
+    RG = StarAlgebra(G, groupRingBasis, tmstr)
+
+    return RG
+end
 
 function cyclicGroup(n)
     A = Alphabet([:a, :A, :b, :B], [2,1,4,3])
