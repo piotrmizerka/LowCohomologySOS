@@ -91,7 +91,7 @@ function groupRing(G, supportSize::Int64, starMultiplication = false)
     return RG
 end;
 
-# Group ring with basis given by prescribed support - TODO
+# Group ring with basis given by prescribed support
 function groupRing(G, support::AbstractVector{<:FPGroupElement}, starMultiplication = false)
     basisElementsToAppend = []
     inverseClosedSupport = unique([support; inv.(support)])
@@ -108,9 +108,6 @@ function groupRing(G, support::AbstractVector{<:FPGroupElement}, starMultiplicat
     for g in basisElementsToAppend
         append!(basisElements, [g])
     end
-
-    # @info basisElements
-
     groupRingBasis = StarAlgebras.Basis{UInt32}(basisElements)
     tmstr = StarAlgebras.CachedMTable{starMultiplication}(groupRingBasis, table_size = (length(inverseClosedSupport), length(inverseClosedSupport)))
     RG = StarAlgebra(G, groupRingBasis, tmstr)
