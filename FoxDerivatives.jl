@@ -98,9 +98,9 @@ function foxDerivative(relatorWord, generatorId)
             end
         end
     end
-    groupRingBasis = unique([generators; summandElements])
+    support = unique([generators; summandElements])
 
-    return groupRing(G, groupRingBasis)
+    return groupRing(G, support)
  end
 
  function jacobianMatrix(G, JEncoded, generators, RG)
