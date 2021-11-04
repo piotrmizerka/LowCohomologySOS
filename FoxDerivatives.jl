@@ -1,9 +1,9 @@
-using Pkg
-Pkg.activate(@__DIR__)
+# using Pkg
+# Pkg.activate(@__DIR__)
 
-using LinearAlgebra
-ENV["JULIA_NUM_THREADS"] = 4
-LinearAlgebra.BLAS.set_num_threads(2)
+# using LinearAlgebra
+# ENV["JULIA_NUM_THREADS"] = 4
+# LinearAlgebra.BLAS.set_num_threads(2)
 
 include("starAlgebras.jl")
 
@@ -189,7 +189,7 @@ function foxDerivative(relatorWord, generatorId)
     printMatrix(Δ₁x)
  end
 
- let
+ function differentialsExamples()
     A = Alphabet([:x, :X, :y, :Y], [2, 1, 4, 3])
     F = FreeGroup(A)
     x,y = Groups.gens(F)
@@ -205,34 +205,10 @@ function foxDerivative(relatorWord, generatorId)
     # ε = one(F)
     # G = FPGroup(F, [x*y*z => y*x] ) # proper matrix: [1-y x-1 xy]
     # G = FPGroup(F, [x*y*z => y*x, z => ε] ) # proper matrix: [1-y x-1 xy; 0 0 1]
-
+ 
     differentials(G)
  end
- 
- CₙJacobianMatrix = let n = 10
-    differentials(cyclicGroup(n))
- end
-  
- SL₃ƵJacobianShorterPresentation = let
-    A = Alphabet([:x, :X, :y, :Y, :z, :Z], [2, 1, 4, 3, 6, 5])
-    F = FreeGroup(A)
-    x,y,z = Groups.gens(F)
-    ε = one(F);
-    SL₃ƵShorterPresentation = FPGroup(F, [x^3 => ε, y^3 => ε, z^2 => ε, (x*z)^3 => ε, (y*z)^3 => ε, 
-                    (x^(-1)*z*x*y)^2 => ε, (y^(-1)*z*y*x)^2 => ε, (x*y)^6 => ε], maxrules = maxRules )
-    
-    differentials(SL₃ƵShorterPresentation)
- end
- 
- SL₃ƵJacobianElementaryMatrixPresentation = let
-    A = Alphabet([:e12, :E12, :e21, :E21, :e13, :E13, :e31, :E31, :e23, :E23, :e32, :E32], [2, 1, 4, 3, 6, 5, 8, 7, 10, 9, 12, 11])
-    F = FreeGroup(A)
-    e12, e21, e13, e31, e23, e32 = Groups.gens(F)
-    ε = one(F);
-    SL₃ƵElementaryMatrixPresentation = FPGroup(F, [e12*e13 => e13*e12, e12*e32 => e32*e12, e13*e23 => e23*e13, e23*e21 => e21*e23, e21*e31 => e31*e21, e31*e32 => e32*e31,
-                    e12*e23 => e13*e23*e12, e13*e32 => e12*e32*e13, e21*e13 => e23*e13*e21, e23*e31 => e21*e31*e23, 
-                    e31*e12 => e32*e12*e31, e32*e21 => e31*e21*e32,
-                    (e12*e21^(-1)*e12)^4 => ε], maxrules = maxRules )
 
-    differentials(SL₃ƵElementaryMatrixPresentation)
+ function CₙDifferentials(n)
+    differentials(cyclicGroup(n))
  end
