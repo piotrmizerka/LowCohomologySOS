@@ -56,7 +56,9 @@ function changeUnderlyingGroupRing(MRGOld, RGOld, RGNew, G)
     for i in 1:size(MRGOld)[1]
         for j in 1:size(MRGOld)[2]
             for k in 1:length(MRGOld[i,j].coeffs)
-                result[i,j] += MRGOld[i,j].coeffs[k]*RGNew(RGOld.basis[k])
+                if MRGOld[i,j].coeffs[k] != 0
+                    result[i,j] += MRGOld[i,j].coeffs[k]*RGNew(RGOld.basis[k])
+                end
             end
         end
     end
@@ -72,12 +74,4 @@ function cyclicGroup(n)
     Cₙ = FPGroup(F, [a^n => e, b => e])
 
     return Cₙ
-end
-
-# Cyclic group ring
-function cyclicGroupRing(n)
-    Cₙ = cyclicGroup(n)
-    ID = one(Cₙ)
-    RCₙ = groupRing(Cₙ, n)
-    return RCₙ, ID
 end

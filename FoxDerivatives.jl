@@ -163,8 +163,11 @@ function foxDerivative(relatorWord, generatorId)
 
     @info "D₁ = Jacobian"
     printMatrix(D₁)
+    # @info D₁
     @info "D₁*"
     printMatrix(starOfMatrixOverGroupRing(D₁))
+    # @info "typeof Jacobian:"
+    # @info typeof(D₁)
 
     D₀x = D₀(G, generators, RG)
 
@@ -187,28 +190,4 @@ function foxDerivative(relatorWord, generatorId)
 
     @info "Δ₁ = Δ₁⁺+Δ₁⁻"
     printMatrix(Δ₁x)
- end
-
- function differentialsExamples()
-    A = Alphabet([:x, :X, :y, :Y], [2, 1, 4, 3])
-    F = FreeGroup(A)
-    x,y = Groups.gens(F)
-    ε = one(F)
-    # G = FPGroup(F, [x*y => ε] ) # proper matrix: [1 x]
-    # G = FPGroup(F, [x*y => ε, y*x => ε] ) # proper matrix: [1 x; X 1]
-    # G = FPGroup(F, [x*y*x^(-1)*y^(-1) => ε] ) # proper matrix: [1-y x-1]
-    G = FPGroup(F, [x*y => y*x] ) # proper matrix: as above
- 
-    # A = Alphabet([:x, :X, :y, :Y, :z, :Z], [2, 1, 4, 3, 6, 5])
-    # F = FreeGroup(A)
-    # x,y,z = Groups.gens(F)
-    # ε = one(F)
-    # G = FPGroup(F, [x*y*z => y*x] ) # proper matrix: [1-y x-1 xy]
-    # G = FPGroup(F, [x*y*z => y*x, z => ε] ) # proper matrix: [1-y x-1 xy; 0 0 1]
- 
-    differentials(G)
- end
-
- function CₙDifferentials(n)
-    differentials(cyclicGroup(n))
  end
