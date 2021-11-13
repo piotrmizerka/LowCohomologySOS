@@ -1,4 +1,4 @@
-include("SOSDecompositions.jl")
+include("certification.jl")
 
 function differentialsExamples()
     A = Alphabet([:x, :X, :y, :Y], [2, 1, 4, 3])
@@ -24,7 +24,7 @@ function differentialsExamples()
     differentials(cyclicGroup(n))
  end
  
-## stuff for tests - cyclic group example ###################################################3
+## Defining optimization problems ###################################################3
 cyclicGroupOptimizationProblem = let n = 3
     Cₙ = cyclicGroup(n)
     ID = one(Cₙ)
@@ -47,27 +47,7 @@ cyclicGroupOptimizationProblem = let n = 3
     SOSProblemMatrix(M, orderUnit)
  end
  
- # stuff for tests - When running further commands after completing the one below, unexpected problems occur in VSCode
- λ, cyclicGroupSolutionProxSDP = let SOS_problem = cyclicGroupOptimizationProblem
-    with_ProxSDP = with_optimizer(ProxSDP.Optimizer, log_verbose=true, tol_gap=1e-4, tol_feasibility=1e-4)
-    set_optimizer(SOS_problem, with_ProxSDP)
-    optimize!(SOS_problem)
-    λ, P_Cₙ = value(SOS_problem[:λ]), value.(SOS_problem[:P])
-    Q = real.(sqrt(P_Cₙ))
-    λ, Q, svdvals(Q), svdvals(P_Cₙ)
- end
- 
- λ, cyclicGroupSolutionSCS = let SOS_problem = cyclicGroupOptimizationProblem
-    with_scs = with_optimizer(SCS.Optimizer, eps=1e-8)
-    set_optimizer(SOS_problem, with_scs)
-    optimize!(SOS_problem)
-    λ, P_Cₙ = value(SOS_problem[:λ]), value.(SOS_problem[:P])
-    Q = real.(sqrt(P_Cₙ))
-    λ, Q, svdvals(Q), svdvals(P_Cₙ)
- end
- ##############################################
- 
- ## stuff for tests - another example of an SDP matrix problem #################3
+ ## Solving optimization problems (in particular establishing approx. spectral gaps) #################3
  let
     A = Alphabet([:x, :X, :y, :Y], [2, 1, 4, 3])
     F = FreeGroup(A)
@@ -109,3 +89,50 @@ let n = 3
     spectralGapsApproximated(Cₙ, n)
  end
  ###############################################
+
+ SL₃ƵShorterPresentationSpectralGaps = let maxRules = 1000, supportSize = 3
+   A = Alphabet([:x, :X, :y, :Y, :z, :Z], [2, 1, 4, 3, 6, 5])
+   F = FreeGroup(A)
+   x,y,z = Groups.gens(F)
+   ε = one(F);
+   SL₃ƵShorterPresentation = FPGroup(F, [x^3 => ε, y^3 => ε, z^2 => ε, (x*z)^3 => ε, (y*z)^3 => ε, 
+                   (x^(-1)*z*x*y)^2 => ε, (y^(-1)*z*y*x)^2 => ε, (x*y)^6 => ε], maxrules = maxRules )
+   
+   # spectralGapsApproximated(SL₃ƵShorterPresentation, supportSize)
+   differentials(SL₃ƵShorterPresentation)
+end
+
+SL₃ƵElementaryMatrixPresentationSpectralGaps = let maxRules = 5000, supportSize = 2
+   A = Alphabet([:e12, :E12, :e21, :E21, :e13, :E13, :e31, :E31, :e23, :E23, :e32, :E32], [2, 1, 4, 3, 6, 5, 8, 7, 10, 9, 12, 11])
+   F = FreeGroup(A)
+   e12, e21, e13, e31, e23, e32 = Groups.gens(F)
+   ε = one(F);
+   SL₃ƵElementaryMatrixPresentation = FPGroup(F, [e12*e13 => e13*e12, e12*e32 => e32*e12, e13*e23 => e23*e13, e23*e21 => e21*e23, e21*e31 => e31*e21, e31*e32 => e32*e31,
+                   e12*e23 => e13*e23*e12, e13*e32 => e12*e32*e13, e21*e13 => e23*e13*e21, e23*e31 => e21*e31*e23, 
+                   e31*e12 => e32*e12*e31, e32*e21 => e31*e21*e32,
+                   (e12*e21^(-1)*e12)^4 => ε], maxrules = maxRules )
+
+   spectralGapsApproximated(SL₃ƵElementaryMatrixPresentation, supportSize)
+end
+
+SL₃ƵSteinbergGroupSpectralGaps = let maxRules = 5000, supportSize = 2
+   A = Alphabet([:e12, :E12, :e21, :E21, :e13, :E13, :e31, :E31, :e23, :E23, :e32, :E32], [2, 1, 4, 3, 6, 5, 8, 7, 10, 9, 12, 11])
+   F = FreeGroup(A)
+   e12, e21, e13, e31, e23, e32 = Groups.gens(F)
+   ε = one(F);
+   SteinbergGroupPresentation = FPGroup(F, [e12*e13 => e13*e12, e12*e32 => e32*e12, e13*e23 => e23*e13, e23*e21 => e21*e23, e21*e31 => e31*e21, e31*e32 => e32*e31,
+                   e12*e23 => e13*e23*e12, e13*e32 => e12*e32*e13, e21*e13 => e23*e13*e21, e23*e31 => e21*e31*e23, 
+                   e31*e12 => e32*e12*e31, e32*e21 => e31*e21*e32], maxrules = maxRules )
+
+   # differentials(SteinbergGroupPresentation)
+   spectralGapsApproximated(SteinbergGroupPresentation, supportSize)
+end
+
+###### test examples - certification ###################################
+let n = 3
+   Cₙ = cyclicGroup(n)
+   spectralGapsCertification(Cₙ, n)
+end
+
+
+#########################################################################

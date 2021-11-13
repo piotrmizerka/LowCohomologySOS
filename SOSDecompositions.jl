@@ -1,15 +1,3 @@
-using Pkg
-Pkg.activate(@__DIR__)
-
-using LinearAlgebra
-ENV["JULIA_NUM_THREADS"] = 4
-LinearAlgebra.BLAS.set_num_threads(2)
-using Kronecker
-
-using JuMP
-using SCS
-using ProxSDP
-
 # include("starAlgebras.jl")
 include("FoxDerivatives.jl")
  
@@ -77,77 +65,23 @@ function SOSSummands(SOSProblem, groupRing)
    @info groupRing.basis
 end
 
-Base.adjoint(X::AlgebraElement) = StarAlgebra.star(X)
-function SOSFromMatrix(P, support, RG, G)
-   # @info "Support:"
-   # @info support
-
-   mn = size(P)[1]
-   m = length(support)
-   n = floor(Int, mn/m)
-
-   Iₙ = reshape([RG(0) for i in 1:(n*n)], n, n)
-   for i in 1:n
-      Iₙ[i,i] = RG(one(G))
-   end
-
-   # @info "Iₙ:"
-   # @info Iₙ
-
-   PRG = reshape([RG(0) for i in 1:(mn*mn)], mn, mn)
-   for i in 1:mn
-      for j in 1:mn
-         PRG[i,j] = P[i,j]*RG(one(G))
-      end
-   end
-
-   # @info "PRG:"
-   # @info PRG
-   # @info PRG*PRG
-
-   x = reshape([RG(support[i]) for i in 1:length(support)], m, 1)
-   xx = collect(Iₙ⊗x)
-   
-   # @info "xx:"
-   # @info xx
-
-   # xxᵀ = xx' # not working!
-   xxᵀ = starOfMatrixOverGroupRing(xx)
-
-   @info "xxᵀ:"
-   @info xxᵀ
-
-   result = xxᵀ*PRG*xx
-   # result = xxᵀ*xx
-
-   @info "result:"
-   @info result
-
-   return result
-end
-
-let n = 3
-   Cₙ = cyclicGroup(n)
-   RCₙ = groupRing(Cₙ, n)
-   P = [1 1 1 1 1 1;1 1 1 1 1 1;1 1 1 1 1 1;1 1 1 1 1 1;1 1 1 1 1 1;1 1 1 1 1 1]
-   M = SOSFromMatrix(P, RCₙ.basis, RCₙ, Cₙ) # M shall be equal to []
-end
-
 function SOSProblemSolutionSCS(SOSProblem)
-   with_scs = with_optimizer(SCS.Optimizer, eps=1e-2, acceleration_lookback=0)
+   with_scs = with_optimizer(SCS.Optimizer, eps=1e-8, acceleration_lookback=0)
    set_optimizer(SOSProblem, with_scs)
    optimize!(SOSProblem)
    λ, P = value(SOSProblem[:λ]), value.(SOSProblem[:P])
    # Q = real.(sqrt(P))
 
-   @info "λ:"
-   @info λ
-   @info "Size of P:"
-   @info size(P)
+   # @info "λ:"
+   # @info λ
+   # @info "Size of P:"
+   # @info size(P)
    # @info "P:"
    # @info P
    # @info "Q s.t. Q^TQ = P:"
    # @info Q
+
+   return λ, P
 end
 
 function spectralGapsApproximated(G, supportSize)
@@ -159,6 +93,9 @@ function spectralGapsApproximated(G, supportSize)
    Δ₁⁻x = Δ₁⁻(G, generators, RGDifferentials)
    Δ₁x = Δ₁(G, jacobianMatrixEncodedx, generators, RGDifferentials)
 
+   @info "Δ₁:"
+   printMatrix(Δ₁x)
+
    RGBallStar = groupRing(G, supportSize, true)
    # RGBallStar = RGDifferentials # we may try to find a solution with a prescibed support , e.g. the same as for computing the differentials - advantage: goes fast, con: may not find a solution
 
@@ -166,10 +103,10 @@ function spectralGapsApproximated(G, supportSize)
    # @info RGDifferentials.basis
    # @info "Basis of RGBallStar:"
    # @info RGBallStar.basis
-   @info "Size of basis of RGDifferentials and dimension of its multiplication table:"
-   @info [length(RGDifferentials.basis) size(RGDifferentials.mstructure)[1]]
-   @info "Size of basis of RGBallStar and dimension of its multiplication table:"
-   @info [length(RGBallStar.basis) size(RGBallStar.mstructure)[1]]
+   # @info "Size of basis of RGDifferentials and dimension of its multiplication table:"
+   # @info [length(RGDifferentials.basis) size(RGDifferentials.mstructure)[1]]
+   # @info "Size of basis of RGBallStar and dimension of its multiplication table:"
+   # @info [length(RGBallStar.basis) size(RGBallStar.mstructure)[1]]
 
    Δ₁⁺xx = changeUnderlyingGroupRing(Δ₁⁺x, RGDifferentials, RGBallStar, G)
    Δ₁⁻xx = changeUnderlyingGroupRing(Δ₁⁻x, RGDifferentials, RGBallStar, G)
@@ -189,44 +126,14 @@ function spectralGapsApproximated(G, supportSize)
    # SOSProblemSolutionSCS(Δ₁⁺SOSProblem) # CAUTION: may require potentially twice the basis as Δ₁
    # @info "Solution for (Δ₁⁻)²-λΔ₁⁻ = SOS:"
    # SOSProblemSolutionSCS(Δ₁⁻SOSProblem) # CAUTION: may require potentially twice the basis as Δ₁
-   @info "Solution for Δ₁-λIₙ = SOS:"
-   SOSProblemSolutionSCS(Δ₁SOSProblem)
+   # @info "Solution for Δ₁-λIₙ = SOS:"
+   # SOSProblemSolutionSCS(Δ₁SOSProblem)
+
+   λ, P = SOSProblemSolutionSCS(Δ₁SOSProblem)
+
+   result = λ, P, RGBallStar, Δ₁xx, Iₙ
+
+   return result
 end
  
-SL₃ƵShorterPresentationSpectralGaps = let maxRules = 1000, supportSize = 3
-   A = Alphabet([:x, :X, :y, :Y, :z, :Z], [2, 1, 4, 3, 6, 5])
-   F = FreeGroup(A)
-   x,y,z = Groups.gens(F)
-   ε = one(F);
-   SL₃ƵShorterPresentation = FPGroup(F, [x^3 => ε, y^3 => ε, z^2 => ε, (x*z)^3 => ε, (y*z)^3 => ε, 
-                   (x^(-1)*z*x*y)^2 => ε, (y^(-1)*z*y*x)^2 => ε, (x*y)^6 => ε], maxrules = maxRules )
-   
-   # spectralGapsApproximated(SL₃ƵShorterPresentation, supportSize)
-   differentials(SL₃ƵShorterPresentation)
-end
 
-SL₃ƵElementaryMatrixPresentationSpectralGaps = let maxRules = 5000, supportSize = 2
-   A = Alphabet([:e12, :E12, :e21, :E21, :e13, :E13, :e31, :E31, :e23, :E23, :e32, :E32], [2, 1, 4, 3, 6, 5, 8, 7, 10, 9, 12, 11])
-   F = FreeGroup(A)
-   e12, e21, e13, e31, e23, e32 = Groups.gens(F)
-   ε = one(F);
-   SL₃ƵElementaryMatrixPresentation = FPGroup(F, [e12*e13 => e13*e12, e12*e32 => e32*e12, e13*e23 => e23*e13, e23*e21 => e21*e23, e21*e31 => e31*e21, e31*e32 => e32*e31,
-                   e12*e23 => e13*e23*e12, e13*e32 => e12*e32*e13, e21*e13 => e23*e13*e21, e23*e31 => e21*e31*e23, 
-                   e31*e12 => e32*e12*e31, e32*e21 => e31*e21*e32,
-                   (e12*e21^(-1)*e12)^4 => ε], maxrules = maxRules )
-
-   spectralGapsApproximated(SL₃ƵElementaryMatrixPresentation, supportSize)
-end
-
-SL₃ƵSteinbergGroupSpectralGaps = let maxRules = 5000, supportSize = 2
-   A = Alphabet([:e12, :E12, :e21, :E21, :e13, :E13, :e31, :E31, :e23, :E23, :e32, :E32], [2, 1, 4, 3, 6, 5, 8, 7, 10, 9, 12, 11])
-   F = FreeGroup(A)
-   e12, e21, e13, e31, e23, e32 = Groups.gens(F)
-   ε = one(F);
-   SteinbergGroupPresentation = FPGroup(F, [e12*e13 => e13*e12, e12*e32 => e32*e12, e13*e23 => e23*e13, e23*e21 => e21*e23, e21*e31 => e31*e21, e31*e32 => e32*e31,
-                   e12*e23 => e13*e23*e12, e13*e32 => e12*e32*e13, e21*e13 => e23*e13*e21, e23*e31 => e21*e31*e23, 
-                   e31*e12 => e32*e12*e31, e32*e21 => e31*e21*e32], maxrules = maxRules )
-
-   # differentials(SteinbergGroupPresentation)
-   spectralGapsApproximated(SteinbergGroupPresentation, supportSize)
-end
