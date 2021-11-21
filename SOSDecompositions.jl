@@ -1,7 +1,7 @@
 # include("starAlgebras.jl")
 include("FoxDerivatives.jl")
  
-function constraints(pm::AbstractMatrix{<:Integer}, total_length=maximum(pm)) # this function has to be customized for matrices
+function constraints(pm::AbstractMatrix{<:Integer}, total_length=maximum(pm))
    cnstrs = [Vector{Int}() for _ in 1:total_length]
    li = LinearIndices(CartesianIndices(size(pm)))
    for i in eachindex(pm)
@@ -28,6 +28,9 @@ end
 
 function SOSProblemMatrix(M, orderUnit, upper_bound::Float64=Inf)
    underlyingGroupRing = parent(M[1,1])
+
+   # @info length(underlyingGroupRing.mstructure)
+
    m = size(underlyingGroupRing.mstructure, 1)
    n = size(M)[1]
    mn = m*n
@@ -66,7 +69,7 @@ function SOSSummands(SOSProblem, groupRing)
 end
 
 function SOSProblemSolutionSCS(SOSProblem)
-   with_scs = with_optimizer(SCS.Optimizer, eps=1e-8, acceleration_lookback=0)
+   with_scs = with_optimizer(SCS.Optimizer, eps=1e-5, acceleration_lookback=0, max_iters = 50000)
    set_optimizer(SOSProblem, with_scs)
    optimize!(SOSProblem)
    λ, P = value(SOSProblem[:λ]), value.(SOSProblem[:P])
@@ -84,20 +87,33 @@ function SOSProblemSolutionSCS(SOSProblem)
    return λ, P
 end
 
-function spectralGapsApproximated(G, supportSize)
-   generators = gens(G)
-   jacobianMatrixEncodedx = jacobianMatrixEncoded(G.relations, generators)
-   RGDifferentials = suitableGroupRing(G, generators, jacobianMatrixEncodedx)
+# h:Free group --> our group G
+function spectralGapsApproximated(h::Function, relations, halfBasis)
+   F = parent(relations[1])
+   G = parent(h(relations[1]))
 
-   Δ₁⁺x = Δ₁⁺(G, jacobianMatrixEncodedx, generators, RGDifferentials)
-   Δ₁⁻x = Δ₁⁻(G, generators, RGDifferentials)
-   Δ₁x = Δ₁(G, jacobianMatrixEncodedx, generators, RGDifferentials)
+   # @info F
+   # @info G
 
-   @info "Δ₁:"
-   printMatrix(Δ₁x)
+   jacobianFreeGroup = jacobianMatrix(relations)
 
-   RGBallStar = groupRing(G, supportSize, true)
-   # RGBallStar = RGDifferentials # we may try to find a solution with a prescibed support , e.g. the same as for computing the differentials - advantage: goes fast, con: may not find a solution
+   # @info jacobianFreeGroup
+
+   RGDifferentials = suitableGroupRing(jacobianFreeGroup, h)
+
+   D₀x = D₀(G, RGDifferentials, [h(x) for x in Groups.gens(F)])
+   D₁ = jacobianMatrix(jacobianFreeGroup, h, RGDifferentials)
+
+   Δ₁⁺ = starOfMatrixOverGroupRing(D₁)*D₁
+   Δ₁⁻ = D₀x*starOfMatrixOverGroupRing(D₀x)
+   Δ₁ = Δ₁⁺+Δ₁⁻
+
+   # @info "Δ₁:"
+   # printMatrix(Δ₁)
+
+   RGBallStar = groupRing(G, halfBasis, true)
+   
+   # @info typeof(RGBallStar.basis[1])
 
    # @info "Basis of RGDifferentials:"
    # @info RGDifferentials.basis
@@ -108,19 +124,23 @@ function spectralGapsApproximated(G, supportSize)
    # @info "Size of basis of RGBallStar and dimension of its multiplication table:"
    # @info [length(RGBallStar.basis) size(RGBallStar.mstructure)[1]]
 
-   Δ₁⁺xx = changeUnderlyingGroupRing(Δ₁⁺x, RGDifferentials, RGBallStar, G)
-   Δ₁⁻xx = changeUnderlyingGroupRing(Δ₁⁻x, RGDifferentials, RGBallStar, G)
-   Δ₁xx = changeUnderlyingGroupRing(Δ₁x, RGDifferentials, RGBallStar, G)
+   Δ₁⁺x = changeUnderlyingGroupRing(Δ₁⁺, RGDifferentials, RGBallStar, G)
+   Δ₁⁻x = changeUnderlyingGroupRing(Δ₁⁻, RGDifferentials, RGBallStar, G)
+   Δ₁x = changeUnderlyingGroupRing(Δ₁, RGDifferentials, RGBallStar, G)
 
-   Iₙ = [RGBallStar(0) for i in 1:length(Δ₁⁻xx)]
-   Iₙ = reshape(Iₙ, size(Δ₁⁻xx)[1], size(Δ₁⁻xx)[2])
-   for i in 1:size(Δ₁⁻xx)[1]
+   # @info typeof(Δ₁x[1,1])
+
+   Iₙ = [RGBallStar(0) for i in 1:length(Δ₁⁻x)]
+   Iₙ = reshape(Iₙ, size(Δ₁⁻x)[1], size(Δ₁⁻x)[2])
+   for i in 1:size(Δ₁⁻x)[1]
       Iₙ[i,i] = RGBallStar(one(G))
    end
 
+   # @info typeof(Δ₁x[1,1])
+
    # Δ₁⁺SOSProblem = SOSProblemMatrix(Δ₁⁺xx^2, Δ₁⁺xx) # CAUTION: may require potentially twice the basis as Δ₁
    # Δ₁⁻SOSProblem = SOSProblemMatrix(Δ₁⁻xx^2, Δ₁⁻xx) # as above
-   Δ₁SOSProblem = SOSProblemMatrix(Δ₁xx, Iₙ)
+   Δ₁SOSProblem = SOSProblemMatrix(Δ₁x, Iₙ)
 
    # @info "Solution for (Δ₁⁺)²-λΔ₁⁺ = SOS:"
    # SOSProblemSolutionSCS(Δ₁⁺SOSProblem) # CAUTION: may require potentially twice the basis as Δ₁
@@ -131,7 +151,7 @@ function spectralGapsApproximated(G, supportSize)
 
    λ, P = SOSProblemSolutionSCS(Δ₁SOSProblem)
 
-   result = λ, P, RGBallStar, Δ₁xx, Iₙ
+   result = λ, P, RGBallStar, Δ₁x, Iₙ
 
    return result
 end

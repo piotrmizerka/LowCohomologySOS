@@ -5,10 +5,11 @@ using Test
 
 Base.:/(G::Groups.AbstractFPGroup, rels::AbstractVector{<:FPGroupElement}) = FPGroup(G, [r=>one(G) for r in rels])
 StarAlgebras.star(g::Groups.GroupElement) = inv(g)
+StarAlgebras.star(A::AbstractAlgebra.Generic.MatAlgElem{Int64}) = inv(A)
 ∗ = StarAlgebras.star
 
 
-# Group ring with basis the whole ball
+# Group ring with basis the whole ball; returns halfbasis as well
 function groupRing(G, supportSize::Int64, starMultiplication = false)
     S = Groups.gens(G)
     S = unique([S; inv.(S)])
@@ -22,11 +23,11 @@ function groupRing(G, supportSize::Int64, starMultiplication = false)
     tmstr = StarAlgebras.CachedMTable{starMultiplication}(b, table_size = (sizes[supportSize], sizes[supportSize]))
     RG = StarAlgebra(G, b, tmstr)
 
-    return RG
+    return RG, Ball[1:sizes[supportSize]] # ARE WE SURE THAT THIS WILL BE OUR HALFBASIS?
 end
 
 # Group ring with basis given by prescribed support
-function groupRing(G, support::AbstractVector{<:FPGroupElement}, starMultiplication = false)
+function groupRing(G, support, starMultiplication = false)
     basisElementsToAppend = []
     inverseClosedSupport = unique([support; inv.(support)])
     for i in 1:length(inverseClosedSupport)
@@ -49,7 +50,7 @@ function groupRing(G, support::AbstractVector{<:FPGroupElement}, starMultiplicat
     return RG
 end
 
-# Saves a matrix MRGOld over the group ring MRGOld as a matrix over the group ring XRGNew (both rings are for G)
+# Saves a matrix MRGOld over the group ring MRGOld as a matrix over the group ring RGNew (both rings are for G)
 function changeUnderlyingGroupRing(MRGOld, RGOld, RGNew, G)
     result = [RGNew(0) for i in 1:length(MRGOld)]
     result = reshape(result, size(MRGOld)[1], size(MRGOld)[2])
@@ -75,3 +76,4 @@ function cyclicGroup(n)
 
     return Cₙ
 end
+

@@ -15,24 +15,28 @@ include("SOSDecompositions.jl")
 
 ##### CERTIFICATION - see certify_SOS_decomposition from Marek's code (Property T) - in 1712.07167.jl file
 # Base.adjoint(X::AlgebraElement) = StarAlgebra.star(X)
-function SOSFromMatrix(Q, support, RG, G)
+function SOSFromMatrix(Q, support, RG)
     mn = size(Q)[1]
+
+    # @info length(support)
+    # @info mn
 
     # Changing Q to the corresponding interval-entry matrix
     QInterval = reshape([@interval(0) for i in 1:(mn*mn)], mn, mn)
     for i in 1:mn
-        for j in 1:mn
+        for j in i:mn
             QInterval[i,j] = @interval(Q[i,j])
+            QInterval[j,i] = QInterval[i,j]
         end
     end
 
-    QIntervalᵀ = QInterval' 
-    PInterval = QIntervalᵀ*QInterval
-    # PInterval = QInterval^2 # we don't need Cholesky decomposition - we can take normal squares insted
+    # QIntervalᵀ = QInterval' 
+    # PInterval = QIntervalᵀ*QInterval
+    PInterval = QInterval^2
     PIntervalRG = reshape([@interval(0)*RG(0) for i in 1:(mn*mn)], mn, mn)
     for i in 1:mn
         for j in 1:mn
-            PIntervalRG[i,j] = PInterval[i,j]*RG(one(G))
+            PIntervalRG[i,j] = PInterval[i,j]*one(RG)
         end
     end
 
@@ -41,26 +45,30 @@ function SOSFromMatrix(Q, support, RG, G)
 
     Iₙ = reshape([RG(0) for i in 1:(n*n)], n, n)
     for i in 1:n
-        Iₙ[i,i] = RG(one(G))
+        Iₙ[i,i] = one(RG(G))
     end
 
     x = reshape([RG(support[i]) for i in 1:length(support)], m, 1)
     xx = collect(Iₙ⊗x)
     xxᵀ = starOfMatrixOverGroupRing(xx)
 
+    # @info size(xx)[1]
+    # @info size(xxᵀ)[1]
+    # @info size(PIntervalRG)[1]
+
     result = xxᵀ*PIntervalRG*xx
 
     return result
 end
 
-function certifySOSDecomposition(X, orderunit, λ::Number, Q::AbstractMatrix, support, RG, G)
+function certifySOSDecomposition(X, orderunit, λ::Number, Q::AbstractMatrix, support, RG)
     λInterval = @interval(λ)
     eoi = X - λInterval*orderunit
 
-    @info "Element to be certified in interval arithmetic:"
-    @info eoi
+    # @info "Element to be certified in interval arithmetic:"
+    # @info eoi
 
-    residual = eoi - SOSFromMatrix(Q, support, RG, G)
+    residual = eoi - SOSFromMatrix(Q, support, RG)
     l1Norm = 0
     mn = size(X)[1]
     for i in 1:mn
@@ -69,7 +77,7 @@ function certifySOSDecomposition(X, orderunit, λ::Number, Q::AbstractMatrix, su
         end
     end
 
-    @info "l₁ norm in interval arithmetic:"
+    @info "l₁ norm of the error in interval arithmetic:"
     @info l1Norm
 
     result = λInterval-l1Norm
@@ -77,29 +85,18 @@ function certifySOSDecomposition(X, orderunit, λ::Number, Q::AbstractMatrix, su
     return result
 end
 
-function spectralGapsCertification(G, supportSize) # change support to halfbasis
-    λₐₚ, Pₐₚ, RG, Δ₁, Iₙ = spectralGapsApproximated(G, supportSize)
-    # Qₐₚ = real(sqrt(Symmetric( (P.+ P')./2 ))) # we do not need Cholesky decomposition - we can take the normal square to ensure that Q^2 will be >= using interval arithmetic
-    PSymm = Symmetric((Pₐₚ.+ Pₐₚ')./2)
-    minEigenvalue = minimum(eigvals(PSymm))
-    if minEigenvalue < 0
-        subtrahend = prevfloat(prevfloat(minEigenvalue))
-        for i in 1:size(PSymm)[1]
-            PSymm[i,i] -= subtrahend
-        end
-    end
-    @info eigvals(PSymm)
-    Ch = cholesky(PSymm)
-    Qₐₚ = Ch.U
+function spectralGapsCertification(h::Function, relations, halfBasis) # change support to halfbasis
+    λₐₚ, Pₐₚ, RG, Δ₁, Iₙ = spectralGapsApproximated(h, relations, halfBasis)
+    Qₐₚ = real(sqrt(Symmetric( (Pₐₚ.+ Pₐₚ')./2 )))
 
     @info "Approximated λ:"
     @info λₐₚ
-    @info "Approximated P:"
-    @info Pₐₚ
-    @info "Approximated Q such that P = QᵀQ:"
-    @info Qₐₚ
+    # @info "Approximated P:"
+    # @info Pₐₚ
+    # @info "Approximated Q = principal square root of P (i.e. the unique Q s.t. Q is semipositive definite (Qᵀ=Q, Q has nonnegative eigvals), and Q^2 = P):"
+    # @info Qₐₚ
     
-    result = certifySOSDecomposition(Δ₁, Iₙ, λₐₚ, Qₐₚ, RG.basis, RG, G)
+    result = certifySOSDecomposition(Δ₁, Iₙ, λₐₚ, Qₐₚ, halfBasis, RG)
 
     @info "Certified λ (interval atithmetic):"
     @info result
