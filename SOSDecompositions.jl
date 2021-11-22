@@ -69,7 +69,7 @@ function SOSSummands(SOSProblem, groupRing)
 end
 
 function SOSProblemSolutionSCS(SOSProblem)
-   with_scs = with_optimizer(SCS.Optimizer, eps=1e-5, acceleration_lookback=0, max_iters = 50000)
+   with_scs = with_optimizer(SCS.Optimizer, eps=1e-5, acceleration_lookback=0, max_iters = 5000000)
    set_optimizer(SOSProblem, with_scs)
    optimize!(SOSProblem)
    λ, P = value(SOSProblem[:λ]), value.(SOSProblem[:P])

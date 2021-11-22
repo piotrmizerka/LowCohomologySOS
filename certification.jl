@@ -45,7 +45,7 @@ function SOSFromMatrix(Q, support, RG)
 
     Iₙ = reshape([RG(0) for i in 1:(n*n)], n, n)
     for i in 1:n
-        Iₙ[i,i] = one(RG(G))
+        Iₙ[i,i] = one(RG)
     end
 
     x = reshape([RG(support[i]) for i in 1:length(support)], m, 1)
