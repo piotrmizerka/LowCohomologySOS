@@ -91,14 +91,11 @@ SL₃ƵSpectralGaps = let halfRadius = 2
    F = FreeGroup(A)
    e12, e21, e13, e31, e23, e32 = Groups.gens(F)
 
-   # @info Groups.gens(F)
-
    N = 3
    SL₃Ƶ = MatrixAlgebra(zz, N)
    E(SL₃Ƶ, i,j) = (e_ij = one(SL₃Ƶ); e_ij[i,j] = 1; e_ij)
    S = [E(SL₃Ƶ, i,j) for i in 1:N for j in 1:N if i≠j]
    S = unique([S; inv.(S)])
-   # E_R, sizes = Groups.wlmetric_ball(S, radius=2*halfRadius)
 
    function h(w::FPGroupElement)
       result = one(SL₃Ƶ)

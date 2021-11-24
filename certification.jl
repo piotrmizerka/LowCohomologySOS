@@ -18,9 +18,6 @@ include("SOSDecompositions.jl")
 function SOSFromMatrix(Q, support, RG)
     mn = size(Q)[1]
 
-    # @info length(support)
-    # @info mn
-
     # Changing Q to the corresponding interval-entry matrix
     QInterval = reshape([@interval(0) for i in 1:(mn*mn)], mn, mn)
     for i in 1:mn
@@ -30,8 +27,6 @@ function SOSFromMatrix(Q, support, RG)
         end
     end
 
-    # QIntervalᵀ = QInterval' 
-    # PInterval = QIntervalᵀ*QInterval
     PInterval = QInterval^2
     PIntervalRG = reshape([@interval(0)*RG(0) for i in 1:(mn*mn)], mn, mn)
     for i in 1:mn
@@ -52,10 +47,6 @@ function SOSFromMatrix(Q, support, RG)
     xx = collect(Iₙ⊗x)
     xxᵀ = starOfMatrixOverGroupRing(xx)
 
-    # @info size(xx)[1]
-    # @info size(xxᵀ)[1]
-    # @info size(PIntervalRG)[1]
-
     result = xxᵀ*PIntervalRG*xx
 
     return result
@@ -64,9 +55,6 @@ end
 function certifySOSDecomposition(X, orderunit, λ::Number, Q::AbstractMatrix, support, RG)
     λInterval = @interval(λ)
     eoi = X - λInterval*orderunit
-
-    # @info "Element to be certified in interval arithmetic:"
-    # @info eoi
 
     residual = eoi - SOSFromMatrix(Q, support, RG)
     l1Norm = 0
@@ -91,10 +79,6 @@ function spectralGapsCertification(h::Function, relations, halfBasis) # change s
 
     @info "Approximated λ:"
     @info λₐₚ
-    # @info "Approximated P:"
-    # @info Pₐₚ
-    # @info "Approximated Q = principal square root of P (i.e. the unique Q s.t. Q is semipositive definite (Qᵀ=Q, Q has nonnegative eigvals), and Q^2 = P):"
-    # @info Qₐₚ
     
     result = certifySOSDecomposition(Δ₁, Iₙ, λₐₚ, Qₐₚ, halfBasis, RG)
 

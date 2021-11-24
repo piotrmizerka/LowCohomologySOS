@@ -15,10 +15,6 @@ function groupRing(G, supportSize::Int64, starMultiplication = false)
     S = unique([S; inv.(S)])
     ID = one(G)
     Ball, sizes = Groups.wlmetric_ball(S, ID, radius = 2*supportSize)
-
-    # @info "Ball size:"
-    # @info length(Ball)
-
     b = StarAlgebras.Basis{UInt32}(Ball)
     tmstr = StarAlgebras.CachedMTable{starMultiplication}(b, table_size = (sizes[supportSize], sizes[supportSize]))
     RG = StarAlgebra(G, b, tmstr)

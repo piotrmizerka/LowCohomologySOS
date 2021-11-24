@@ -28,9 +28,6 @@ end
 
 function SOSProblemMatrix(M, orderUnit, upper_bound::Float64=Inf)
    underlyingGroupRing = parent(M[1,1])
-
-   # @info length(underlyingGroupRing.mstructure)
-
    m = size(underlyingGroupRing.mstructure, 1)
    n = size(M)[1]
    mn = m*n
@@ -73,16 +70,6 @@ function SOSProblemSolutionSCS(SOSProblem)
    set_optimizer(SOSProblem, with_scs)
    optimize!(SOSProblem)
    λ, P = value(SOSProblem[:λ]), value.(SOSProblem[:P])
-   # Q = real.(sqrt(P))
-
-   # @info "λ:"
-   # @info λ
-   # @info "Size of P:"
-   # @info size(P)
-   # @info "P:"
-   # @info P
-   # @info "Q s.t. Q^TQ = P:"
-   # @info Q
 
    return λ, P
 end
@@ -92,13 +79,7 @@ function spectralGapsApproximated(h::Function, relations, halfBasis)
    F = parent(relations[1])
    G = parent(h(relations[1]))
 
-   # @info F
-   # @info G
-
    jacobianFreeGroup = jacobianMatrix(relations)
-
-   # @info jacobianFreeGroup
-
    RGDifferentials = suitableGroupRing(jacobianFreeGroup, h)
 
    D₀x = D₀(G, RGDifferentials, [h(x) for x in Groups.gens(F)])
@@ -108,27 +89,11 @@ function spectralGapsApproximated(h::Function, relations, halfBasis)
    Δ₁⁻ = D₀x*starOfMatrixOverGroupRing(D₀x)
    Δ₁ = Δ₁⁺+Δ₁⁻
 
-   # @info "Δ₁:"
-   # printMatrix(Δ₁)
-
    RGBallStar = groupRing(G, halfBasis, true)
-   
-   # @info typeof(RGBallStar.basis[1])
-
-   # @info "Basis of RGDifferentials:"
-   # @info RGDifferentials.basis
-   # @info "Basis of RGBallStar:"
-   # @info RGBallStar.basis
-   # @info "Size of basis of RGDifferentials and dimension of its multiplication table:"
-   # @info [length(RGDifferentials.basis) size(RGDifferentials.mstructure)[1]]
-   # @info "Size of basis of RGBallStar and dimension of its multiplication table:"
-   # @info [length(RGBallStar.basis) size(RGBallStar.mstructure)[1]]
 
    Δ₁⁺x = changeUnderlyingGroupRing(Δ₁⁺, RGDifferentials, RGBallStar, G)
    Δ₁⁻x = changeUnderlyingGroupRing(Δ₁⁻, RGDifferentials, RGBallStar, G)
    Δ₁x = changeUnderlyingGroupRing(Δ₁, RGDifferentials, RGBallStar, G)
-
-   # @info typeof(Δ₁x[1,1])
 
    Iₙ = [RGBallStar(0) for i in 1:length(Δ₁⁻x)]
    Iₙ = reshape(Iₙ, size(Δ₁⁻x)[1], size(Δ₁⁻x)[2])
@@ -136,19 +101,7 @@ function spectralGapsApproximated(h::Function, relations, halfBasis)
       Iₙ[i,i] = RGBallStar(one(G))
    end
 
-   # @info typeof(Δ₁x[1,1])
-
-   # Δ₁⁺SOSProblem = SOSProblemMatrix(Δ₁⁺xx^2, Δ₁⁺xx) # CAUTION: may require potentially twice the basis as Δ₁
-   # Δ₁⁻SOSProblem = SOSProblemMatrix(Δ₁⁻xx^2, Δ₁⁻xx) # as above
    Δ₁SOSProblem = SOSProblemMatrix(Δ₁x, Iₙ)
-
-   # @info "Solution for (Δ₁⁺)²-λΔ₁⁺ = SOS:"
-   # SOSProblemSolutionSCS(Δ₁⁺SOSProblem) # CAUTION: may require potentially twice the basis as Δ₁
-   # @info "Solution for (Δ₁⁻)²-λΔ₁⁻ = SOS:"
-   # SOSProblemSolutionSCS(Δ₁⁻SOSProblem) # CAUTION: may require potentially twice the basis as Δ₁
-   # @info "Solution for Δ₁-λIₙ = SOS:"
-   # SOSProblemSolutionSCS(Δ₁SOSProblem)
-
    λ, P = SOSProblemSolutionSCS(Δ₁SOSProblem)
 
    result = λ, P, RGBallStar, Δ₁x, Iₙ
