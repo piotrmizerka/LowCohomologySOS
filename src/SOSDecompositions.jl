@@ -1,6 +1,3 @@
-# include("starAlgebras.jl")
-include("FoxDerivatives.jl")
- 
 function constraints(pm::AbstractMatrix{<:Integer}, total_length=maximum(pm))
    cnstrs = [Vector{Int}() for _ in 1:total_length]
    li = LinearIndices(CartesianIndices(size(pm)))
@@ -80,6 +77,13 @@ function spectralGapsApproximated(h::Function, relations, halfBasis)
    G = parent(h(relations[1]))
 
    jacobianFreeGroup = jacobianMatrix(relations)
+
+   # println(size(jacobianFreeGroup)[1])
+   # printMatrix(jacobianFreeGroup)
+   # println("")
+
+   # return
+
    RGDifferentials = suitableGroupRing(jacobianFreeGroup, h)
 
    D₀x = D₀(G, RGDifferentials, [h(x) for x in Groups.gens(F)])
@@ -91,13 +95,20 @@ function spectralGapsApproximated(h::Function, relations, halfBasis)
 
    RGBallStar = groupRing(G, halfBasis, true)
 
-   Δ₁⁺x = changeUnderlyingGroupRing(Δ₁⁺, RGDifferentials, RGBallStar, G)
-   Δ₁⁻x = changeUnderlyingGroupRing(Δ₁⁻, RGDifferentials, RGBallStar, G)
-   Δ₁x = changeUnderlyingGroupRing(Δ₁, RGDifferentials, RGBallStar, G)
+   @info length(halfBasis)
+   @info length(RGBallStar.basis)
 
-   Iₙ = [RGBallStar(0) for i in 1:length(Δ₁⁻x)]
-   Iₙ = reshape(Iₙ, size(Δ₁⁻x)[1], size(Δ₁⁻x)[2])
-   for i in 1:size(Δ₁⁻x)[1]
+   # Δ₁⁺x = changeUnderlyingGroupRing.(Δ₁⁺, RGBallStar)
+   # Δ₁⁻x = changeUnderlyingGroupRing.(Δ₁⁻, RGBallStar)
+   # Δ₁x = changeUnderlyingGroupRing.(Δ₁, RGBallStar)
+   Δ₁x = changeUnderlyingGroupRing(Δ₁, RGDifferentials, RGBallStar)
+
+   # printMatrix(Δ₁x)
+   # println("")
+
+   Iₙ = [RGBallStar(0) for i in 1:length(Δ₁x)]
+   Iₙ = reshape(Iₙ, size(Δ₁x)[1], size(Δ₁x)[2])
+   for i in 1:size(Δ₁x)[1]
       Iₙ[i,i] = RGBallStar(one(G))
    end
 

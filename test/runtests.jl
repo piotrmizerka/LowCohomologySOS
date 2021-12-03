@@ -1,4 +1,9 @@
-include("certification.jl")
+using StarAlgebras
+using AbstractAlgebra
+using Groups
+using Test
+
+include("../src/SOSStarAlgebras.jl")
 
 function differentialsExamples()
     A = Alphabet([:x, :X, :y, :Y], [2, 1, 4, 3])

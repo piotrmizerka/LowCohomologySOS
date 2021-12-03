@@ -1,18 +1,3 @@
-using Pkg
-Pkg.activate(@__DIR__)
-
-using LinearAlgebra
-ENV["JULIA_NUM_THREADS"] = 4
-LinearAlgebra.BLAS.set_num_threads(2)
-using Kronecker
-using IntervalArithmetic
-
-using JuMP
-using SCS
-using ProxSDP
-
-include("SOSDecompositions.jl")
-
 ##### CERTIFICATION - see certify_SOS_decomposition from Marek's code (Property T) - in 1712.07167.jl file
 # Base.adjoint(X::AlgebraElement) = StarAlgebra.star(X)
 function SOSFromMatrix(Q, support, RG)
@@ -74,6 +59,8 @@ function certifySOSDecomposition(X, orderunit, λ::Number, Q::AbstractMatrix, su
 end
 
 function spectralGapsCertification(h::Function, relations, halfBasis) # change support to halfbasis
+    # spectralGapsApproximated(h, relations, halfBasis)
+    
     λₐₚ, Pₐₚ, RG, Δ₁, Iₙ = spectralGapsApproximated(h, relations, halfBasis)
     Qₐₚ = real(sqrt(Symmetric( (Pₐₚ.+ Pₐₚ')./2 )))
 

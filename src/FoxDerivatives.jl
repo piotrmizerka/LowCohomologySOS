@@ -1,26 +1,38 @@
-# using Oscar
-
-include("starAlgebras.jl")
-
 function foxDerivative(RF::StarAlgebra, u::FPGroupElement, i::Integer)
+    # isone(u) && return RF(0)
+
+    # if length(word(u)) == 1
+    #     if u == Groups.gens(parent(u), i)
+    #         return one(RF)
+    #     end
+    #     if u == inv(Groups.gens(parent(u), i))
+    #         return -RF(u)
+    #     else
+    #         return RF(0)
+    #     end
+    # else
+    #     half = ceil(Int,length(word(u))/2)
+    #     p = parent(u)(word(u)[1:half])
+    #     s = parent(u)(word(u)[(half+1):end])
+
+    #     return foxDerivative(RF, p, i) + RF(p)*foxDerivative(RF, s, i)
+    # end
+
     isone(u) && return RF(0)
 
-    if length(word(u)) == 1
-        if u == Groups.gens(parent(u), i)
-            return one(RF)
+    result = RF(0)
+    F = parent(u)
+    currentMultiplier = one(F)
+    for k in 1:length(u.word)
+        if F(word(u)[k:k]) == Groups.gens(F, i)
+            result += RF(currentMultiplier)
+        elseif F(word(u)[k:k]) == inv(Groups.gens(F, i))
+            result += RF(currentMultiplier*F(word(u)[k:k]))
         end
-        if u == inv(Groups.gens(parent(u), i))
-            return -RF(u)
-        else
-            return RF(0)
-        end
-    else
-        half = ceil(Int,length(word(u))/2)
-        p = parent(u)(word(u)[1:half])
-        s = parent(u)(word(u)[(half+1):end])
-
-        return foxDerivative(RF, p, i) + RF(p)*foxDerivative(RF, s, i)
+        currentMultiplier *= F(word(u)[k:k])
     end
+
+    return result
 end
 
 # h is intended to be a homomorphism from a free group to G
@@ -30,6 +42,32 @@ function embedToGroupRing(h::Function, RG::StarAlgebra, x::AlgebraElement)
     end
 
     return sum(x(g)*RG(h(g)) for g in supp(x))
+end
+
+function suitableGroupRing(relations)
+    F = parent(rand(relations))
+
+    halfBasis = [one(F)]
+
+    function foxDerivativeAppendBasis(u::FPGroupElement, j::Integer)
+        currentMultiplier = one(F)
+        for k in 1:length(u.word)
+            if F(word(u)[k:k]) == Groups.gens(F, j)
+                append!(halfBasis, [currentMultiplier])
+            elseif F(word(u)[k:k]) == inv(Groups.gens(F, j))
+                append!(halfBasis, [currentMultiplier*F(word(u)[k:k])])
+            end
+            currentMultiplier *= F(word(u)[k:k])
+        end
+    end
+
+    for r in relations
+        for j in 1:length(Groups.gens(F))
+            foxDerivativeAppendBasis(r, j)
+        end
+    end
+
+    return groupRing(F, halfBasis)
 end
 
 # function suitableGroupRing(J::Matrix{<:StarAlgebra}, h::Function) PROBLEMS WITH TYPES
@@ -54,9 +92,9 @@ function jacobianMatrix(relations)
     relationsNumber = length(relations)
     generatorsNumber = length(Groups.gens(F))
 
-    halfRadius = ceil(Int, maximum([length(r.word) for r in relations])/2)
-
-    RF, halfBasis  = groupRing(F, halfRadius)
+    # halfRadius = ceil(Int, maximum([length(r.word) for r in relations])/2)
+    # RF, halfBasis  = groupRing(F, halfRadius)
+    RF = suitableGroupRing(relations)
  
     result = [RF(0) for i in 1:relationsNumber*generatorsNumber]
     result = reshape(result, relationsNumber, generatorsNumber)
