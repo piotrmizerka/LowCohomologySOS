@@ -28,9 +28,9 @@ end
  
 ## Defining optimization problems ###################################################3
 cyclicGroupOptimizationProblem = let n = 3
-    Cₙ = cyclicGroup(n)
+    Cₙ = cyclic_group(n)
     ID = one(Cₙ)
-    RCₙ, halfBasis = groupRing(Cₙ, n, true)
+    RCₙ, halfBasis = group_ring(Cₙ, n, true)
     S = collect(RCₙ.basis)
  
     a = S[2]
@@ -63,8 +63,8 @@ let
    @info "Generators of G:"
    @info gens(G)
 
-   RG = groupRing(G, 2, true)
-   S = collect(RG.basis)
+   RG = group_ring(G, 2, true)
+   S = collect(StarAlgebras.basis(RG))
 
    @info "Basis:"
    @info S
@@ -87,7 +87,7 @@ end
 
 ###### test examples - certification ###################################
 let n = 3
-   Cₙ = cyclicGroup(n)
+   Cₙ = cyclic_group(n)
    # TODO spectralGapsCertification(Cₙ, n)
 end
 
