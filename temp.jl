@@ -16,7 +16,7 @@ SL₃ƵSpectralGaps = let halfRadius = 2
     E(SL₃Ƶ, i,j) = (e_ij = one(SL₃Ƶ); e_ij[i,j] = 1; e_ij)
     S = [E(SL₃Ƶ, i,j) for i in 1:N for j in 1:N if i≠j]
     S = unique([S; inv.(S)])
-    
+
     function h(u::FPGroupElement)
         result = one(SL₃Ƶ)
 

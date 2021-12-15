@@ -58,7 +58,7 @@ function sos_problem_matrix(M, order_unit, upper_bound::Float64=Inf)
 end
 
 function sos_problem_solution_scs(sos_problem)
-   with_scs = with_optimizer(SCS.Optimizer, eps=1e-1, acceleration_lookback=0, max_iters = 5000000)
+   with_scs = with_optimizer(SCS.Optimizer, eps=1e-5, acceleration_lookback=0, max_iters = 5000000)
    set_optimizer(sos_problem, with_scs)
    optimize!(sos_problem)
    λ, P = value(sos_problem[:λ]), value.(sos_problem[:P])
@@ -70,15 +70,17 @@ end
 function spectral_gaps_approximated(h::Function, relations, half_basis)
    F = parent(rand(relations))
    G = parent(h(rand(relations)))
-   RG_ball_star = group_ring(G, half_basis, true)
 
-   jacobian_free_group = jacobian_matrix(relations)
-   d₀x = d₀(RG_ball_star, [h(x) for x in Groups.gens(F)])
-   d₁ = embed_to_group_ring.(jacobian_free_group, Ref(RG_ball_star), h)
+   d₁ = jacobian_matrix(relations)
+   d₀x = d₀(parent(rand(d₁)), Groups.gens(F))
    Δ₁⁺ = d₁'*d₁
    Δ₁⁻ = d₀x*d₀x'
    Δ₁ = Δ₁⁺+Δ₁⁻
-   Δ₁x = change_underlying_group_ring.(Δ₁, Ref(RG_ball_star))
+
+   RG_ball_star = group_ring(G, half_basis, true)
+
+   Δ₁x = embed_to_group_ring.(Δ₁, Ref(RG_ball_star), h)
+
    n = length(Groups.gens(F))
    @assert size(Δ₁x,1) === size(Δ₁x,2) === n
    Iₙ = reshape([zero(RG_ball_star) for i in 1:(n*n)], n, n)

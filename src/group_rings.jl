@@ -6,16 +6,6 @@ StarAlgebras.star(A::AbstractAlgebra.Generic.MatAlgElem{Int64}) = inv(A)
 StarAlgebras.star(g::Groups.GroupElement) = inv(g)
 
 
-function change_underlying_group_ring(X::AlgebraElement, RG_new::StarAlgebra)
-    @assert StarAlgebras.object(parent(X)) === StarAlgebras.object(RG_new)
-    result = RG_new(zero(eltype(X)))
-    for x in supp(X)
-        result[x] += X(x)
-    end
-    
-    return result
-end
-
 function cyclic_group(n::Integer)
     A = Alphabet([:a, :A], [2,1])
     F = FreeGroup(A)
