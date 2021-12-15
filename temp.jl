@@ -1,9 +1,9 @@
 using Pkg
 
 Pkg.activate(@__DIR__)
-# using Revise # I DON'T UNDERSTAND HOW IT LOADS THE FILES - GOT ISSUES WITH THIS
-# includet("src/SOSStarAlgebras.jl") # I DON'T UNDERSTAND HOW IT LOADS THE FILES - GOT ISSUES WITH THIS
-include("src/SOSStarAlgebras.jl")
+# using Revise # CHECK THIS
+# includet("src/LowCohomologySOS.jl") # CHECK THIS
+include("src/LowCohomologySOS.jl")
 
 
 SL₃ƵSpectralGaps = let halfRadius = 2

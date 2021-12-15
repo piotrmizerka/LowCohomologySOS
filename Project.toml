@@ -1,4 +1,4 @@
-name = "SOSStarAlgebras"
+name = "LowCohomologySOS"
 uuid = "70c9f613-c550-58ca-b626-6da403f9846d"
 
 [deps]
