@@ -21,12 +21,6 @@ function fox_derivative(RF::StarAlgebra, u::FPGroupElement, i::Integer)
     end
 end
 
-# h is intended to be a homomorphism from a free group to G
-function embed_to_group_ring(X::AlgebraElement, RG::StarAlgebra, h::Function)
-    length(supp(X)) == 0 && return zero(RG)
-    return sum(X(g)*RG(h(g)) for g in supp(X))
-end
-
 function suitable_group_ring(relations)
     F = parent(rand(relations))
     half_basis = [one(F)]
