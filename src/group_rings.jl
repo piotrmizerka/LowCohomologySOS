@@ -16,6 +16,12 @@ function cyclic_group(n::Integer)
     return Cₙ
 end
 
+# h is intended to be a homomorphism from a free group to G
+function embed_to_group_ring(X::AlgebraElement, RG::StarAlgebra, h::Function)
+    length(supp(X)) == 0 && return zero(RG)
+    return sum(X(g)*RG(h(g)) for g in supp(X))
+end
+
 # Group ring with the basis given by the prescribed support
 function group_ring(G, half_basis, star_multiplication = false)
     star_closed_support = unique!([half_basis; star.(half_basis)])
