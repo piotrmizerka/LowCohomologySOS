@@ -1,10 +1,11 @@
 using Pkg
 
 Pkg.activate(@__DIR__)
-# using Revise # I DON'T UNDERSTAND HOW IT LOADS THE FILES - GOT ISSUES WITH THIS
-# includet("src/SOSStarAlgebras.jl") # I DON'T UNDERSTAND HOW IT LOADS THE FILES - GOT ISSUES WITH THIS
-include("src/SOSStarAlgebras.jl")
-
+# using Revise # CHECK THIS
+using StarAlgebras
+using Groups
+using AbstractAlgebra
+using LowCohomologySOS
 
 SL₃ƵSpectralGaps = let halfRadius = 2
     A = Alphabet([:e12, :E12, :e21, :E21, :e13, :E13, :e31, :E31, :e23, :E23, :e32, :E32], [2, 1, 4, 3, 6, 5, 8, 7, 10, 9, 12, 11])
@@ -58,5 +59,5 @@ SL₃ƵSpectralGaps = let halfRadius = 2
                  e31*e12*e31^(-1)*e12^(-1)*e32^(-1), e32*e21*e32^(-1)*e21^(-1)*e31^(-1)]
     
     halfBasis, sizes = Groups.wlmetric_ball(S, radius = halfRadius)
-    spectral_gaps_certification(h, relations, halfBasis)
+    LowCohomologySOS.spectral_gaps_certification(h, relations, halfBasis)
 end
