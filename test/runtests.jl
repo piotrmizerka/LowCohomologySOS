@@ -3,7 +3,40 @@ using Groups
 using Test
 using LowCohomologySOS
 
-@testset "Fox derivatives" begin
+
+@testset "cyclic_group" begin n = 3
+   Cₙ = LowCohomologySOS.cyclic_group(n)
+
+   a, = Groups.gens(Cₙ)
+
+   @test a^n == one(Cₙ)
+   @test all(a^i*a^j == a^(i+j) for i in 2:n for j in 2:n)
+end
+
+@testset "group_ring" begin n = 15
+   Cₙ = LowCohomologySOS.cyclic_group(n)
+   a, = Groups.gens(Cₙ)
+
+   RCₙ = LowCohomologySOS.group_ring(Cₙ, n)
+   @test RCₙ.object == Cₙ
+   @test Set(collect(RCₙ.basis)) == Set([[a];[a^i for i in 2:n]])
+   mstr = RCₙ.mstructure
+   b = RCₙ.basis
+   @test mstr[getindex(b, a),getindex(b, a)] == getindex(b, a^2)
+   @test all(mstr[getindex(b, a),getindex(b, a^j)] == getindex(b, a^(j+1)) for j in 2:n)
+   @test all(mstr[getindex(b, a^i),getindex(b, a^j)] == getindex(b, a^(i+j)) for i in 2:n for j in 2:n)
+
+   RCₙ_star = LowCohomologySOS.group_ring(Cₙ, n, true)
+   @test RCₙ_star.object == Cₙ
+   @test Set(collect(RCₙ_star.basis)) == Set([[a];[a^i for i in 2:n]])
+   mstr_star = RCₙ_star.mstructure
+   b_star = RCₙ_star.basis
+   @test mstr_star[getindex(b_star, a),getindex(b_star, a)] == getindex(b_star, one(Cₙ))
+   @test all(mstr_star[getindex(b_star, a),getindex(b_star, a^j)] == getindex(b_star, a^(-1+j)) for j in 2:n if -1+j != 1)
+   @test all(mstr_star[getindex(b_star, a^i),getindex(b_star, a^j)] == getindex(b_star, a^(-i+j)) for i in 2:n for j in 2:n if -i+j != 1 && i-j != 1)
+end
+
+@testset "fox_derivative" begin
    A = Alphabet([:x, :X, :y, :Y], [2, 1, 4, 3])
    F = FreeGroup(A)
    RF = LowCohomologySOS.group_ring(F, 2)
