@@ -1,3 +1,19 @@
+function d₀(RG, generators)
+    result = reshape([zero(RG) for i in 1:length(generators)], length(generators), 1)
+    
+    for i in 1:length(generators)
+        result[i,1] = RG(generators[i])-one(RG)
+    end
+
+    return result
+end
+
+# h is intended to be a homomorphism from a free group to G
+function embed_to_group_ring(X::AlgebraElement, RG::StarAlgebra, h::Function)
+    length(supp(X)) == 0 && return zero(RG)
+    return sum(X(g)*RG(h(g)) for g in supp(X))
+end
+
 function fox_derivative(RF::StarAlgebra, u::FPGroupElement, i::Integer)
     @assert parent(u) === StarAlgebras.object(RF)
 
@@ -21,31 +37,6 @@ function fox_derivative(RF::StarAlgebra, u::FPGroupElement, i::Integer)
     end
 end
 
-# h is intended to be a homomorphism from a free group to G
-function embed_to_group_ring(X::AlgebraElement, RG::StarAlgebra, h::Function)
-    length(supp(X)) == 0 && return zero(RG)
-    return sum(X(g)*RG(h(g)) for g in supp(X))
-end
-
-function suitable_group_ring(relations)
-    F = parent(rand(relations))
-    half_basis = [one(F)]
-
-    function relation_append_basis(u::FPGroupElement)
-        for k in 1:length(word(u))
-            for l in k:length(word(u))
-                append!(half_basis, [F(word(u)[k:l])])
-            end
-        end
-    end
-
-    for r in relations
-        relation_append_basis(r)
-    end
-
-    return group_ring(F, half_basis)
-end
-
 # Jacobian matrix in the free group ring.
 # Relations is an array of relators which are elements of the free group
 function jacobian_matrix(relations)
@@ -65,16 +56,6 @@ function jacobian_matrix(relations)
     return result
 end
 
-function d₀(RG, generators)
-    result = reshape([zero(RG) for i in 1:length(generators)], length(generators), 1)
-    
-    for i in 1:length(generators)
-        result[i,1] = RG(generators[i])-one(RG)
-    end
-
-    return result
-end
-
 function print_matrix(M)
     for i in 1:size(M, 1)
         for j in 1:size(M, 2)
@@ -84,4 +65,24 @@ function print_matrix(M)
         println("")
     end
     println("")
+end
+
+# relations is intended to contain elements of a free group
+function suitable_group_ring(relations)
+    F = parent(rand(relations))
+    half_basis = [one(F)]
+
+    function relation_append_basis(u::FPGroupElement)
+        for k in 1:length(word(u))
+            for l in k:length(word(u))
+                append!(half_basis, [F(word(u)[k:l])])
+            end
+        end
+    end
+
+    for r in relations
+        relation_append_basis(r)
+    end
+
+    return group_ring(F, half_basis)
 end
