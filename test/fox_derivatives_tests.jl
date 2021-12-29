@@ -211,12 +211,12 @@ end
     Mx[2,1] = RF(x); Mx[2,2] = RF(y)
     testt = @capture_out LowCohomologySOS.print_matrix(Mx)
     @test Int(testt[2]) == Int('·')
-    @test length(@capture_out LowCohomologySOS.print_matrix(Mx)) == length("0·(id)   1·(id)   \n1·x   1·y   \n\n")
+    @test (@capture_out LowCohomologySOS.print_matrix(Mx)) == "0·(id)   1·(id)   \n1·x   1·y   \n\n"
 
     Mxx = copy(Mx)
     Mxx[1,1] = one(RF)+RF(x*y^(-1)); Mxx[1,2] = 2*RF(y*x)
     Mxx[2,1] = RF(y^(-1)); Mxx[2,2] = RF(x^(-1))
-    @test length(@capture_out LowCohomologySOS.print_matrix(Mxx)) == length("1·(id) +1·x*Y   2·y*x   \n1·Y   1·X   \n\n")
+    @test (@capture_out LowCohomologySOS.print_matrix(Mxx)) == "1·(id) +1·x*Y   2·y*x   \n1·Y   1·X   \n\n"
  end
 
  @testset "suitable_group_ring" begin
