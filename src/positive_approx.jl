@@ -1,6 +1,8 @@
 # The function below concerns definition of constraints defined for the semi-positive definite matrix P to be computed.
-function constraints(pm::AbstractMatrix{<:Integer}, total_length=maximum(pm))
-   cnstrs = [Vector{Int}() for _ in 1:total_length]
+# For each entry value, it creates a vector of linear indices of the matrix pm on which this value occurs.
+# The function returns the vector of vectors as above indexed by pm matrix's values.
+function constraints(pm::AbstractMatrix{<:Integer})
+   cnstrs = [Vector{Int}() for _ in 1:maximum(pm)]
    li = LinearIndices(CartesianIndices(size(pm)))
 
    for i in eachindex(pm)
@@ -12,13 +14,13 @@ end
 
 # As the constraints function, this function also concerns defining the constraints arising from matrix P.
 # More precisely, it defines constraints arising from the (row_id,column_id)-entry of the matrix equation for our problem.
-# Me can apply the constraints function written by M. Kaluba to define the constraints arising from each entry.
+# We can apply the constraints function written by M. Kaluba to define the constraints arising from each entry.
 # Order of linear indices for matrices which has to be applied: column snake (from Seattle to Miami).
-function entry_constraint(cnstrs, row_id, column_id, constraind_id, relations_number, generators_number)
-   B = (column_id-1)*relations_number^2*generators_number+(row_id-1)*relations_number
+function entry_constraint(cnstrs, row_id, column_id, constraind_id, half_radius, generators_number)
+   B = (column_id-1)*half_radius^2*generators_number+(row_id-1)*half_radius
    result = copy(cnstrs[constraind_id])
    for l in 1:length(cnstrs[constraind_id])
-      summand = (cnstrs[constraind_id][l]%relations_number != 0) ? cnstrs[constraind_id][l]%relations_number : relations_number
+      summand = (cnstrs[constraind_id][l]%half_radius != 0) ? cnstrs[constraind_id][l]%half_radius : half_radius
       factor = cnstrs[constraind_id][l]-summand
       result[l] = B+factor*generators_number+summand
    end
@@ -57,9 +59,12 @@ function sos_problem_matrix(M, order_unit, upper_bound::Float64=Inf)
    return result
 end
 
-function sos_problem_solution_scs(sos_problem)
-   with_scs = with_optimizer(SCS.Optimizer, eps=1e-5, acceleration_lookback=0, max_iters = 5000000)
+function sos_problem_solution_scs(sos_problem, is_silent = false)
+   with_scs = with_optimizer(SCS.Optimizer, eps=1e-5, acceleration_lookback=0, max_iters = 5000000) # one may try to enlarge acceleration_lookback
    set_optimizer(sos_problem, with_scs)
+   if is_silent
+      set_silent(sos_problem)
+   end
    optimize!(sos_problem)
    λ, P = value(sos_problem[:λ]), value.(sos_problem[:P])
 
@@ -67,7 +72,7 @@ function sos_problem_solution_scs(sos_problem)
 end
 
 # h:Free group --> our group G
-function spectral_gaps_approximated(h::Function, relations, half_basis)
+function spectral_gaps_approximated(h::Function, relations, half_basis, is_silent = false)
    F = parent(rand(relations))
    G = parent(h(rand(relations)))
 
@@ -89,7 +94,7 @@ function spectral_gaps_approximated(h::Function, relations, half_basis)
    end
 
    Δ₁_sos_problem = sos_problem_matrix(Δ₁x, Iₙ)
-   λ, P = sos_problem_solution_scs(Δ₁_sos_problem)
+   λ, P = sos_problem_solution_scs(Δ₁_sos_problem, is_silent)
 
    return λ, P, RG_ball_star, Δ₁x, Iₙ
 end
