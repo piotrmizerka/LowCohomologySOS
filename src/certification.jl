@@ -1,6 +1,7 @@
 ##### Certification - see certify_SOS_decomposition from Marek's code (Property T) - in 1712.07167.jl file
 
-function sos_from_matrix(Q, support, RG::StarAlgebra)
+# Q is supposed to be a square root, so it is a symmetric matrix
+function sos_from_matrix(Q, half_basis, RG::StarAlgebra)
     mn = size(Q,1)
 
     # Changing Q to the corresponding interval-entry matrix
@@ -20,25 +21,25 @@ function sos_from_matrix(Q, support, RG::StarAlgebra)
         end
     end
 
-    m = length(support)
+    m = length(half_basis)
     n = floor(Int, mn/m)
     Iₙ = reshape([zero(RG) for i in 1:(n*n)], n, n)
     for i in 1:n
         Iₙ[i,i] = one(RG)
     end
 
-    x = reshape([RG(support[i]) for i in 1:length(support)], m, 1)
+    x = reshape([RG(half_basis[i]) for i in 1:length(half_basis)], m, 1)
     xx = collect(Iₙ⊗x)
     result = xx'*P_interval_RG*xx
 
     return result
 end
 
-function certify_sos_decomposition(X, order_unit, λ::Number, Q::AbstractMatrix, support, RG::StarAlgebra)
+function certify_sos_decomposition(X, order_unit, λ::Number, Q::AbstractMatrix, half_basis, RG::StarAlgebra)
     λ_interval = @interval(λ)
     eoi = X - λ_interval*order_unit
 
-    residual = eoi - sos_from_matrix(Q, support, RG)
+    residual = eoi - sos_from_matrix(Q, half_basis, RG)
     l1_norm = 0
     mn = size(X,1)
     for i in 1:mn
@@ -55,8 +56,8 @@ function certify_sos_decomposition(X, order_unit, λ::Number, Q::AbstractMatrix,
     return result
 end
 
-function spectral_gaps_certification(h::Function, relations, half_basis)
-    λₐₚ, Pₐₚ, RG, Δ₁, Iₙ = spectral_gaps_approximated(h, relations, half_basis)
+function spectral_gaps_certification(h::Function, relations, half_basis, is_silent = false)
+    λₐₚ, Pₐₚ, RG, Δ₁, Iₙ = spectral_gaps_approximated(h, relations, half_basis, is_silent)
     Qₐₚ = real(sqrt(Symmetric( (Pₐₚ.+ Pₐₚ')./2 )))
 
     @info "Approximated λ:"
