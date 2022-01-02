@@ -7,11 +7,9 @@ using Kronecker
 using IntervalArithmetic
 
 using StarAlgebras
-using AbstractAlgebra
 using Groups
 
-using JuMP
-using SCS
+import JuMP
 
 include("group_rings.jl")
 include("fox_derivatives.jl")

@@ -1,6 +1,6 @@
 @testset "cyclic_group" begin 
     n = 3
-    Cₙ = LowCohomologySOS.cyclic_group(n)
+    Cₙ = cyclic_group(n)
     a, = Groups.gens(Cₙ)
  
     @test a^n == one(Cₙ)
@@ -9,7 +9,7 @@
  
  @testset "group_ring" begin 
     n = 15
-    Cₙ = LowCohomologySOS.cyclic_group(n)
+    Cₙ = cyclic_group(n)
     a, = Groups.gens(Cₙ)
  
     RCₙ = LowCohomologySOS.group_ring(Cₙ, n)

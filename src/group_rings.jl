@@ -1,20 +1,7 @@
 Base.:/(G::Groups.AbstractFPGroup, rels::AbstractVector{<:FPGroupElement}) = FPGroup(G, [r=>one(G) for r in rels])
 Base.adjoint(X::AlgebraElement) = StarAlgebras.star(X)
 Base.copy(X::AlgebraElement) = AlgebraElement(copy(StarAlgebras.coeffs(X)),parent(X))
-Base.show(io::IO, t::Type{<:StarAlgebras.StarAlgebra}) = print(io, "StarAlgebra{...}")
-StarAlgebras.star(A::AbstractAlgebra.Generic.MatAlgElem{Int64}) = inv(A)
 StarAlgebras.star(g::Groups.GroupElement) = inv(g)
-
-
-function cyclic_group(n::Integer)
-    A = Alphabet([:a, :A], [2,1])
-    F = FreeGroup(A)
-    a, = Groups.gens(F)
-    e = one(F)
-    Cₙ = FPGroup(F, [a^n => e])
-
-    return Cₙ
-end
 
 # Group ring with the basis given by the prescribed support
 function group_ring(G, half_basis, star_multiplication = false)

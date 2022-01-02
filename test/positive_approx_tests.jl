@@ -40,7 +40,7 @@ end
 end
 
 @testset "sos_problem_matrix" begin
-    C₃ = LowCohomologySOS.cyclic_group(3)
+    C₃ = cyclic_group(3)
     a, = Groups.gens(C₃)
 
     RC₃ = LowCohomologySOS.group_ring(C₃, [one(C₃), a, a^2], false)
@@ -110,7 +110,7 @@ end
 end
 
 @testset "sos_problem_solution_scs" begin
-    C₃ = LowCohomologySOS.cyclic_group(3)
+    C₃ = cyclic_group(3)
     a, = Groups.gens(C₃)
     RC₃_star = LowCohomologySOS.group_ring(C₃, [one(C₃), a, a^2], true)
     M_1 = reshape([RC₃_star(a)], 1, 1)

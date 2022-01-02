@@ -58,7 +58,10 @@ end
     RF_sl_3_z = LowCohomologySOS.group_ring(F_sl_3_z, 1)
     e12, e21, e13, e31, e23, e32 = Groups.gens(F_sl_3_z)
     N = 3
-    SL₃Ƶ = MatrixAlgebra(zz, N)
+
+    SL₃Ƶ = AbstractAlgebra.MatrixAlgebra(AbstractAlgebra.zz, N)
+    StarAlgebras.star(A::AbstractAlgebra.Generic.MatAlgElem) = inv(A)
+
     E(SL₃Ƶ, i,j) = (e_ij = one(SL₃Ƶ); e_ij[i,j] = 1; e_ij)
     S = [E(SL₃Ƶ, i,j) for i in 1:N for j in 1:N if i≠j]
     half_basis, sizes = Groups.wlmetric_ball(unique([S; inv.(S)]), radius = 1)

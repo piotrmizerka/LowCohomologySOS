@@ -10,7 +10,7 @@ function matrix_in_interval(M, M_interval)
     return true
 end
 
-C₃ = LowCohomologySOS.cyclic_group(3)
+C₃ = cyclic_group(3)
 a, = Groups.gens(C₃)
 half_basis_C_3 = [one(C₃), a, a^2]
 RC₃ = LowCohomologySOS.group_ring(C₃, 3, true)
@@ -21,7 +21,7 @@ Q_2 = [1 0 1;
        0 1 0;
        1 0 1]
 
-C₂ = LowCohomologySOS.cyclic_group(2)
+C₂ = cyclic_group(2)
 x, = Groups.gens(C₂)
 half_basis_C_2 = [one(C₂), x]
 RC₂ = LowCohomologySOS.group_ring(C₂, 2, true)
