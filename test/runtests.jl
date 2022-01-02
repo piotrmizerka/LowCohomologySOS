@@ -24,7 +24,7 @@ function scs_opt(;
 end
 
 function cyclic_group(n::Integer)
-    A = Alphabet([:a, :A], [2,1])
+    A = Alphabet([:a, :A], [2, 1])
     F = FreeGroup(A)
     a, = Groups.gens(F)
     e = one(F)
@@ -34,8 +34,8 @@ function cyclic_group(n::Integer)
 end
 
 @testset "LowCohomologySOS" begin
-   include("group_rings_tests.jl")
-   include("fox_derivatives_tests.jl")
-   include("positive_approx_tests.jl")
-   include("certification_tests.jl")
+    include("group_rings_tests.jl")
+    include("fox_derivatives_tests.jl")
+    include("positive_approx_tests.jl")
+    include("certification_tests.jl")
 end
