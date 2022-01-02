@@ -1,5 +1,5 @@
 function d₀(RG, generators)
-    result = [RG(g)-one(RG) for g in generators]
+    result = [RG(g) - one(RG) for g in generators]
     return reshape(result, length(generators), 1)
 end
 
@@ -7,7 +7,7 @@ end
 function embed(h::Function, X::AlgebraElement, RG::StarAlgebra)
     S = supp(X)
     length(S) == 0 && return zero(RG, eltype(X))
-    return sum(X(s)*RG(h(s)) for s in S)
+    return sum(X(s) * RG(h(s)) for s in S)
 end
 
 function fox_derivative(RF::StarAlgebra, u::FPGroupElement, i::Integer)
@@ -25,11 +25,11 @@ function fox_derivative(RF::StarAlgebra, u::FPGroupElement, i::Integer)
             return zero(RF)
         end
     else
-        d = div(length(word(u)),2)
+        d = div(length(word(u)), 2)
         p = parent(u)(word(u)[1:d])
         s = parent(u)(word(u)[d+1:end])
 
-        return fox_derivative(RF, p, i) + RF(p)*fox_derivative(RF, s, i)
+        return fox_derivative(RF, p, i) + RF(p) * fox_derivative(RF, s, i)
     end
 end
 
@@ -51,7 +51,7 @@ function suitable_group_ring(relations)
     F = parent(first(relations))
 
     half_basis = [one(F)]
-    sizehint!(half_basis, length(relations)*maximum(length∘word, relations))
+    sizehint!(half_basis, length(relations) * maximum(length ∘ word, relations))
 
     for rel in relations
         for k in 1:length(word(rel))
