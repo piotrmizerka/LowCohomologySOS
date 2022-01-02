@@ -59,22 +59,19 @@ function sos_problem_matrix(M, order_unit, upper_bound::Float64=Inf)
    return result
 end
 
-function sos_problem_solution_scs(sos_problem, is_silent = false)
-   with_scs = with_optimizer(SCS.Optimizer, eps=1e-5, acceleration_lookback=0, max_iters = 5000000) # one may try to enlarge acceleration_lookback
-   set_optimizer(sos_problem, with_scs)
-   if is_silent
-      set_silent(sos_problem)
-   end
-   optimize!(sos_problem)
-   λ, P = value(sos_problem[:λ]), value.(sos_problem[:P])
+function sos_problem_solution(sos_problem; optimizer)
+   JuMP.set_optimizer(sos_problem, optimizer)
+   JuMP.optimize!(sos_problem)
+   λ, P = JuMP.value(sos_problem[:λ]), JuMP.value.(sos_problem[:P])
 
    return λ, P
 end
 
 # h:Free group --> our group G
-function spectral_gaps_approximated(h::Function, relations, half_basis, is_silent = false)
-   F = parent(rand(relations))
-   G = parent(h(rand(relations)))
+function spectral_gaps_approximated(h::Function, relations, half_basis; optimizer)
+   @assert !isempty(relations)
+   F = parent(first(relations))
+   G = parent(h(first(relations)))
 
    d₁ = jacobian_matrix(relations)
    d₀x = d₀(parent(rand(d₁)), Groups.gens(F))
@@ -94,7 +91,7 @@ function spectral_gaps_approximated(h::Function, relations, half_basis, is_silen
    end
 
    Δ₁_sos_problem = sos_problem_matrix(Δ₁x, Iₙ)
-   λ, P = sos_problem_solution_scs(Δ₁_sos_problem, is_silent)
+   λ, P = sos_problem_solution(Δ₁_sos_problem, optimizer=optimizer)
 
    return λ, P, RG_ball_star, Δ₁x, Iₙ
 end
