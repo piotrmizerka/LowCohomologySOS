@@ -46,26 +46,34 @@ end
     order_unit_1 = reshape([one(RC₃)], 1, 1)
 
     X_1a = reshape([33*one(RC₃)], 1, 1)
-    certified_interval_1a = @interval(0)
-    @suppress begin
-        certified_interval_1a = LowCohomologySOS.certify_sos_decomposition(X_1a, order_unit_1, 4, Q_1, half_basis_C_3, RC₃)
+
+    certified_interval_1a = Logging.with_logger(Logging.NullLogger()) do
+        LowCohomologySOS.certify_sos_decomposition(
+            X_1a,
+            order_unit_1,
+            4,
+            Q_1,
+            half_basis_C_3,
+            RC₃,
+        )
     end
+
     @test 4 ∈ certified_interval_1a
 
     X_1b = reshape([28*one(RC₃)], 1, 1)
-    certified_interval_1b = @interval(0)
-    @suppress begin
-        certified_interval_1b = LowCohomologySOS.certify_sos_decomposition(X_1b, order_unit_1, 1, Q_1, half_basis_C_3, RC₃)
+
+    certified_interval_1b = Logging.with_logger(Logging.NullLogger()) do
+        LowCohomologySOS.certify_sos_decomposition(X_1b, order_unit_1, 1, Q_1, half_basis_C_3, RC₃)
     end
-    @test certified_interval_1b.hi < 0
+    @test sup(certified_interval_1b) < 0
 
     order_unit_2 = [zero(RC₂) 2*RC₂(x);
                     2*RC₂(x) zero(RC₂)] # actually I did not verify if this is an order unit but this is irrelevant for the sake of the test
     X_2 = [3*one(RC₂) 4*RC₂(x);
            4*RC₂(x) 3*one(RC₂)]
-    certified_interval_2 = @interval(0)
-    @suppress begin
-        certified_interval_2 = LowCohomologySOS.certify_sos_decomposition(X_2, order_unit_2, 1, Q_3, half_basis_C_2, RC₂)
+
+    certified_interval_2 = Logging.with_logger(Logging.NullLogger()) do
+        LowCohomologySOS.certify_sos_decomposition(X_2, order_unit_2, 1, Q_3, half_basis_C_2, RC₂)
     end
     @test 1 ∈ certified_interval_2
 end
@@ -86,9 +94,9 @@ end
         return result
     end
     relations = [ax^3]
-    certified_interval = @interval(0)
-    @suppress begin
-        certified_interval = LowCohomologySOS.spectral_gaps_certification(quotient_hom_1, relations, half_basis_C_3, true)
+
+    certified_interval = Logging.with_logger(Logging.NullLogger()) do
+        LowCohomologySOS.spectral_gaps_certification(quotient_hom_1, relations, half_basis_C_3, optimizer=scs_opt(eps=1e-8, verbose=true))
     end
     @test 2.999998988664523 ∈ certified_interval
 end

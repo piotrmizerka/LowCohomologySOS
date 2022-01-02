@@ -116,11 +116,12 @@ end
     M_1 = reshape([RC₃_star(a)], 1, 1)
     order_unit_1 = reshape([one(RC₃_star)], 1, 1)
     sos_problem_infeasible = LowCohomologySOS.sos_problem_matrix(M_1, order_unit_1)
-    λ_1, P_1 = 1, 1
-    @suppress begin
-        λ_1, P_1 = LowCohomologySOS.sos_problem_solution_scs(sos_problem_infeasible, true)
-    end
-    @test isnan(λ_1) && isnan.(P_1) == [1 1 1; 1 1 1; 1 1 1]
+
+    λ_1, P_1 = LowCohomologySOS.sos_problem_solution(
+        sos_problem_infeasible,
+        optimizer = scs_opt(verbose=false)
+    )
+    @test isnan(λ_1) && all(isnan, P_1)
 
     A = Alphabet([:x, :X], [2, 1])
     Z = FreeGroup(A)
@@ -128,14 +129,22 @@ end
     RZ = LowCohomologySOS.group_ring(Z, 2)
     RZ_star = LowCohomologySOS.group_ring(Z, 2, true)
     Δ = reshape([2*one(RZ)-RZ(x^(-1))-RZ(x)], 1, 1)
-    M_2 = LowCohomologySOS.embed_to_group_ring.(Δ^2, Ref(RZ_star), identity)
-    order_unit_2 = LowCohomologySOS.embed_to_group_ring.(Δ, Ref(RZ_star), identity)
-    sos_problem_infeasible_2 = LowCohomologySOS.sos_problem_matrix(M_2, order_unit_2)
-    λ_2, P_2 = 1, 1
-    @suppress begin
-        λ_2, P_2 = LowCohomologySOS.sos_problem_solution_scs(sos_problem_infeasible_2, true)
+    M_2 = LowCohomologySOS.embed.(identity, Δ^2, Ref(RZ_star))
+    order_unit_2 = LowCohomologySOS.embed.(identity, Δ, Ref(RZ_star))
+    sos_problem_infeasible_2 = let elt = M_2, unit = order_unit_2
+        m = LowCohomologySOS.sos_problem_matrix(M_2, order_unit_2)
+        JuMP.@constraint(m, m[:λ] >= 0.2)
+        m
     end
-    @test λ_2+1 ≈ 1 rtol=4.0e-3 # something strange happens when comparing values close to 0
+
+    λ_2, P_2 = LowCohomologySOS.sos_problem_solution(
+        sos_problem_infeasible_2,
+        optimizer = scs_opt(
+            verbose=false
+        )
+    )
+
+    @test isnan(λ_2)
 
     M_3 = [4*one(RZ_star) zero(RZ_star) zero(RZ_star);
            zero(RZ_star) 3*one(RZ_star) zero(RZ_star);
@@ -144,11 +153,12 @@ end
                     zero(RZ_star) one(RZ_star) zero(RZ_star);
                     zero(RZ_star) zero(RZ_star) one(RZ_star)]
     sos_problem_3 = LowCohomologySOS.sos_problem_matrix(M_3, order_unit_3)
-    λ_3 = 0
-    P_3 = reshape([0 for i in 1:15^2], 15, 15)
-    @suppress begin
-        λ_3, P_3 = LowCohomologySOS.sos_problem_solution_scs(sos_problem_3, true)
-    end
+
+    λ_3, P_3 = LowCohomologySOS.sos_problem_solution(
+        sos_problem_3,
+        optimizer = scs_opt(verbose=false)
+    )
+
     @test λ_3 ≈ 3 rtol=4.0e-3
 end
 
@@ -171,10 +181,14 @@ end
     end
     relations = [x^3]
     half_basis, sizes = Groups.wlmetric_ball([xx, xx^(-1)], radius = 1)
-    λ_1, P_1, RG_ball_star, Δ₁_1, I_1 = 1, 1, 1, 1, 1
-    @suppress begin
-        λ_1, P_1, RG_ball_star, Δ₁_1, I_1 = LowCohomologySOS.spectral_gaps_approximated(quotient_hom, relations, half_basis, true)
-    end
+
+    λ_1, P_1, RG_ball_star, Δ₁_1, I_1 = LowCohomologySOS.spectral_gaps_approximated(
+        quotient_hom,
+        relations,
+        half_basis,
+        optimizer = scs_opt(verbose=false),
+    )
+
     Δ₁_1_proper = reshape([5*one(RG_ball_star)+2*RG_ball_star(xx)+2*RG_ball_star(xx^2)], 1, 1)
     I_1_proper = reshape([one(RG_ball_star)], 1, 1)
     @test λ_1 ≈ 3 rtol=1e-3
