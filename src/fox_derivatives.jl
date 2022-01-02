@@ -54,17 +54,7 @@ function jacobian_matrix(relations)
     end
  
     return result
-end
 
-function print_matrix(M)
-    for i in 1:size(M, 1)
-        for j in 1:size(M, 2)
-            print(M[i,j])
-            print("   ")
-        end
-        println("")
-    end
-    println("")
 end
 
 # relations is intended to contain elements of a free group

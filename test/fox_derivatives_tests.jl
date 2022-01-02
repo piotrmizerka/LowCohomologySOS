@@ -197,9 +197,10 @@ end
     @test J2 == J2_proper
  end
 
- @testset "print_matrix" begin
+@testset "print_matrix" begin
     M = reshape([i for i in 1:9], 3, 3)
-    @test (@capture_out LowCohomologySOS.print_matrix(M)) == "1   4   7   \n2   5   8   \n3   6   9   \n\n"
+    f(io, m::AbstractMatrix) = Base.print_matrix(io, m)
+    @test Base.sprint(f, M) == " 1  4  7\n 2  5  8\n 3  6  9"
 
     A = Alphabet([:x, :X, :y, :Y], [2, 1, 4, 3])
     F = FreeGroup(A)
@@ -209,15 +210,14 @@ end
     Mx = reshape([zero(RF) for i in 1:4], 2, 2)
     Mx[1,1] = zero(RF); Mx[1,2] = one(RF)
     Mx[2,1] = RF(x); Mx[2,2] = RF(y)
-    testt = @capture_out LowCohomologySOS.print_matrix(Mx)
-    @test Int(testt[2]) == Int('·')
-    @test (@capture_out LowCohomologySOS.print_matrix(Mx)) == "0·(id)   1·(id)   \n1·x   1·y   \n\n"
+
+    @test Base.sprint(f, Mx) == " 0·(id)  1·(id)\n 1·x     1·y"
 
     Mxx = copy(Mx)
     Mxx[1,1] = one(RF)+RF(x*y^(-1)); Mxx[1,2] = 2*RF(y*x)
     Mxx[2,1] = RF(y^(-1)); Mxx[2,2] = RF(x^(-1))
-    @test (@capture_out LowCohomologySOS.print_matrix(Mxx)) == "1·(id) +1·x*Y   2·y*x   \n1·Y   1·X   \n\n"
- end
+    @test Base.sprint(f, Mxx) == " 1·(id) +1·x*Y  2·y*x\n 1·Y            1·X"
+end
 
  @testset "suitable_group_ring" begin
     A = Alphabet([:x, :X], [2, 1])
