@@ -28,15 +28,16 @@ function entry_constraint(cnstrs, row_id, column_id, constraind_id, half_radius,
    return result
 end
 
-function sos_problem_matrix(M, order_unit, upper_bound::Float64=Inf)
-   underlying_group_ring = parent(rand(M))
+function sos_problem_matrix(M::AbstractMatrix, order_unit, upper_bound::Float64=Inf)
+   @assert !isempty(M)
+   underlying_group_ring = parent(first(M))
    m = size(underlying_group_ring.mstructure, 1)
    n = size(M,1)
    mn = m*n
    result = JuMP.Model();
 
-   JuMP.@variable(result, P[1:mn, 1:mn])
-   JuMP.@SDconstraint(result, sdp, P >= 0)
+   JuMP.@variable(result, P[1:mn, 1:mn], Symmetric)
+   JuMP.@constraint(result, sdp, P in JuMP.PSDCone())
 
    if upper_bound < Inf
       λ = JuMP.@variable(result, λ <= upper_bound)
@@ -45,10 +46,11 @@ function sos_problem_matrix(M, order_unit, upper_bound::Float64=Inf)
    end
 
    cnstrs = constraints(underlying_group_ring.mstructure)
-   
+
    for i in 1:n
       for j in 1:n
-         mij, u = M[i,j].coeffs, order_unit[i,j].coeffs
+         mij = StarAlgebras.coeffs(M[i,j])
+         u = StarAlgebras.coeffs(order_unit[i,j])
          @assert length(cnstrs) == length(mij) == length(u)
          JuMP.@constraint(result, [k=1:length(cnstrs)], mij[k] - λ*u[k] == sum(P[entry_constraint(cnstrs, i, j, k, m, n)]))
       end
