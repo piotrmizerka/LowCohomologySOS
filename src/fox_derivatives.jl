@@ -4,9 +4,10 @@ function d₀(RG, generators)
 end
 
 # h is intended to be a homomorphism from a free group to G
-function embed_to_group_ring(X::AlgebraElement, RG::StarAlgebra, h::Function)
-    length(supp(X)) == 0 && return zero(RG)
-    return sum(X(g)*RG(h(g)) for g in supp(X))
+function embed(h::Function, X::AlgebraElement, RG::StarAlgebra)
+    S = supp(X)
+    length(S) == 0 && return zero(RG, eltype(X))
+    return sum(X(s)*RG(h(s)) for s in S)
 end
 
 function fox_derivative(RF::StarAlgebra, u::FPGroupElement, i::Integer)

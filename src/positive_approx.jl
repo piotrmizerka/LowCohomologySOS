@@ -83,7 +83,7 @@ function spectral_gaps_approximated(h::Function, relations, half_basis; optimize
 
    RG_ball_star = group_ring(G, half_basis, true)
 
-   Δ₁x = embed_to_group_ring.(Δ₁, Ref(RG_ball_star), h)
+   Δ₁x = embed.(h, Δ₁, Ref(RG_ball_star))
 
    n = length(Groups.gens(F))
    @assert size(Δ₁x,1) === size(Δ₁x,2) === n

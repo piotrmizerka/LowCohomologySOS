@@ -11,7 +11,7 @@
     @test LowCohomologySOS.d₀(RG, [xx, yy, zz]) == reshape([RG(xx)-one(RG),RG(yy)-one(RG), RG(zz)-one(RG)], 3, 1)
 end
 
-@testset "embed_to_group_ring" begin
+@testset "embed" begin
     A = Alphabet([:x, :X, :y, :Y], [2, 1, 4, 3])
     F = FreeGroup(A)
     RF = LowCohomologySOS.group_ring(F, 1)
@@ -23,10 +23,15 @@ end
     function zero_hom(u::FPGroupElement)
         return one(G)
     end
-    @test LowCohomologySOS.embed_to_group_ring(zero(RF), RG, zero_hom) == zero(RG)
-    @test LowCohomologySOS.embed_to_group_ring(RF(x), RG, zero_hom) == one(RG)
-    @test LowCohomologySOS.embed_to_group_ring(RF(y), RG, zero_hom) == one(RG)
-    @test LowCohomologySOS.embed_to_group_ring(RF(x*y)+RF(y^2), RG, zero_hom) == 2*one(RG)
+    @test LowCohomologySOS.embed(zero_hom, zero(RF), RG) == zero(RG)
+    @test LowCohomologySOS.embed(zero_hom, RF(x), RG) == one(RG)
+    @test LowCohomologySOS.embed(zero_hom, RF(y), RG) == one(RG)
+    @test LowCohomologySOS.embed(zero_hom, RF(x*y)+RF(y^2), RG) == 2*one(RG)
+
+    @test LowCohomologySOS.embed(x->one(G), zero(RF), RG) == zero(RG)
+    @test LowCohomologySOS.embed(x->one(G), RF(x), RG) == one(RG)
+    @test LowCohomologySOS.embed(x->one(G), RF(y), RG) == one(RG)
+    @test LowCohomologySOS.embed(x->one(G), RF(x*y)+RF(y^2), RG) == 2*one(RG)
 
     function quotient_hom(u::FPGroupElement)
         result = one(G)
@@ -43,10 +48,10 @@ end
         end
         return result
     end
-    @test LowCohomologySOS.embed_to_group_ring(zero(RF), RG, quotient_hom) == zero(RG)
-    @test LowCohomologySOS.embed_to_group_ring(RF(x), RG, quotient_hom) == RG(xx)
-    @test LowCohomologySOS.embed_to_group_ring(RF(y), RG, quotient_hom) == RG(yy)
-    @test LowCohomologySOS.embed_to_group_ring(RF(x*y)+RF(y^2), RG, quotient_hom) == RG(xx*yy)+RG(yy^2)
+    @test LowCohomologySOS.embed(quotient_hom, zero(RF), RG) == zero(RG)
+    @test LowCohomologySOS.embed(quotient_hom, RF(x), RG) == RG(xx)
+    @test LowCohomologySOS.embed(quotient_hom, RF(y), RG) == RG(yy)
+    @test LowCohomologySOS.embed(quotient_hom, RF(x*y)+RF(y^2), RG) == RG(xx*yy)+RG(yy^2)
 
     A2 = Alphabet([:e12, :E12, :e21, :E21, :e13, :E13, :e31, :E31, :e23, :E23, :e32, :E32], [2, 1, 4, 3, 6, 5, 8, 7, 10, 9, 12, 11])
     F_sl_3_z = FreeGroup(A2)
@@ -89,13 +94,13 @@ end
         end
         return result
     end
-    @test LowCohomologySOS.embed_to_group_ring(RF_sl_3_z(e12), RSL₃Ƶ, h) == RSL₃Ƶ(S[1])
-    @test LowCohomologySOS.embed_to_group_ring(RF_sl_3_z(e21), RSL₃Ƶ, h) == RSL₃Ƶ(S[3])
-    @test LowCohomologySOS.embed_to_group_ring(RF_sl_3_z(e13), RSL₃Ƶ, h) == RSL₃Ƶ(S[2])
-    @test LowCohomologySOS.embed_to_group_ring(RF_sl_3_z(e31), RSL₃Ƶ, h) == RSL₃Ƶ(S[5])
-    @test LowCohomologySOS.embed_to_group_ring(RF_sl_3_z(e23), RSL₃Ƶ, h) == RSL₃Ƶ(S[4])
-    @test LowCohomologySOS.embed_to_group_ring(RF_sl_3_z(e32), RSL₃Ƶ, h) == RSL₃Ƶ(S[6])
-    @test LowCohomologySOS.embed_to_group_ring(RF_sl_3_z(e12*e13^(-1)), RSL₃Ƶ, h) == RSL₃Ƶ(S[1]*S[2]^(-1))
+    @test LowCohomologySOS.embed(h, RF_sl_3_z(e12), RSL₃Ƶ) == RSL₃Ƶ(S[1])
+    @test LowCohomologySOS.embed(h, RF_sl_3_z(e21), RSL₃Ƶ) == RSL₃Ƶ(S[3])
+    @test LowCohomologySOS.embed(h, RF_sl_3_z(e13), RSL₃Ƶ) == RSL₃Ƶ(S[2])
+    @test LowCohomologySOS.embed(h, RF_sl_3_z(e31), RSL₃Ƶ) == RSL₃Ƶ(S[5])
+    @test LowCohomologySOS.embed(h, RF_sl_3_z(e23), RSL₃Ƶ) == RSL₃Ƶ(S[4])
+    @test LowCohomologySOS.embed(h, RF_sl_3_z(e32), RSL₃Ƶ) == RSL₃Ƶ(S[6])
+    @test LowCohomologySOS.embed(h, RF_sl_3_z(e12*e13^(-1)), RSL₃Ƶ) == RSL₃Ƶ(S[1]*S[2]^(-1))
 end
 
 @testset "fox_derivative" begin
