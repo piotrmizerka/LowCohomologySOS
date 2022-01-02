@@ -1,52 +1,30 @@
 ##### Certification - see certify_SOS_decomposition from Marek's code (Property T) - in 1712.07167.jl file
 
-# Q is supposed to be a square root, so it is a symmetric matrix
-function sos_from_matrix(Q, half_basis, RG::StarAlgebra)
-    mn = size(Q,1)
+function sos_from_matrix(Q::AbstractMatrix, support, RG::StarAlgebra)
+    mn = LinearAlgebra.checksquare(Q)
 
     # Changing Q to the corresponding interval-entry matrix
-    Q_interval = reshape([@interval(0) for i in 1:(mn*mn)], mn, mn)
-    for i in 1:mn
-        for j in i:mn
-            Q_interval[i,j] = @interval(Q[i,j])
-            Q_interval[j,i] = Q_interval[i,j]
-        end
-    end
+    Q_interval = map(x->@interval(x), Symmetric((Q.+Q')./2))
+    P_interval_RG = RG.(Q_interval^2)
 
-    P_interval = Q_interval^2
-    P_interval_RG = reshape([@interval(0)*zero(RG) for i in 1:(mn*mn)], mn, mn)
-    for i in 1:mn
-        for j in 1:mn
-            P_interval_RG[i,j] = P_interval[i,j]*one(RG)
-        end
-    end
+    m = length(support)
+    n,r = divrem(mn, m)
+    @assert iszero(r)
+    Iₙ = [(i == j ? one(RG) : zero(RG)) for i in 1:n, j in 1:n]
 
-    m = length(half_basis)
-    n = floor(Int, mn/m)
-    Iₙ = reshape([zero(RG) for i in 1:(n*n)], n, n)
-    for i in 1:n
-        Iₙ[i,i] = one(RG)
-    end
-
-    x = reshape([RG(half_basis[i]) for i in 1:length(half_basis)], m, 1)
-    xx = collect(Iₙ⊗x)
+    x = reshape([RG(s) for s in support], m, 1)
+    xx = collect(Iₙ ⊗ x)
     result = xx'*P_interval_RG*xx
 
     return result
 end
 
-function certify_sos_decomposition(X, order_unit, λ::Number, Q::AbstractMatrix, half_basis, RG::StarAlgebra)
+function certify_sos_decomposition(X, order_unit, λ::Number, Q::AbstractMatrix, support, RG::StarAlgebra)
     λ_interval = @interval(λ)
     eoi = X - λ_interval*order_unit
 
-    residual = eoi - sos_from_matrix(Q, half_basis, RG)
-    l1_norm = 0
-    mn = size(X,1)
-    for i in 1:mn
-        for j in 1:mn
-            l1_norm += norm(residual[i,j],1)
-        end
-    end
+    residual = eoi - sos_from_matrix(Q, support, RG)
+    l1_norm = sum(x->norm(x,1), residual)
 
     @info "l₁ norm of the error in interval arithmetic:"
     @info l1_norm
