@@ -46,19 +46,18 @@ end
 
 # relations is intended to contain elements of a free group
 function suitable_group_ring(relations)
-    F = parent(rand(relations))
-    half_basis = [one(F)]
+    @assert !isempty(relations)
+    F = parent(first(relations))
 
-    function relation_append_basis(u::FPGroupElement)
-        for k in 1:length(word(u))
-            for l in k:length(word(u))
-                append!(half_basis, [F(word(u)[k:l])])
+    half_basis = [one(F)]
+    sizehint!(half_basis, length(relations)*maximum(length∘word, relations))
+
+    for rel in relations
+        for k in 1:length(word(rel))
+            for l in k:length(word(rel))
+                append!(half_basis, [F(word(rel)[k:l])])
             end
         end
-    end
-
-    for r in relations
-        relation_append_basis(r)
     end
 
     return group_ring(F, half_basis)
