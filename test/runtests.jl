@@ -3,7 +3,7 @@ using AbstractAlgebra
 using Groups
 using Test
 
-include("../src/SOSStarAlgebras.jl")
+include("../src/LowCohomologySOS.jl")
 
 function differentialsExamples()
     A = Alphabet([:x, :X, :y, :Y], [2, 1, 4, 3])
