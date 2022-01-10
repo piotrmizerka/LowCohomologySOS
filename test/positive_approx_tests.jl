@@ -89,80 +89,36 @@ end
     M_1 = reshape([RC₃(a)], 1, 1)
     order_unit_1 = reshape([one(RC₃)], 1, 1)
     m = LowCohomologySOS.sos_problem_matrix(M_1, order_unit_1)
-    @test sprint(print, m) == """
-                              Max λ
-                              Subject to
-                               -P[1,1] - 2 P[2,3] - λ = 0.0
-                               -2 P[1,2] - P[3,3] = -1.0
-                               -P[2,2] - 2 P[1,3] = 0.0
-                               sdp : [P[1,1]  P[1,2]  P[1,3];
-                                P[1,2]  P[2,2]  P[2,3]; ∈ JuMP.PSDCone()
-                                P[1,3]  P[2,3]  P[3,3]]
-                              """
+    output_1 = sprint(print, m)
+    @test occursin("Subject to", output_1)
+    @test occursin("-P[1,1] - 2 P[2,3] - λ = 0.0", output_1)
+    @test occursin("-2 P[1,2] - P[3,3] = -1.0", output_1)
+    @test occursin("-P[2,2] - 2 P[1,3] = 0.0", output_1)
+    @test occursin("sdp : [P[1,1]  P[1,2]  P[1,3];", output_1)
+    @test occursin("P[1,2]  P[2,2]  P[2,3];", output_1)
+    @test occursin("JuMP.PSDCone()", output_1)
+    @test occursin("P[1,3]  P[2,3]  P[3,3]]", output_1)
 
     RC₃_star = LowCohomologySOS.group_ring(C₃, [one(C₃), a, a^2], true)
     M_2 = reshape([RC₃_star(a)], 1, 1)
     order_unit_2 = reshape([one(RC₃_star)], 1, 1)
-    @test sprint(
-        print,
-        LowCohomologySOS.sos_problem_matrix(M_2, order_unit_2),
-    ) == """
-         Max λ
-         Subject to
-          -P[1,1] - P[2,2] - P[3,3] - λ = 0.0
-          -P[1,2] - P[1,3] - P[2,3] = -1.0
-          -P[1,2] - P[1,3] - P[2,3] = 0.0
-          sdp : [P[1,1]  P[1,2]  P[1,3];
-           P[1,2]  P[2,2]  P[2,3]; ∈ JuMP.PSDCone()
-           P[1,3]  P[2,3]  P[3,3]]
-         """
-
+    output_2 = sprint(print, LowCohomologySOS.sos_problem_matrix(M_2, order_unit_2))
+    @test occursin("-P[1,1] - P[2,2] - P[3,3] - λ = 0.0", output_2)
+    @test occursin("-P[1,2] - P[1,3] - P[2,3] = -1.0", output_2)
+    @test occursin("-P[1,2] - P[1,3] - P[2,3] = 0.0", output_2)
+    
     C₂ = cyclic_group(2)
     x, = Groups.gens(C₂)
     RC₂ = LowCohomologySOS.group_ring(C₂, [one(C₂), x])
     M_3 = [RC₂(x) zero(RC₂); zero(RC₂) RC₂(x)]
     order_unit_3 = [one(RC₂) zero(RC₂); zero(RC₂) one(RC₂)]
-
-    @test sprint(
-        print,
-        LowCohomologySOS.sos_problem_matrix(M_3, order_unit_3),
-    ) == """
-         Max λ
-         Subject to
-          -P[1,1] - P[2,2] - λ = 0.0
-          -2 P[1,2] = -1.0
-          -P[1,3] - P[2,4] = 0.0
-          -P[2,3] - P[1,4] = 0.0
-          -P[1,3] - P[2,4] = 0.0
-          -P[2,3] - P[1,4] = 0.0
-          -P[3,3] - P[4,4] - λ = 0.0
-          -2 P[3,4] = -1.0
-          sdp : [P[1,1]  P[1,2]  P[1,3]  P[1,4];
-           P[1,2]  P[2,2]  P[2,3]  P[2,4];
-           P[1,3]  P[2,3]  P[3,3]  P[3,4]; ∈ JuMP.PSDCone()
-           P[1,4]  P[2,4]  P[3,4]  P[4,4]]
-         """
-
-    @test sprint(
-        print,
-        LowCohomologySOS.sos_problem_matrix(M_3, order_unit_3, 0.5),
-    ) == """
-         Max λ
-         Subject to
-          -P[1,1] - P[2,2] - λ = 0.0
-          -2 P[1,2] = -1.0
-          -P[1,3] - P[2,4] = 0.0
-          -P[2,3] - P[1,4] = 0.0
-          -P[1,3] - P[2,4] = 0.0
-          -P[2,3] - P[1,4] = 0.0
-          -P[3,3] - P[4,4] - λ = 0.0
-          -2 P[3,4] = -1.0
-          sdp : [P[1,1]  P[1,2]  P[1,3]  P[1,4];
-           P[1,2]  P[2,2]  P[2,3]  P[2,4];
-           P[1,3]  P[2,3]  P[3,3]  P[3,4]; ∈ JuMP.PSDCone()
-           P[1,4]  P[2,4]  P[3,4]  P[4,4]]
-          λ ≤ 0.5
-         """
+    output_3 = sprint(print, LowCohomologySOS.sos_problem_matrix(M_3, order_unit_3))
+    @test occursin("-P[1,1] - P[2,2] - λ = 0.0", output_3)
+    @test occursin("-2 P[1,2] = -1.0", output_3)
+    @test occursin("-P[1,3] - P[2,4] = 0.0", output_3)
+    @test occursin("-P[2,3] - P[1,4] = 0.0", output_3)
+    @test occursin("-P[3,3] - P[4,4] - λ = 0.0", output_3)
+    @test occursin("-2 P[3,4] = -1.0", output_3)
 end
 
 @testset "sos_problem_solution_scs" begin
