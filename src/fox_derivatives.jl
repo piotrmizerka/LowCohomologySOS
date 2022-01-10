@@ -1,11 +1,6 @@
 function d₀(RG, generators)
-    result = reshape([zero(RG) for i in 1:length(generators)], length(generators), 1)
-    
-    for i in 1:length(generators)
-        result[i,1] = RG(generators[i])-one(RG)
-    end
-
-    return result
+    result = [RG(g)-one(RG) for g in generators]
+    return reshape(result, length(generators), 1)
 end
 
 # h is intended to be a homomorphism from a free group to G
@@ -40,20 +35,13 @@ end
 # Jacobian matrix in the free group ring.
 # Relations is an array of relators which are elements of the free group
 function jacobian_matrix(relations)
-    F = parent(rand(relations))
+    @assert !isempty(relations)
+    F = parent(first(relations))
     RF = suitable_group_ring(relations)
-    relations_number = length(relations)
-    generators_number = length(Groups.gens(F))
- 
-    result = reshape([zero(RF) for i in 1:relations_number*generators_number], relations_number, generators_number)
- 
-    for i in 1:relations_number
-        for j in 1:generators_number
-            result[i,j] = fox_derivative(RF, relations[i], j)
-        end
-    end
- 
-    return result
+
+    jac = [fox_derivative(RF, r, j) for r in relations, j in 1:Groups.ngens(F)]
+
+    return jac
 end
 
 # relations is intended to contain elements of a free group
