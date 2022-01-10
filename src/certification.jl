@@ -14,37 +14,51 @@ function sos_from_matrix(Q::AbstractMatrix, support, RG::StarAlgebra)
 
     x = reshape([RG(s) for s in support], m, 1)
     xx = collect(Iₙ ⊗ x)
-    result = xx'*P_interval_RG*xx
+    result = xx' * P_interval_RG * xx
 
     return result
 end
 
-function certify_sos_decomposition(X, order_unit, λ::Number, Q::AbstractMatrix, support, RG::StarAlgebra)
+function certify_sos_decomposition(
+    X,
+    order_unit,
+    λ::Number,
+    Q::AbstractMatrix,
+    support,
+    RG::StarAlgebra,
+)
     λ_interval = @interval(λ)
-    eoi = X - λ_interval*order_unit
+    eoi = X - λ_interval * order_unit
 
     residual = eoi - sos_from_matrix(Q, support, RG)
-    l1_norm = sum(x->norm(x,1), residual)
+    l1_norm = sum(x -> norm(x, 1), residual)
 
-    @info "l₁ norm of the error in interval arithmetic:"
-    @info l1_norm
+    @info "l₁ norm of the error in interval arithmetic:" l1_norm radius(l1_norm)
 
-    result = λ_interval-l1_norm
+    result = λ_interval - l1_norm
 
     return result
 end
 
-function spectral_gaps_certification(h::Function, relations, half_basis, is_silent = false)
-    λₐₚ, Pₐₚ, RG, Δ₁, Iₙ = spectral_gaps_approximated(h, relations, half_basis, is_silent)
-    Qₐₚ = real(sqrt(Symmetric( (Pₐₚ.+ Pₐₚ')./2 )))
+function spectral_gaps_certification(
+    h::Function,
+    relations,
+    half_basis;
+    optimizer,
+)
+    λₐₚ, Pₐₚ, RG, Δ₁, Iₙ = spectral_gaps_approximated(
+        h,
+        relations,
+        half_basis;
+        optimizer = optimizer,
+    )
+    Qₐₚ = real(sqrt(Symmetric((Pₐₚ .+ Pₐₚ') ./ 2)))
 
-    @info "Approximated λ:"
-    @info λₐₚ
-    
-    result = certify_sos_decomposition(Δ₁, Iₙ, λₐₚ, Qₐₚ, half_basis, RG)
+    @info "Approximated λ:" λₐₚ
 
-    @info "Certified λ (interval atithmetic):"
-    @info result
+    certified_sgap = certify_sos_decomposition(Δ₁, Iₙ, λₐₚ, Qₐₚ, half_basis, RG)
 
-    return result
+    @info "Certified λ (interval atithmetic):" certified_sgap
+
+    return certified_sgap
 end
