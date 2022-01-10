@@ -133,7 +133,7 @@ end
             quotient_hom_1,
             relations,
             half_basis_C_3,
-            optimizer = scs_opt(eps = 1e-8, verbose = true),
+            optimizer = scs_opt(eps = 1e-8, verbose = false),
         )
     end
 
