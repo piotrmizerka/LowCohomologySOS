@@ -169,12 +169,6 @@ end
     @test RF_J.basis == RF_J_proper.basis
     @test RF_J.mstructure == RF_J_proper.mstructure
     @test typeof(RF_J) == typeof(RF_J_proper)
-    # WHY THE COMMENTED TESTS BELOW FAIL????
-    # @test RF_J == RF_J_proper
-    # J_proper = reshape([zero(RF_J_proper) for i in 1:6], 3, 2)
-    # J_proper[1,1] = one(RF_J_proper); J_proper[1,2] = zero(RF_J_proper)
-    # J_proper[2,1] = one(RF_J_proper); J_proper[2,2] = RF_J_proper(x)
-    # J_proper[3,1] = one(RF_J_proper)-RF_J_proper(x*y*x^(-1)); J_proper[3,2] = RF_J_proper(x)
     J_proper = reshape([zero(RF_J) for i in 1:6], 3, 2)
     J_proper[1, 1] = one(RF_J)
     J_proper[1, 2] = zero(RF_J)
