@@ -15,7 +15,7 @@ end
 # As the constraints function, this function also concerns defining the constraints arising from matrix P.
 # More precisely, it defines constraints arising from the (row_id,column_id)-entry of the matrix equation for our problem.
 # We can apply the constraints function written by M. Kaluba to define the constraints arising from each entry.
-# Order of linear indices for matrices which has to be applied: column snake (from Seattle to Miami).
+# Order of linear indices for matrices which has to be applied: column order (from top to bottom and from Seattle to Miami).
 function entry_constraint(
     cnstrs,
     row_id,
