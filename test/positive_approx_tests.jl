@@ -98,7 +98,7 @@ end
     @test occursin(inclusion_sign*" JuMP.PSDCone()", sprint(print, m[:sdp]))
 end
 
-@testset "sos_problem_solution_scs" begin
+@testset "sos_problem_solution" begin
     C₃ = cyclic_group(3)
     a, = Groups.gens(C₃)
     RC₃_star = LowCohomologySOS.group_ring(C₃, [one(C₃), a, a^2], true)
@@ -108,11 +108,11 @@ end
     sos_problem_infeasible =
         LowCohomologySOS.sos_problem_matrix(M_1, order_unit_1)
 
-    λ_1, P_1 = LowCohomologySOS.sos_problem_solution(
+    λ_1, P_1, termination_status_1 = LowCohomologySOS.sos_problem_solution(
         sos_problem_infeasible,
         optimizer = scs_opt(verbose = false),
     )
-    @test isnan(λ_1) && all(isnan, P_1)
+    @test termination_status_1 == MathOptInterface.INFEASIBLE
 
     A = Alphabet([:x, :X], [2, 1])
     Z = FreeGroup(A)
@@ -129,12 +129,12 @@ end
         m
     end
 
-    λ_2, P_2 = LowCohomologySOS.sos_problem_solution(
+    λ_2, P_2, termination_status_2 = LowCohomologySOS.sos_problem_solution(
         sos_problem_infeasible_2,
         optimizer = scs_opt(verbose = false),
     )
 
-    @test isnan(λ_2)
+    @test termination_status_2 == MathOptInterface.INFEASIBLE
 
     M_3 = [
         4*one(RZ_star) zero(RZ_star) zero(RZ_star)
@@ -148,11 +148,12 @@ end
     ]
     sos_problem_3 = LowCohomologySOS.sos_problem_matrix(M_3, order_unit_3)
 
-    λ_3, P_3 = LowCohomologySOS.sos_problem_solution(
+    λ_3, P_3, termination_status_3 = LowCohomologySOS.sos_problem_solution(
         sos_problem_3,
         optimizer = scs_opt(verbose = false),
     )
 
+    @test termination_status_3 == MathOptInterface.OPTIMAL
     @test λ_3 ≈ 3 rtol = 4.0e-3
 end
 
@@ -176,7 +177,7 @@ end
     relations = [x^3]
     half_basis, sizes = Groups.wlmetric_ball([xx, xx^(-1)], radius = 1)
 
-    λ_1, P_1, RG_ball_star, Δ₁_1, I_1 =
+    λ_1, P_1, termination_status_1, RG_ball_star, Δ₁_1, I_1 =
         LowCohomologySOS.spectral_gaps_approximated(
             quotient_hom,
             relations,
@@ -190,6 +191,7 @@ end
         1,
     )
     I_1_proper = reshape([one(RG_ball_star)], 1, 1)
+    @test termination_status_1 == MathOptInterface.OPTIMAL
     @test λ_1 ≈ 3 rtol = 1e-3
     @test Δ₁_1 == Δ₁_1_proper
     @test I_1 == I_1_proper

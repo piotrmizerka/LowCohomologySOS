@@ -8,6 +8,7 @@ import AbstractAlgebra
 import Logging
 import JuMP
 import SCS
+import MathOptInterface
 function scs_opt(;
     eps = 1e-5,
     acceleration_lookback = 0,

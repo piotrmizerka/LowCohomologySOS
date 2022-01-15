@@ -128,7 +128,7 @@ end
     end
     relations = [ax^3]
 
-    certified_interval = Logging.with_logger(Logging.NullLogger()) do
+    termination_status, certified_interval = Logging.with_logger(Logging.NullLogger()) do
         return LowCohomologySOS.spectral_gaps_certification(
             quotient_hom_1,
             relations,
@@ -137,5 +137,5 @@ end
         )
     end
 
-    @test 3 ∈ certified_interval + (-1e-7..1e-7)
+    @test (termination_status == MathOptInterface.OPTIMAL) && (3 ∈ certified_interval + (-1e-7..1e-7))
 end
