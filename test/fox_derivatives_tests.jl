@@ -1,3 +1,5 @@
+using PropertyT_new
+
 @testset "d₀" begin
     A = Alphabet([:x, :X, :y, :Y, :z, :Z], [2, 1, 4, 3, 6, 5])
     F = FreeGroup(A)
@@ -13,121 +15,167 @@
           reshape([RG(xx) - one(RG), RG(yy) - one(RG), RG(zz) - one(RG)], 3, 1)
 end
 
-@testset "embed" begin
+@testset "example embed" begin
+
+    function test_homomorphism(hom)
+        F = hom.source
+        @test isone(hom(one(F)))
+        @test all(inv(hom(g)) == hom(inv(g)) for g in gens(F))
+        @test all(isone(hom(g)*hom(inv(g))) for g in gens(F))
+        @test all(hom(g*h) == hom(g)*hom(h) for g in gens(F) for h in gens(F))
+    end
+
     A = Alphabet([:x, :X, :y, :Y], [2, 1, 4, 3])
     F = FreeGroup(A)
     RF = LowCohomologySOS.group_ring(F, 1)
     x, y = Groups.gens(F)
     G = FPGroup(F, [x * y => y * x])
     RG = LowCohomologySOS.group_ring(G, 1)
-    xx, yy = Groups.gens(G)
 
-    function zero_hom(u::FPGroupElement)
-        return one(G)
+    @testset "one homomorphism" begin
+
+        one_hom = PropertyT_new.Homomorphism(
+            (i,source, target) -> word(one(target)),
+            F,
+            G
+        )
+
+        test_homomorphism(one_hom)
+        @test isone(one_hom(x))
+        @test isone(one_hom(y))
+
+        @test LowCohomologySOS.embed(one_hom, zero(RF), RG) == zero(RG)
+        @test LowCohomologySOS.embed(one_hom, RF(x), RG) == one(RG)
+        @test LowCohomologySOS.embed(one_hom, RF(y), RG) == one(RG)
+        @test LowCohomologySOS.embed(one_hom, RF(x * y) + RF(y^2), RG) ==
+             2 * one(RG)
     end
-    @test LowCohomologySOS.embed(zero_hom, zero(RF), RG) == zero(RG)
-    @test LowCohomologySOS.embed(zero_hom, RF(x), RG) == one(RG)
-    @test LowCohomologySOS.embed(zero_hom, RF(y), RG) == one(RG)
-    @test LowCohomologySOS.embed(zero_hom, RF(x * y) + RF(y^2), RG) ==
-          2 * one(RG)
 
-    @test LowCohomologySOS.embed(x -> one(G), zero(RF), RG) == zero(RG)
-    @test LowCohomologySOS.embed(x -> one(G), RF(x), RG) == one(RG)
-    @test LowCohomologySOS.embed(x -> one(G), RF(y), RG) == one(RG)
-    @test LowCohomologySOS.embed(x -> one(G), RF(x * y) + RF(y^2), RG) ==
-          2 * one(RG)
+    @testset "quotient homomorphism" begin
 
-    function quotient_hom(u::FPGroupElement)
-        result = one(G)
-        for i in 1:length(word(u))
-            if F(word(u)[i:i]) == x
-                result *= xx
-            elseif F(word(u)[i:i]) == inv(x)
-                result *= inv(xx)
-            elseif F(word(u)[i:i]) == y
-                result *= yy
-            elseif F(word(u)[i:i]) == inv(y)
-                result *= inv(yy)
+        quotient_hom = let source = F, target = G
+            function f(i, source, target)
+                # i index of letter in source
+                # i == ... && return Word{...}[....]
+                if alphabet(source) == alphabet(target)
+                    # e.g. Word{Int8}([1])
+                    Groups.word_type(target)([i])
+                else
+                    throw("Unsupported")
+                end
             end
+            PropertyT_new.Homomorphism(f, F, G)
         end
-        return result
-    end
-    @test LowCohomologySOS.embed(quotient_hom, zero(RF), RG) == zero(RG)
-    @test LowCohomologySOS.embed(quotient_hom, RF(x), RG) == RG(xx)
-    @test LowCohomologySOS.embed(quotient_hom, RF(y), RG) == RG(yy)
-    @test LowCohomologySOS.embed(quotient_hom, RF(x * y) + RF(y^2), RG) ==
-          RG(xx * yy) + RG(yy^2)
 
-    A2 = Alphabet(
-        [
-            :e12,
-            :E12,
-            :e21,
-            :E21,
-            :e13,
-            :E13,
-            :e31,
-            :E31,
-            :e23,
-            :E23,
-            :e32,
-            :E32,
-        ],
-        [2, 1, 4, 3, 6, 5, 8, 7, 10, 9, 12, 11],
-    )
-    F_sl_3_z = FreeGroup(A2)
-    RF_sl_3_z = LowCohomologySOS.group_ring(F_sl_3_z, 1)
+        test_homomorphism(quotient_hom)
+
+        @test !isone(quotient_hom(x))
+        @test !isone(quotient_hom(y))
+        @test quotient_hom(x*y) == quotient_hom(y*x)
+        @test isone(quotient_hom(Groups.commutator(x,y)))
+
+        @test LowCohomologySOS.embed(quotient_hom, zero(RF), RG) == zero(RG)
+        let (x, y) = Groups.gens(F)
+            xx = quotient_hom(x)
+            yy = quotient_hom(y)
+            @test LowCohomologySOS.embed(quotient_hom, RF(x), RG) == RG(xx)
+            @test LowCohomologySOS.embed(quotient_hom, RF(y), RG) == RG(yy)
+            @test LowCohomologySOS.embed(quotient_hom, RF(x * y) + RF(y^2), RG) ==
+                  RG(xx * yy) + RG(yy^2)
+        end
+    end
+end
+
+@testset "SL(3, ℤ)" begin
+    A = Alphabet(
+            [
+                :e12,
+                :E12,
+                :e21,
+                :E21,
+                :e13,
+                :E13,
+                :e31,
+                :E31,
+                :e23,
+                :E23,
+                :e32,
+                :E32,
+            ],
+            [2, 1, 4, 3, 6, 5, 8, 7, 10, 9, 12, 11],
+        )
+    F_sl_3_z = FreeGroup(A)
     e12, e21, e13, e31, e23, e32 = Groups.gens(F_sl_3_z)
+
     N = 3
+    SL(n, R) = PropertyT_new.SpecialLinearGroup{n}(R)
+    SL₃ℤ = SL(3, Int8)
 
-    SL₃Ƶ = AbstractAlgebra.MatrixAlgebra(AbstractAlgebra.zz, N)
-    StarAlgebras.star(A::AbstractAlgebra.Generic.MatAlgElem) = inv(A)
+    h = let source = F_sl_3_z, target = SL₃ℤ
+        function hom(i, source, target::PropertyT_new.SpecialLinearGroup{N, T}) where {N, T}
+            As = alphabet(source)
+            s = String(As[i])
+            (i,j,isinv) = let m = match(r"^(E|e)(\d)(\d)$", s)
+                @assert !isnothing(m)
+                isinv = isuppercase(Char(first(m[1])))
+                i = parse(Int, m[2])
+                j = parse(Int, m[3])
+                i,j, isinv
+            end
 
-    E(SL₃Ƶ, i, j) = (e_ij = one(SL₃Ƶ);
-    e_ij[i, j] = 1;
-    e_ij)
-    S = [E(SL₃Ƶ, i, j) for i in 1:N for j in 1:N if i ≠ j]
-    half_basis, sizes = Groups.wlmetric_ball(unique([S; inv.(S)]), radius = 1)
-    RSL₃Ƶ = LowCohomologySOS.group_ring(SL₃Ƶ, half_basis, true)
-    function h(u::FPGroupElement)
-        result = one(SL₃Ƶ)
-        for i in 1:length(word(u))
-            if F_sl_3_z(word(u)[i:i]) == e12
-                result *= S[1]
-            elseif F_sl_3_z(word(u)[i:i]) == inv(e12)
-                result *= inv(S[1])
-            elseif F_sl_3_z(word(u)[i:i]) == e21
-                result *= S[3]
-            elseif F_sl_3_z(word(u)[i:i]) == inv(e21)
-                result *= inv(S[3])
-            elseif F_sl_3_z(word(u)[i:i]) == e13
-                result *= S[2]
-            elseif F_sl_3_z(word(u)[i:i]) == inv(e13)
-                result *= inv(S[2])
-            elseif F_sl_3_z(word(u)[i:i]) == e31
-                result *= S[5]
-            elseif F_sl_3_z(word(u)[i:i]) == inv(e31)
-                result *= inv(S[5])
-            elseif F_sl_3_z(word(u)[i:i]) == e23
-                result *= S[4]
-            elseif F_sl_3_z(word(u)[i:i]) == inv(e23)
-                result *= inv(S[4])
-            elseif F_sl_3_z(word(u)[i:i]) == e32
-                result *= S[6]
-            elseif F_sl_3_z(word(u)[i:i]) == inv(e32)
-                result *= inv(S[6])
+            At = alphabet(target)
+            eij = PropertyT_new.MatrixGroups.ElementaryMatrix{N}(i, j, T(isinv ? -1 : 1))
+            return Groups.word_type(target)([At[eij]])
+        end
+        PropertyT_new.Homomorphism(hom, source, target)
+    end
+
+    test_homomorphism(h)
+
+    @test h(Groups.commutator(e12, e23)) == h(e13)
+    # TODO: finish other tests
+
+    _idx(n) = ((i,j) for i in 1:n for j in 1:n if i≠j)
+
+    S = Dict((i,j) =>
+        let eij = PropertyT_new.MatrixGroups.ElementaryMatrix{N}(i,j, Int8(1))
+            SL₃ℤ([alphabet(SL₃ℤ)[eij]])
+        end
+        for (i,j) in _idx(N)
+    )
+
+    S_free = Dict(
+        (i,j) => (s = Symbol('e', i, j); F = F_sl_3_z; F([alphabet(F)[s]]))
+        for (i,j) in _idx(N)
+    )
+
+    @testset "homomorphism specific tests" begin
+        @test all(h(S_free[(i,j)]) == S[(i,j)] for (i,j) in _idx(N))
+        for (i,j) in _idx(N)
+            for (k,l) in _idx(N)
+                g_free = S_free[(i,j)] * S_free[(k,l)]
+                g = S[(i,j)] * S[(k,l)]
+                @test h(g_free) == g
             end
         end
-        return result
     end
-    @test LowCohomologySOS.embed(h, RF_sl_3_z(e12), RSL₃Ƶ) == RSL₃Ƶ(S[1])
-    @test LowCohomologySOS.embed(h, RF_sl_3_z(e21), RSL₃Ƶ) == RSL₃Ƶ(S[3])
-    @test LowCohomologySOS.embed(h, RF_sl_3_z(e13), RSL₃Ƶ) == RSL₃Ƶ(S[2])
-    @test LowCohomologySOS.embed(h, RF_sl_3_z(e31), RSL₃Ƶ) == RSL₃Ƶ(S[5])
-    @test LowCohomologySOS.embed(h, RF_sl_3_z(e23), RSL₃Ƶ) == RSL₃Ƶ(S[4])
-    @test LowCohomologySOS.embed(h, RF_sl_3_z(e32), RSL₃Ƶ) == RSL₃Ƶ(S[6])
-    @test LowCohomologySOS.embed(h, RF_sl_3_z(e12 * e13^(-1)), RSL₃Ƶ) ==
-          RSL₃Ƶ(S[1] * S[2]^(-1))
+
+    @testset "group ring embedding" begin
+        RF_sl_3_z = LowCohomologySOS.group_ring(F_sl_3_z, 1)
+
+        RSL₃ℤ, sizes = let G = SL₃ℤ, S = union!(collect(values(S)), inv.(values(S)))
+            half_basis, sizes = Groups.wlmetric_ball(S, radius = 1)
+            LowCohomologySOS.group_ring(G, half_basis, true), sizes
+        end
+
+        @test LowCohomologySOS.embed(h, RF_sl_3_z(S_free[(1,2)] * S_free[(1,3)]^-1), RSL₃ℤ) ==
+              RSL₃ℤ(S[(1,2)] * S[(1,3)]^(-1))
+
+        @test all(_idx(N)) do (i,j)
+            g_free, g = S_free[(i,j)], S[(i,j)]
+            LowCohomologySOS.embed(h, RF_sl_3_z(g_free), RSL₃ℤ) == RSL₃ℤ(g)
+        end
+    end
 end
 
 @testset "fox_derivative" begin

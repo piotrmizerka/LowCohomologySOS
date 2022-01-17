@@ -4,7 +4,7 @@ function d₀(RG, generators)
 end
 
 # h is intended to be a homomorphism from a free group to G
-function embed(h::Function, X::AlgebraElement, RG::StarAlgebra)
+function embed(h, X::AlgebraElement, RG::StarAlgebra)
     S = supp(X)
     length(S) == 0 && return zero(RG, eltype(X))
     return sum(X(s) * RG(h(s)) for s in S)
