@@ -8,6 +8,7 @@ using IntervalArithmetic
 
 using StarAlgebras
 using Groups
+using Revise
 
 import JuMP
 
