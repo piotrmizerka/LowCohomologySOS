@@ -1,11 +1,71 @@
 using Pkg
 
 Pkg.activate(@__DIR__)
-# using Revise # CHECK THIS
 using StarAlgebras
 using Groups
 using AbstractAlgebra
 using LowCohomologySOS
+using JuMP
+using SCS
+using MathOptInterface
+
+A = Alphabet([:x, :X, :y, :Y], [2, 1, 4, 3])
+    F = FreeGroup(A)
+    RF = LowCohomologySOS.group_ring(F, 1)
+    x, y = Groups.gens(F)
+    G = FPGroup(F, [x * y => y * x])
+    RG = LowCohomologySOS.group_ring(G, 1)
+
+testt = let 
+    function cyclic_group(n::Integer)
+        A = Alphabet([:a, :A], [2, 1])
+        F = FreeGroup(A)
+        a, = Groups.gens(F)
+        e = one(F)
+        Cₙ = FPGroup(F, [a^n => e])
+    
+        return Cₙ
+    end
+    function scs_opt(;
+        eps = 1e-5,
+        acceleration_lookback = 0,
+        max_iters = 20_000,
+        verbose = true,
+    )
+        return JuMP.optimizer_with_attributes(
+            SCS.Optimizer,
+            "eps" => eps,
+            "acceleration_lookback" => acceleration_lookback,
+            "max_iters" => max_iters,
+            "verbose" => verbose,
+        )
+    end
+    A = Alphabet([:x, :X], [2, 1])
+    Z = FreeGroup(A)
+    x, = Groups.gens(Z)
+    RZ = LowCohomologySOS.group_ring(Z, 2)
+    RZ_star = LowCohomologySOS.group_ring(Z, 2, true)
+
+    M_3 = [
+        4*one(RZ_star) zero(RZ_star) zero(RZ_star)
+        zero(RZ_star) 3*one(RZ_star) zero(RZ_star)
+        zero(RZ_star) zero(RZ_star) 5*one(RZ_star)
+    ]
+    order_unit_3 = [
+        one(RZ_star) zero(RZ_star) zero(RZ_star)
+        zero(RZ_star) one(RZ_star) zero(RZ_star)
+        zero(RZ_star) zero(RZ_star) one(RZ_star)
+    ]
+    sos_problem_3 = LowCohomologySOS.sos_problem_matrix(M_3, order_unit_3)
+
+    λ_3, P_3, termination_status_3 = LowCohomologySOS.sos_problem_solution(
+        sos_problem_3,
+        optimizer = scs_opt(verbose = false),
+    )
+
+    @info termination_status_3
+    termination_status_3
+end
 
 SL₃ƵSpectralGaps = let halfRadius = 2
     A = Alphabet([:e12, :E12, :e21, :E21, :e13, :E13, :e31, :E31, :e23, :E23, :e32, :E32], [2, 1, 4, 3, 6, 5, 8, 7, 10, 9, 12, 11])
@@ -59,5 +119,5 @@ SL₃ƵSpectralGaps = let halfRadius = 2
                  e31*e12*e31^(-1)*e12^(-1)*e32^(-1), e32*e21*e32^(-1)*e21^(-1)*e31^(-1)]
     
     halfBasis, sizes = Groups.wlmetric_ball(S, radius = halfRadius)
-    LowCohomologySOS.spectral_gaps_certification(h, relations, halfBasis)
+    LowCohomologySOS.spectral_gaps_certification(h, relations, halfBasis, optimizer=scs_opt(eps = 1e-8, verbose = false))
 end
