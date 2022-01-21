@@ -43,7 +43,7 @@ function certify_sos_decomposition(
 end
 
 function spectral_gaps_certification(
-    h::Function,
+    h,
     relations,
     half_basis;
     optimizer,
