@@ -137,5 +137,5 @@ end
         )
     end
 
-    @test (termination_status == MathOptInterface.OPTIMAL) && (3 ∈ certified_interval + (-1e-7..1e-7))
+    @test (termination_status == JuMP.MOI.OPTIMAL) && (3 ∈ certified_interval + (-1e-7..1e-7))
 end

@@ -9,7 +9,6 @@ import AbstractAlgebra
 import Logging
 import JuMP
 import SCS
-import MathOptInterface
 
 function cyclic_group(n::Integer)
     A = Alphabet([:a, :A], [2, 1])
