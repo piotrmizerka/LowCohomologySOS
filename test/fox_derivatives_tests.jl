@@ -46,7 +46,7 @@ end
                     throw("Unsupported")
                 end
             end
-            PropertyT_new.Homomorphism(f, F, G)
+            PropertyT_new.Homomorphism(f, source, target)
         end
 
         test_homomorphism(quotient_hom)
