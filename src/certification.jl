@@ -19,6 +19,8 @@ function sos_from_matrix(Q::AbstractMatrix, support, RG::StarAlgebra)
     return result
 end
 
+_eoi(X, λ::Number, u) = X-λ*u
+_eoi(X::AbstractMatrix, λ::Number, u::AbstractMatrix) = X-Ref(λ).*u
 function certify_sos_decomposition(
     X,
     order_unit,
@@ -28,7 +30,7 @@ function certify_sos_decomposition(
     RG::StarAlgebra,
 )
     λ_interval = @interval(λ)
-    eoi = X - λ_interval * order_unit
+    eoi = _eoi(X, λ_interval, order_unit)
 
     residual = eoi - sos_from_matrix(Q, support, RG)
     l1_norm = sum(x -> norm(x, 1), residual)
