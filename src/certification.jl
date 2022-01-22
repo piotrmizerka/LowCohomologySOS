@@ -19,6 +19,8 @@ function sos_from_matrix(Q::AbstractMatrix, support, RG::StarAlgebra)
     return result
 end
 
+_eoi(X, λ::Number, u) = X-λ*u
+_eoi(X::AbstractMatrix, λ::Number, u::AbstractMatrix) = X-Ref(λ).*u
 function certify_sos_decomposition(
     X,
     order_unit,
@@ -28,7 +30,7 @@ function certify_sos_decomposition(
     RG::StarAlgebra,
 )
     λ_interval = @interval(λ)
-    eoi = X - λ_interval * order_unit
+    eoi = _eoi(X, λ_interval, order_unit)
 
     residual = eoi - sos_from_matrix(Q, support, RG)
     l1_norm = sum(x -> norm(x, 1), residual)
@@ -41,12 +43,12 @@ function certify_sos_decomposition(
 end
 
 function spectral_gaps_certification(
-    h::Function,
+    h,
     relations,
     half_basis;
     optimizer,
 )
-    λₐₚ, Pₐₚ, RG, Δ₁, Iₙ = spectral_gaps_approximated(
+    λₐₚ, Pₐₚ, termination_status, RG, Δ₁, Iₙ = spectral_gaps_approximated(
         h,
         relations,
         half_basis;
@@ -54,11 +56,12 @@ function spectral_gaps_certification(
     )
     Qₐₚ = real(sqrt(Symmetric((Pₐₚ .+ Pₐₚ') ./ 2)))
 
-    @info "Approximated λ:" λₐₚ
+    @info "Termination status: " termination_status
+    @info "Approximated λ: " λₐₚ
 
     certified_sgap = certify_sos_decomposition(Δ₁, Iₙ, λₐₚ, Qₐₚ, half_basis, RG)
 
-    @info "Certified λ (interval atithmetic):" certified_sgap
+    @info "Certified λ (interval atithmetic): " certified_sgap
 
-    return certified_sgap
+    return termination_status, certified_sgap
 end

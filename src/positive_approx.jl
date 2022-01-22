@@ -84,14 +84,14 @@ end
 function sos_problem_solution(sos_problem; optimizer)
     JuMP.set_optimizer(sos_problem, optimizer)
     JuMP.optimize!(sos_problem)
-    λ, P = JuMP.value(sos_problem[:λ]), JuMP.value.(sos_problem[:P])
+    λ, P, termination_status = JuMP.value(sos_problem[:λ]), JuMP.value.(sos_problem[:P]), JuMP.termination_status(sos_problem)
 
-    return λ, P
+    return λ, P, termination_status
 end
 
 # h:Free group --> our group G
 function spectral_gaps_approximated(
-    h::Function,
+    h,
     relations,
     half_basis;
     optimizer,
@@ -108,7 +108,7 @@ function spectral_gaps_approximated(
 
     RG_ball_star = group_ring(G, half_basis, true)
 
-    Δ₁x = embed.(h, Δ₁, Ref(RG_ball_star))
+    Δ₁x = embed.(Ref(h), Δ₁, Ref(RG_ball_star))
 
     n = length(Groups.gens(F))
     @assert size(Δ₁x, 1) === size(Δ₁x, 2) === n
@@ -118,7 +118,7 @@ function spectral_gaps_approximated(
     end
 
     Δ₁_sos_problem = sos_problem_matrix(Δ₁x, Iₙ)
-    λ, P = sos_problem_solution(Δ₁_sos_problem, optimizer = optimizer)
+    λ, P, termination_status = sos_problem_solution(Δ₁_sos_problem, optimizer = optimizer)
 
-    return λ, P, RG_ball_star, Δ₁x, Iₙ
+    return λ, P, termination_status, RG_ball_star, Δ₁x, Iₙ
 end
