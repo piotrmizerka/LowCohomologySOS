@@ -61,5 +61,5 @@ function suitable_group_ring(relations)
         end
     end
 
-    return group_ring(F, half_basis)
+    return group_ring(F, half_basis, additive_only = true)
 end

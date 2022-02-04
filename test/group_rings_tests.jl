@@ -79,7 +79,7 @@ end
     @test mstr_RF[getindex(b_RF, (x * y * z)^(-1)), getindex(b_RF, x^(-1))] ==
           getindex(b_RF, (x * y * z)^(-1) * x^(-1))
 
-    RF_star = LowCohomologySOS.group_ring(F, half_basis, true)
+    RF_star = LowCohomologySOS.group_ring(F, half_basis, star_multiplication = true)
     b_RF_star = RF_star.basis
     mstr_RF_star = RF_star.mstructure
     @test RF_star.object == F

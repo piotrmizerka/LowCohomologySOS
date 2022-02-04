@@ -104,7 +104,6 @@ end
     RF_J_proper = LowCohomologySOS.suitable_group_ring(relations)
     @test RF_J.object == RF_J_proper.object
     @test RF_J.basis == RF_J_proper.basis
-    @test RF_J.mstructure == RF_J_proper.mstructure
     @test typeof(RF_J) == typeof(RF_J_proper)
     J_proper = reshape([zero(RF_J) for i in 1:6], 3, 2)
     J_proper[1, 1] = one(RF_J)
@@ -226,48 +225,4 @@ end
     @test J2 == J2_proper
 end
 
-@testset "suitable_group_ring" begin
-    A = Alphabet([:x, :X], [2, 1])
-    F = FreeGroup(A)
-    a, = Groups.gens(F)
-    RF = LowCohomologySOS.suitable_group_ring([a^2])
-    b = RF.basis
-    mstr = RF.mstructure
-    @test RF.object == F
-    @test Set(collect(b)) ==
-          Set([one(F), a, a^(-1), a^2, a^(-2), a^3, a^(-3), a^4, a^(-4)])
-    @test mstr[getindex(b, a), getindex(b, a)] == getindex(b, a^2)
-    @test mstr[getindex(b, a), getindex(b, a^2)] == getindex(b, a^3)
-    @test mstr[getindex(b, a^2), getindex(b, a^(-1))] == getindex(b, a)
-
-    A = Alphabet([:x, :X, :y, :Y], [2, 1, 4, 3])
-    F2 = FreeGroup(A)
-    x, y = Groups.gens(F2)
-    RF2 = LowCohomologySOS.suitable_group_ring([x, y])
-    b2 = RF2.basis
-    mstr2 = RF2.mstructure
-    @test RF2.object == F2
-    @test Set(collect(b2)) == Set([
-        one(F2),
-        x,
-        x^(-1),
-        y,
-        y^(-1),
-        x^2,
-        x^(-2),
-        y^2,
-        y^(-2),
-        x * y,
-        x * y^(-1),
-        x^(-1) * y,
-        x^(-1) * y^(-1),
-        y * x,
-        y * x^(-1),
-        y^(-1) * x,
-        y^(-1) * x^(-1),
-    ])
-    @test mstr2[getindex(b2, x), getindex(b2, x)] == getindex(b2, x^2)
-    @test mstr2[getindex(b2, y), getindex(b2, y^(-1))] == getindex(b2, one(F2))
-    @test mstr2[getindex(b2, x^(-1)), getindex(b2, y)] ==
-          getindex(b2, x^(-1) * y)
-end
+# TODO: tests for suitable_group_ring

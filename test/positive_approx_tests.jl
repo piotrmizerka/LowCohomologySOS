@@ -84,7 +84,7 @@ end
 @testset "sos_problem_matrix" begin
     C₃ = cyclic_group(3)
     a, = Groups.gens(C₃)
-    RC₃ = LowCohomologySOS.group_ring(C₃, [one(C₃), a, a^2], false)
+    RC₃ = LowCohomologySOS.group_ring(C₃, [one(C₃), a, a^2])
     M = reshape([RC₃(a)], 1, 1)
     order_unit = reshape([one(RC₃)], 1, 1)
     m = LowCohomologySOS.sos_problem_matrix(M, order_unit)
@@ -101,7 +101,7 @@ end
 @testset "sos_problem_solution" begin
     C₃ = cyclic_group(3)
     a, = Groups.gens(C₃)
-    RC₃_star = LowCohomologySOS.group_ring(C₃, [one(C₃), a, a^2], true)
+    RC₃_star = LowCohomologySOS.group_ring(C₃, [one(C₃), a, a^2], star_multiplication = true)
 
     M_1 = reshape([RC₃_star(a)], 1, 1)
     order_unit_1 = reshape([one(RC₃_star)], 1, 1)

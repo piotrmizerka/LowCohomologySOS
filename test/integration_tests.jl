@@ -93,7 +93,7 @@
 
         RSL₃ℤ, sizes = let G = SL₃ℤ, S = union!(collect(values(S)), inv.(values(S)))
             half_basis, sizes = Groups.wlmetric_ball(S, radius = 1)
-            LowCohomologySOS.group_ring(G, half_basis, true), sizes
+            LowCohomologySOS.group_ring(G, half_basis, star_multiplication = true), sizes
         end
 
         @test LowCohomologySOS.embed(h, RF_sl_3_z(S_free[(1,2)] * S_free[(1,3)]^-1), RSL₃ℤ) ==
