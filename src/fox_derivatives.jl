@@ -15,22 +15,20 @@ function fox_derivative(RF::StarAlgebra, u::FPGroupElement, i::Integer)
 
     isone(u) && return zero(RF)
 
-    if length(word(u)) == 1
-        g = Groups.gens(parent(u), i)
-        if u == g
-            return one(RF)
-        elseif u == inv(g)
-            return -RF(inv(g))
-        else
-            return zero(RF)
+    F = parent(u)
+    xᵢ = Groups.gens(F, i)
+    current_multiplier = one(F)
+    result = zero(RF)
+    for j in 1:length(word(u))
+        if F(word(u)[j:j]) == xᵢ
+            result += RF(current_multiplier)
+        elseif F(word(u)[j:j]) == inv(xᵢ)
+            result -= RF(current_multiplier*inv(xᵢ))
         end
-    else
-        d = div(length(word(u)), 2)
-        p = parent(u)(word(u)[1:d])
-        s = parent(u)(word(u)[d+1:end])
-
-        return fox_derivative(RF, p, i) + RF(p) * fox_derivative(RF, s, i)
+        current_multiplier *= F(word(u)[j:j])
     end
+
+    return result
 end
 
 # Jacobian matrix in the free group ring.
