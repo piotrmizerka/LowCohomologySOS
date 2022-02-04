@@ -1,4 +1,4 @@
-##### Certification - see certify_SOS_decomposition from Marek's code (Property T) - in 1712.07167.jl file
+using MathOptInterface
 
 function sos_from_matrix(Q::AbstractMatrix, support, RG::StarAlgebra)
     mn = LinearAlgebra.checksquare(Q)
@@ -54,9 +54,12 @@ function spectral_gaps_certification(
         half_basis;
         optimizer = optimizer,
     )
+    @info "Termination status: " termination_status
+
+    termination_status != MathOptInterface.OPTIMAL && return termination_status, @interval(-1)
+
     Qₐₚ = real(sqrt(Symmetric((Pₐₚ .+ Pₐₚ') ./ 2)))
 
-    @info "Termination status: " termination_status
     @info "Approximated λ: " λₐₚ
 
     certified_sgap = certify_sos_decomposition(Δ₁, Iₙ, λₐₚ, Qₐₚ, half_basis, RG)

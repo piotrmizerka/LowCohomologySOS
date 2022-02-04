@@ -4,6 +4,7 @@ using Test
 using LowCohomologySOS
 using IntervalArithmetic
 using PropertyT_new
+using MathOptInterface
 
 import AbstractAlgebra
 import Logging
