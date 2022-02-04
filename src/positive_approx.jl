@@ -44,6 +44,7 @@ function sos_problem_matrix(
     order_unit,
     upper_bound::Float64 = Inf,
 )
+
     @assert !isempty(M)
     underlying_group_ring = parent(first(M))
     m = size(underlying_group_ring.mstructure, 1)
@@ -99,16 +100,20 @@ function spectral_gaps_approximated(
     @assert !isempty(relations)
     F = parent(first(relations))
     G = parent(h(first(relations)))
-
+    
     d₁ = jacobian_matrix(relations)
-    d₀x = d₀(parent(rand(d₁)), Groups.gens(F))
-    Δ₁⁺ = d₁' * d₁
+
+    RG_ball = group_ring(G, half_basis, star_multiplication = false)
+
+    d₁x = embed.(Ref(h), d₁, Ref(RG_ball))
+    d₀x = embed.(Ref(h), d₀(parent(rand(d₁)), Groups.gens(F)), Ref(RG_ball))
+    Δ₁⁺ = d₁x' * d₁x
     Δ₁⁻ = d₀x * d₀x'
     Δ₁ = Δ₁⁺ + Δ₁⁻
 
-    RG_ball_star = group_ring(G, half_basis, true)
+    RG_ball_star = group_ring(G, half_basis, star_multiplication = true)
 
-    Δ₁x = embed.(Ref(h), Δ₁, Ref(RG_ball_star))
+    Δ₁x = embed.(identity, Δ₁, Ref(RG_ball_star))
 
     n = length(Groups.gens(F))
     @assert size(Δ₁x, 1) === size(Δ₁x, 2) === n
