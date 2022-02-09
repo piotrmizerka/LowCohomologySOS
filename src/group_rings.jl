@@ -8,8 +8,18 @@ using AbstractAlgebra
 StarAlgebras.star(M::AbstractAlgebra.Generic.MatAlgElem{Int64}) = inv(M)
 
 # Group ring with the basis given by the prescribed support
-function group_ring(G, half_basis; star_multiplication = false, additive_only = false)
-    star_closed_support = unique!([half_basis; star.(half_basis)])
+function group_ring(
+    G,
+    half_basis;
+    star_multiplication = false,
+    star_closed=false,
+    additive_only = false
+)
+    star_closed_support = if !star_closed
+        unique!([half_basis; star.(half_basis)])
+    else
+        half_basis
+    end
 
     if !additive_only
         basis_elements =
