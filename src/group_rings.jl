@@ -46,13 +46,6 @@ end
 function group_ring(G, half_radius::Integer, star_multiplication = false)
     S = Groups.gens(G)
     S = unique([S; inv.(S)])
-    ball, sizes = Groups.wlmetric_ball(S, one(G), radius = 2 * half_radius)
-    b = StarAlgebras.Basis{Int}(ball)
-    tmstr = StarAlgebras.CachedMTable{star_multiplication}(
-        b,
-        table_size = (sizes[half_radius], sizes[half_radius]),
-    )
-    RG = StarAlgebra(G, b, tmstr)
-
-    return RG
+    ball, _ = Groups.wlmetric_ball(S, one(G), radius = half_radius)
+    return group_ring(G, ball; star_multiplication=star_multiplication, star_closed=true)
 end
