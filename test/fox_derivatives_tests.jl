@@ -67,31 +67,88 @@ end
     end
 end
 
-@testset "fox_derivative" begin
-    A = Alphabet([:x, :X, :y, :Y], [2, 1, 4, 3])
-    F = FreeGroup(A)
-    RF = LowCohomologySOS.group_ring(F, 2)
+@testset "Fox derivatives" begin
+    @testset "via group ring of the free group" begin
+        A = Alphabet([:x, :X, :y, :Y], [2, 1, 4, 3])
+        F = FreeGroup(A)
+        RF = LowCohomologySOS.group_ring(F, 2)
 
-    @test LowCohomologySOS.fox_derivative(RF, one(F), 1) == zero(RF)
-    @test LowCohomologySOS.fox_derivative(RF, one(F), 2) == zero(RF)
+        @test LowCohomologySOS.fox_derivative(RF, one(F), 1) == zero(RF)
+        @test LowCohomologySOS.fox_derivative(RF, one(F), 2) == zero(RF)
 
-    x, y = Groups.gens(F)
+        x, y = Groups.gens(F)
 
-    @test LowCohomologySOS.fox_derivative(RF, x, 1) == one(RF)
-    @test LowCohomologySOS.fox_derivative(RF, x, 2) == zero(RF)
-    @test LowCohomologySOS.fox_derivative(RF, y, 1) == zero(RF)
-    @test LowCohomologySOS.fox_derivative(RF, y, 2) == one(RF)
+        @test LowCohomologySOS.fox_derivative(RF, x, 1) == one(RF)
+        @test LowCohomologySOS.fox_derivative(RF, x, 2) == zero(RF)
+        @test LowCohomologySOS.fox_derivative(RF, y, 1) == zero(RF)
+        @test LowCohomologySOS.fox_derivative(RF, y, 2) == one(RF)
 
-    @test LowCohomologySOS.fox_derivative(RF, x^(-1), 1) == -RF(x^(-1))
-    @test LowCohomologySOS.fox_derivative(RF, y^(-1), 2) == -RF(y^(-1))
+        @test LowCohomologySOS.fox_derivative(RF, x^(-1), 1) == -RF(x^(-1))
+        @test LowCohomologySOS.fox_derivative(RF, y^(-1), 2) == -RF(y^(-1))
 
-    @test LowCohomologySOS.fox_derivative(RF, x * y, 1) == one(RF)
-    @test LowCohomologySOS.fox_derivative(RF, x * y, 2) == RF(x)
+        @test LowCohomologySOS.fox_derivative(RF, x * y, 1) == one(RF)
+        @test LowCohomologySOS.fox_derivative(RF, x * y, 2) == RF(x)
 
-    @test LowCohomologySOS.fox_derivative(RF, x * y * x * y, 1) ==
-          one(RF) + RF(x * y)
-    @test LowCohomologySOS.fox_derivative(RF, x * y * x * y, 2) ==
-          RF(x) + RF(x * y * x)
+        @test LowCohomologySOS.fox_derivative(RF, x * y * x * y, 1) ==
+            one(RF) + RF(x * y)
+        @test LowCohomologySOS.fox_derivative(RF, x * y * x * y, 2) ==
+            RF(x) + RF(x * y * x)
+    end
+
+    @testset "via FreeGroup, return vectors" begin
+        F = FreeGroup(4)
+
+        c, g = fox_derivative(F, one(F), 1)
+        @test isempty(c) && isempty(g)
+        c, g  = fox_derivative(F, gens(F, 1), 1)
+        @test c == [1] && g == [one(F)]
+
+        c, g = fox_derivative(F, inv(gens(F, 1)), 1)
+        @test c == [-1] && g == [inv(gens(F, 1))]
+        c, g = fox_derivative(F, inv(gens(F, 1)), 2)
+        @test isempty(c) && isempty(g)
+
+        a,b,c,d = gens(F)
+        u = a*b^-1*c*d^-1
+
+        cf, elts = fox_derivative(F, u, 1)
+        @test cf == [1] && elts == [one(F)]
+
+        cf, elts = fox_derivative(F, u, 2)
+        @test cf == [-1] && elts == [a*b^-1]
+
+        cf, elts = fox_derivative(F, u, 3)
+        @test cf == [1] && elts == [a*b^-1]
+
+        cf, elts = fox_derivative(F, u, 4)
+        @test cf == [-1] && elts == [a*b^-1*c*d^-1]
+    end
+
+    @testset "agreement of two definitions" begin
+        F = FreeGroup(4)
+        RF = LowCohomologySOS.group_ring(F, 3)
+
+        A = alphabet(F)
+        for u in [F(rand(1:length(A), 6)) for _ in 1:4]
+            for i in 1:4
+                (coeffs, elts) = fox_derivative(F, u, i)
+
+                fd = if isempty(coeffs)
+                    @test isempty(elts)
+                    zero(RF)
+                else
+                    sum(c*RF(g) for (c, g) in zip(coeffs, elts))
+                end
+
+                try
+                    @test LowCohomologySOS.fox_derivative(RF, u, i) == fd
+                catch err
+                    @error "failed (?) test for" u, i
+                    rethrow(err)
+                end
+            end
+        end
+    end
 end
 
 @testset "jacobian_matrix" begin
