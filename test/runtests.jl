@@ -4,12 +4,12 @@ using Test
 using LowCohomologySOS
 using IntervalArithmetic
 using PropertyT_new
-using MathOptInterface
 
 import AbstractAlgebra
 import Logging
 import JuMP
 import SCS
+import PropertyT_new.MOI
 
 function cyclic_group(n::Integer)
     A = Alphabet([:a, :A], [2, 1])

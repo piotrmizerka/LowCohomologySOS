@@ -1,4 +1,4 @@
-using MathOptInterface
+import PropertyT_new.MOI
 
 function sos_from_matrix(Q::AbstractMatrix, support, RG::StarAlgebra)
     mn = LinearAlgebra.checksquare(Q)
@@ -56,7 +56,7 @@ function spectral_gaps_certification(
     )
     @info "Termination status: " termination_status
 
-    termination_status != MathOptInterface.OPTIMAL && return termination_status, @interval(-1)
+    termination_status != MOI.OPTIMAL && return termination_status, @interval(-1)
 
     Qₐₚ = real(sqrt(Symmetric((Pₐₚ .+ Pₐₚ') ./ 2)))
 

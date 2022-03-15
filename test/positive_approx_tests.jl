@@ -112,7 +112,7 @@ end
         sos_problem_infeasible,
         optimizer = scs_opt(verbose = false),
     )
-    @test termination_status_1 == MathOptInterface.INFEASIBLE
+    @test termination_status_1 == MOI.INFEASIBLE
 
     A = Alphabet([:x, :X], [2, 1])
     Z = FreeGroup(A)
@@ -134,7 +134,7 @@ end
         optimizer = scs_opt(verbose = false),
     )
 
-    @test termination_status_2 == MathOptInterface.INFEASIBLE
+    @test termination_status_2 == MOI.INFEASIBLE
 
     M_3 = [
         4*one(RZ_star) zero(RZ_star) zero(RZ_star)
@@ -153,7 +153,7 @@ end
         optimizer = scs_opt(verbose = false),
     )
 
-    @test termination_status_3 == MathOptInterface.OPTIMAL
+    @test termination_status_3 == MOI.OPTIMAL
     @test λ_3 ≈ 3 rtol = 4.0e-3
 end
 
@@ -191,7 +191,7 @@ end
         1,
     )
     I_1_proper = reshape([one(RG_ball_star)], 1, 1)
-    @test termination_status_1 == MathOptInterface.OPTIMAL
+    @test termination_status_1 == MOI.OPTIMAL
     @test λ_1 ≈ 3 rtol = 1e-3
     @test Δ₁_1 == Δ₁_1_proper
     @test I_1 == I_1_proper
