@@ -98,29 +98,29 @@ end
     @testset "via FreeGroup, return vectors" begin
         F = FreeGroup(4)
 
-        c, g = fox_derivative(F, one(F), 1)
+        c, g = LowCohomologySOS.fox_derivative(F, one(F), 1)
         @test isempty(c) && isempty(g)
-        c, g  = fox_derivative(F, gens(F, 1), 1)
+        c, g  = LowCohomologySOS.fox_derivative(F, gens(F, 1), 1)
         @test c == [1] && g == [one(F)]
 
-        c, g = fox_derivative(F, inv(gens(F, 1)), 1)
+        c, g = LowCohomologySOS.fox_derivative(F, inv(gens(F, 1)), 1)
         @test c == [-1] && g == [inv(gens(F, 1))]
-        c, g = fox_derivative(F, inv(gens(F, 1)), 2)
+        c, g = LowCohomologySOS.fox_derivative(F, inv(gens(F, 1)), 2)
         @test isempty(c) && isempty(g)
 
         a,b,c,d = gens(F)
         u = a*b^-1*c*d^-1
 
-        cf, elts = fox_derivative(F, u, 1)
+        cf, elts = LowCohomologySOS.fox_derivative(F, u, 1)
         @test cf == [1] && elts == [one(F)]
 
-        cf, elts = fox_derivative(F, u, 2)
+        cf, elts = LowCohomologySOS.fox_derivative(F, u, 2)
         @test cf == [-1] && elts == [a*b^-1]
 
-        cf, elts = fox_derivative(F, u, 3)
+        cf, elts = LowCohomologySOS.fox_derivative(F, u, 3)
         @test cf == [1] && elts == [a*b^-1]
 
-        cf, elts = fox_derivative(F, u, 4)
+        cf, elts = LowCohomologySOS.fox_derivative(F, u, 4)
         @test cf == [-1] && elts == [a*b^-1*c*d^-1]
     end
 
@@ -131,7 +131,7 @@ end
         A = alphabet(F)
         for u in [F(rand(1:length(A), 6)) for _ in 1:4]
             for i in 1:4
-                (coeffs, elts) = fox_derivative(F, u, i)
+                (coeffs, elts) = LowCohomologySOS.fox_derivative(F, u, i)
 
                 fd = if isempty(coeffs)
                     @test isempty(elts)
