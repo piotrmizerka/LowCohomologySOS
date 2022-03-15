@@ -161,6 +161,7 @@ end
     RF_J_proper = LowCohomologySOS.suitable_group_ring(relations)
     @test RF_J.object == RF_J_proper.object
     @test RF_J.basis == RF_J_proper.basis
+    @test_broken RF_J.mstructure == RF_J_proper.mstructure
     @test typeof(RF_J) == typeof(RF_J_proper)
     J_proper = reshape([zero(RF_J) for i in 1:6], 3, 2)
     J_proper[1, 1] = one(RF_J)
