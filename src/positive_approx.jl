@@ -106,7 +106,7 @@ function spectral_gaps_approximated(
     RG_ball = group_ring(G, half_basis, star_multiplication = false)
 
     d₁x = embed.(Ref(h), d₁, Ref(RG_ball))
-    d₀x = embed.(Ref(h), d₀(parent(rand(d₁)), Groups.gens(F)), Ref(RG_ball))
+    d₀x = embed.(Ref(h), d₀(parent(first(d₁)), Groups.gens(F)), Ref(RG_ball))
     Δ₁⁺ = d₁x' * d₁x
     Δ₁⁻ = d₀x * d₀x'
     Δ₁ = Δ₁⁺ + Δ₁⁻
