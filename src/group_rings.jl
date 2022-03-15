@@ -3,7 +3,7 @@ Base.:/(G::Groups.AbstractFPGroup, rels::AbstractVector{<:FPGroupElement}) =
 Base.adjoint(X::AlgebraElement) = StarAlgebras.star(X)
 Base.copy(X::AlgebraElement) =
     AlgebraElement(copy(StarAlgebras.coeffs(X)), parent(X))
-StarAlgebras.star(g::Groups.GroupElement) = inv(g)
+
 using AbstractAlgebra
 StarAlgebras.star(M::AbstractAlgebra.Generic.MatAlgElem{Int64}) = inv(M)
 
