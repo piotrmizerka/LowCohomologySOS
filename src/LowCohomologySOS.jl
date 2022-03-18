@@ -11,6 +11,7 @@ using Groups
 using Revise
 
 import JuMP
+import PropertyT_new.MOI
 
 include("group_rings.jl")
 include("fox_derivatives.jl")

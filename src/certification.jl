@@ -1,5 +1,3 @@
-import PropertyT_new.MOI
-
 function sos_from_matrix(Q::AbstractMatrix, support, RG::StarAlgebra)
     mn = LinearAlgebra.checksquare(Q)
 
