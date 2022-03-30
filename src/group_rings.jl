@@ -4,9 +4,6 @@ Base.adjoint(X::AlgebraElement) = StarAlgebras.star(X)
 Base.copy(X::AlgebraElement) =
     AlgebraElement(copy(StarAlgebras.coeffs(X)), parent(X))
 
-using AbstractAlgebra
-StarAlgebras.star(M::AbstractAlgebra.Generic.MatAlgElem{Int64}) = inv(M)
-
 # Group ring with the basis given by the prescribed support
 function group_ring(
     G,

@@ -5,7 +5,6 @@ using LowCohomologySOS
 using IntervalArithmetic
 using PropertyT_new
 
-import AbstractAlgebra
 import Logging
 import JuMP
 import SCS

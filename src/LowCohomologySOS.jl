@@ -7,11 +7,11 @@ using Kronecker
 using IntervalArithmetic
 
 using StarAlgebras
+using GroupsCore
 using Groups
-using Revise
 
 import JuMP
-import PropertyT_new.MOI
+import JuMP.MOI
 
 include("group_rings.jl")
 include("fox_derivatives.jl")
