@@ -40,45 +40,45 @@ function entry_constraint(
 end
 
 function sos_problem_matrix(
-    M::AbstractMatrix,
-    order_unit,
+    M::AbstractMatrix{<:AlgebraElement},
+    order_unit::AbstractMatrix{<:AlgebraElement},
     upper_bound::Float64 = Inf,
 )
-
+    @assert size(M) == size(order_unit)
     @assert !isempty(M)
-    underlying_group_ring = parent(first(M))
-    m = size(underlying_group_ring.mstructure, 1)
-    n = size(M, 1)
+
+    A = parent(first(M))
+    @assert all(x -> parent(x) === A, M)
+    @assert all(x -> parent(x) === A, order_unit)
+
+    m = size(A.mstructure, 1)
+    n = LinearAlgebra.checksquare(M)
     mn = m * n
     result = JuMP.Model()
 
     JuMP.@variable(result, P[1:mn, 1:mn], Symmetric)
     JuMP.@constraint(result, sdp, P in JuMP.PSDCone())
 
-    if upper_bound < Inf
-        λ = JuMP.@variable(result, λ <= upper_bound)
-    else
-        λ = JuMP.@variable(result, λ)
-    end
-
-    cnstrs = constraints(underlying_group_ring.mstructure)
-
-    for i in 1:n
-        for j in 1:n
-            mij = StarAlgebras.coeffs(M[i, j])
-            u = StarAlgebras.coeffs(order_unit[i, j])
-            @assert length(cnstrs) == length(mij) == length(u)
-            JuMP.@constraint(
-                result,
-                [k = 1:length(cnstrs)],
-                mij[k] - λ * u[k] ==
-                sum(P[entry_constraint(cnstrs, i, j, k, m, n)])
-            )
-        end
-    end
-
+    JuMP.@variable(result, λ)
     JuMP.@objective(result, Max, λ)
 
+    if upper_bound < Inf
+        λ = JuMP.@constraint(result, λ <= upper_bound)
+    end
+
+    cnstrs = constraints(A.mstructure)
+    @assert length(cnstrs) == length(basis(A))
+
+    for idx in CartesianIndices(M)
+        mij = M[idx]
+        u = StarAlgebras.coeffs(order_unit[idx])
+        JuMP.@constraint(
+            result,
+            [k = 1:length(cnstrs)],
+            mij[k] - λ * u[k] ==
+            sum(P[p] for p in entry_constraint(cnstrs, Tuple(idx)..., k, m, n))
+        )
+    end
     return result
 end
 
@@ -93,14 +93,14 @@ end
 # h:Free group --> our group G
 function spectral_gaps_approximated(
     h,
-    relations,
+    relations::AbstractVector{<:FPGroupElement},
     half_basis;
     optimizer,
 )
     @assert !isempty(relations)
-    F = parent(first(relations))
-    G = parent(h(first(relations)))
-    
+    F = parent(first(relations)) # source of h
+    G = parent(h(first(relations))) # target of h
+
     d₁ = jacobian_matrix(relations)
 
     RG_ball = group_ring(G, half_basis, star_multiplication = false)
@@ -117,10 +117,7 @@ function spectral_gaps_approximated(
 
     n = length(Groups.gens(F))
     @assert size(Δ₁x, 1) === size(Δ₁x, 2) === n
-    Iₙ = reshape([zero(RG_ball_star) for i in 1:(n*n)], n, n)
-    for i in 1:n
-        Iₙ[i, i] = one(RG_ball_star)
-    end
+    Iₙ = [i ≠ j ? zero(RG_ball_star) : one(RG_ball_star) for i in 1:n, j in 1:n]
 
     Δ₁_sos_problem = sos_problem_matrix(Δ₁x, Iₙ)
     λ, P, termination_status = sos_problem_solution(Δ₁_sos_problem, optimizer = optimizer)
