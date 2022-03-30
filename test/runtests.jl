@@ -21,16 +21,22 @@ function cyclic_group(n::Integer)
 end
 
 function scs_opt(;
-    eps = 1e-5,
-    acceleration_lookback = 0,
-    max_iters = 20_000,
+    accel = 10,
+    alpha = 1.5,
+    eps = 1e-9,
+    max_iters = 10_000,
     verbose = true,
 )
     return JuMP.optimizer_with_attributes(
         SCS.Optimizer,
-        "eps" => eps,
-        "acceleration_lookback" => acceleration_lookback,
+        "acceleration_lookback" => accel,
+        "acceleration_interval" => max(abs(accel), 1),
+        "alpha" => alpha,
+        "eps_abs" => eps,
+        "eps_rel" => eps,
+        "linear_solver" => SCS.DirectSolver,
         "max_iters" => max_iters,
+        "warm_start" => true,
         "verbose" => verbose,
     )
 end
