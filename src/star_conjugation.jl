@@ -40,51 +40,50 @@ function).
 """
 
 function associated_elements(
-    G, 
-    bigger_ball, 
+    G,
+    bigger_ball,
     smaller_ball
 )
-    gsⱼ⁻¹ = [[] for k in 1:length(bigger_ball)]
-    sᵢg = [[] for k in 1:length(bigger_ball)]
-    sᵢgsⱼ⁻¹ = [[] for k in 1:length(bigger_ball)]
+    ran = 1:length(bigger_ball)
+    gsⱼ⁻¹ = [NTuple{2, Int}[] for _ in ran]
+    sᵢg = [NTuple{2, Int}[] for _ in ran]
+    sᵢgsⱼ⁻¹ = [NTuple{3, Int}[] for _ in ran]
 
-    for k in 1:length(bigger_ball)
-        for i in 1:length(gens(G))
-            gsⱼ⁻¹_elt = bigger_ball[k]*gens(G,i)^(-1)
-            gsⱼ⁻¹_id = findall(x -> x==gsⱼ⁻¹_elt, smaller_ball)
-            if length(gsⱼ⁻¹_id) == 1 
-                append!(gsⱼ⁻¹[k], [[i, gsⱼ⁻¹_id[1]]])
+    for (k, g) in pairs(bigger_ball)
+        for (i, s) in pairs(gens(G))
+            idx = findfirst(x -> x==g*inv(s), smaller_ball)
+            if idx ≠ nothing
+                push!(gsⱼ⁻¹[k], (i, idx))
             end
 
-            sᵢg_elt = gens(G,i)*bigger_ball[k]
-            sᵢg_id = findall(x -> x==sᵢg_elt, smaller_ball)
-            if length(sᵢg_id) == 1 
-                append!(sᵢg[k], [[i, sᵢg_id[1]]])
+            idx = findfirst(x -> x==s*g, smaller_ball)
+            if idx ≠ nothing
+                push!(sᵢg[k], (i, idx))
             end
 
-            for j in 1:length(gens(G))
-                sᵢgsⱼ⁻¹_elt = gens(G,i)*bigger_ball[k]*gens(G,j)^(-1)
-                sᵢgsⱼ⁻¹_id = findall(x -> x==sᵢgsⱼ⁻¹_elt, smaller_ball)
-                if length(sᵢgsⱼ⁻¹_id) == 1 
-                    append!(sᵢgsⱼ⁻¹[k], [[i, j, sᵢgsⱼ⁻¹_id[1]]])
+            for (j, t) in pairs(gens(G))
+                idx = findfirst(x -> x==s*g*inv(t), smaller_ball)
+                if idx ≠ nothing
+                    push!(sᵢgsⱼ⁻¹[k], (i, j, idx))
                 end
             end
         end
     end
-    
+
     return gsⱼ⁻¹, sᵢg, sᵢgsⱼ⁻¹
 end
 
 function sos_problem_conjugated(
-    ξ,
-    order_unit,
+    ξ::AlgebraElement,
+    order_unit::AlgebraElement,
     upper_bound::Float64 = Inf;
-    G,
-    smaller_group_ring
+    G::Group,
+    smaller_group_ring::StarAlgebra,
 )
+    @assert parent(ξ) === parent(order_unit)
 
     m = size(smaller_group_ring.mstructure, 1)
-    n = length(gens(G))
+    n = ngens(G)
     mn = m * n
 
     result = JuMP.Model()
@@ -92,31 +91,51 @@ function sos_problem_conjugated(
     JuMP.@variable(result, P[1:mn, 1:mn], Symmetric)
     JuMP.@constraint(result, sdp, P in JuMP.PSDCone())
 
-    if upper_bound < Inf
-        λ = JuMP.@variable(result, λ <= upper_bound)
-    else
-        λ = JuMP.@variable(result, λ)
+    λ = JuMP.@variable(result, λ)
+    JuMP.@objective(result, Max, λ)
+
+    if isfinite(upper_bound)
+        JuMP.@constraint(result, λ <= upper_bound)
     end
 
     cnstrs = constraints(smaller_group_ring.mstructure)
 
-    bigger_group_ring = parent(ξ)
-    gsⱼ⁻¹, sᵢg, sᵢgsⱼ⁻¹ = associated_elements(G, bigger_group_ring.basis, smaller_group_ring.basis)
+    gsⱼ⁻¹, sᵢg, sᵢgsⱼ⁻¹ =
+        associated_elements(G, basis(parent(ξ)), basis(smaller_group_ring))
 
-    u = StarAlgebras.coeffs(order_unit)
-    @assert length(StarAlgebras.coeffs(ξ)) == length(u) == length(bigger_group_ring.basis)
-    @assert length(cnstrs) == length(smaller_group_ring.basis)
-    JuMP.@constraint(
-        result,
-        [k = 1:length(u)],
-        ξ[k] - λ * u[k] ==
-        ((k <= length(cnstrs)) ? sum(sum(P[entry_constraint(cnstrs, i, j, k, m, n)]) for i in 1:n for j in 1:n) : 0) -
-        sum(sum(P[entry_constraint(cnstrs, i, jk[1], jk[2], m, n)]) for jk in gsⱼ⁻¹[k] for i in 1:n)-
-        sum(sum(P[entry_constraint(cnstrs, ik[1], j, ik[2], m, n)]) for ik in sᵢg[k] for j in 1:n)+
-        sum(sum(P[entry_constraint(cnstrs, ijk[1], ijk[2], ijk[3], m, n)]) for ijk in sᵢgsⱼ⁻¹[k])
-    )
+    for (k, g) in pairs(basis(parent(ξ)))
+        rhs = if k <= length(cnstrs)
+            sum(
+                sum(P[entry_constraint(cnstrs, i, j, k, m, n)]) for i = 1:n
+                for j = 1:n
+            )
+        else
+            zero(JuMP.AffExpr)
+        end
 
-    JuMP.@objective(result, Max, λ)
+        if !isempty(gsⱼ⁻¹[k])
+            rhs -= sum(
+                P[p] for i = 1:n for (j, k) in gsⱼ⁻¹[k] for
+                p in entry_constraint(cnstrs, i, j, k, m, n)
+            )
+        end
+
+        if !isempty(sᵢg[k])
+            rhs -= sum(
+                P[p] for (i, k) in sᵢg[k] for j = 1:n for
+                p in entry_constraint(cnstrs, i, j, k, m, n)
+            )
+        end
+
+        if !isempty(sᵢgsⱼ⁻¹[k])
+            rhs += sum(
+                P[p] for (i, j, k) in sᵢgsⱼ⁻¹[k] for
+                p in entry_constraint(cnstrs, i, j, k, m, n)
+            )
+        end
+
+        JuMP.@constraint(result, ξ(g) - λ * order_unit(g) == rhs)
+    end
 
     return result
 end
