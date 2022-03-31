@@ -8,7 +8,7 @@ using PropertyT_new
 import Logging
 import JuMP
 import SCS
-import PropertyT_new.MOI
+import JuMP.MOI
 
 function cyclic_group(n::Integer)
     A = Alphabet([:a, :A], [2, 1])
