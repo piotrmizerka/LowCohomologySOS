@@ -47,14 +47,15 @@ function sos_problem_matrix(
     @assert length(cnstrs) == length(basis(A))
 
     for idx in CartesianIndices(M)
+        i, j = Tuple(idx)
+        Pⁱʲ = @view P[KroneckerDelta{n}(i, j)]
+
         mij = M[idx]
-        u = StarAlgebras.coeffs(order_unit[idx])
-        JuMP.@constraint(
-            result,
-            [k = 1:length(cnstrs)],
-            mij[k] - λ * u[k] ==
-            sum(P[p] for p in entry_constraint(cnstrs, Tuple(idx)..., k, m, n))
-        )
+        uij = order_unit[idx]
+
+        for (A_g, g) in zip(cnstrs, basis(A))
+            JuMP.@constraint(result, mij(g) - λ * uij(g) == dot(A_g, Pⁱʲ))
+        end
     end
     return result
 end
