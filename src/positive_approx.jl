@@ -1,42 +1,19 @@
-# The function below concerns definition of constraints defined for the semi-positive definite matrix P to be computed.
-# For each entry value, it creates a vector of linear indices of the matrix pm on which this value occurs.
-# The function returns the vector of vectors as above indexed by pm matrix's values.
 function constraints(pm::AbstractMatrix{<:Integer})
+    @assert all(i->1≤length(pm), pm)
     cnstrs = [Vector{Int}() for _ in 1:maximum(pm)]
-    li = LinearIndices(CartesianIndices(size(pm)))
+    li = LinearIndices(pm)
 
-    for i in eachindex(pm)
-        push!(cnstrs[pm[i]], li[i])
+    for (idx, k) in pairs(pm)
+        push!(cnstrs[k], li[idx])
     end
 
-    return cnstrs
-end
-
-# As the constraints function, this function also concerns defining the constraints arising from matrix P.
-# More precisely, it defines constraints arising from the (row_id,column_id)-entry of the matrix equation for our problem.
-# We can apply the constraints function written by M. Kaluba to define the constraints arising from each entry.
-# Order of linear indices for matrices which has to be applied: column order (from top to bottom and from Seattle to Miami).
-function entry_constraint(
-    cnstrs,
-    row_id,
-    column_id,
-    constraind_id,
-    half_radius,
-    generators_number,
-)
-    B =
-        (column_id - 1) * half_radius^2 * generators_number +
-        (row_id - 1) * half_radius
-    result = copy(cnstrs[constraind_id])
-    for l in 1:length(cnstrs[constraind_id])
-        summand =
-            (cnstrs[constraind_id][l] % half_radius != 0) ?
-            cnstrs[constraind_id][l] % half_radius : half_radius
-        factor = cnstrs[constraind_id][l] - summand
-        result[l] = B + factor * generators_number + summand
+    Threads.@threads for i in 1:length(cnstrs)
+        sort!(cnstrs[i])
     end
 
-    return result
+    a,b = size(pm)
+
+    return [BinaryMatrix(c, a, b, 1, sorted = true) for c in cnstrs]
 end
 
 function sos_problem_matrix(

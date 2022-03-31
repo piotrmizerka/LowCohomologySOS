@@ -87,3 +87,40 @@ Base.@propagate_inbounds function Base.getindex(
 
     return t.a[d1, d2]*t.b[r1, r2]
 end
+
+struct BinaryMatrix{T} <: AbstractMatrix{T}
+    nzeros::Vector{Int} # list of indices
+    n::Int # nrows
+    m::Int # ncols
+    val::T
+
+    function BinaryMatrix(nzeros, n, m, val::T; sorted::Bool = false) where T
+        @assert n ≥ 1
+        @assert m ≥ 1
+
+        if !sorted && !issorted(nzeros)
+            sort!(nzeros)
+        end
+        !isempty(nzeros) && @assert first(nzeros) ≥ 1 && last(nzeros) ≤ n*m
+
+        return new{T}(nzeros, n, m, val)
+    end
+end
+
+Base.size(bm::BinaryMatrix) = (bm.n, bm.m)
+Base.@propagate_inbounds function Base.getindex(
+    bm::BinaryMatrix,
+    i::Integer,
+    j::Integer,
+) where {N}
+    li = LinearIndices(bm)
+    idx = li[i,j]
+
+    # TODO:
+    # return isnothing(searchsorted(bm.nzeros, idx)) ? zero(bm.val) : bm.val
+
+    return idx ∈ bm.nzeros ? bm.val : zero(bm.val)
+end
+
+LinearAlgebra.dot(bm::BinaryMatrix, m::AbstractMatrix) =
+    sum(bm.val*m[idx] for idx in bm.nzeros)
