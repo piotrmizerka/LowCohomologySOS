@@ -56,5 +56,5 @@ end
     include("certification_tests.jl")
     include("integration_tests.jl")
 
-    include(joinpath(@__DIR__, "..", "scripts", "SL_3_Z_conjugated.jl"))
+    # include(joinpath(@__DIR__, "..", "scripts", "SL_3_Z_conjugated.jl"))
 end
