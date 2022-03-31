@@ -3,19 +3,24 @@ using Groups
 using PropertyT_new
 using JuMP
 using SCS
-using Revise
 
 function scs_opt(;
-    eps = 1e-5,
-    acceleration_lookback = 0,
-    max_iters = 20_000,
+    accel = 10,
+    alpha = 1.5,
+    eps = 1e-9,
+    max_iters = 10_000,
     verbose = true,
 )
     return JuMP.optimizer_with_attributes(
         SCS.Optimizer,
-        "eps" => eps,
-        "acceleration_lookback" => acceleration_lookback,
+        "acceleration_lookback" => accel,
+        "acceleration_interval" => max(abs(accel), 1),
+        "alpha" => alpha,
+        "eps_abs" => eps,
+        "eps_rel" => eps,
+        "linear_solver" => SCS.DirectSolver,
         "max_iters" => max_iters,
+        "warm_start" => true,
         "verbose" => verbose,
     )
 end
@@ -70,10 +75,10 @@ SL₃ℤ_spectral_gaps = let half_radius = 2
         PropertyT_new.Homomorphism(hom, source, target)
     end
 
-    relations = [e12*e13*e12^(-1)*e13^(-1), e12*e32*e12^(-1)*e32^(-1), e13*e23*e13^(-1)*e23^(-1), 
+    relations = [e12*e13*e12^(-1)*e13^(-1), e12*e32*e12^(-1)*e32^(-1), e13*e23*e13^(-1)*e23^(-1),
                  e23*e21*e23^(-1)*e21^(-1), e21*e31*e21^(-1)*e31^(-1), e31*e32*e31^(-1)*e32^(-1),
-                 e12*e23*e12^(-1)*e23^(-1)*e13^(-1), e13*e32*e13^(-1)*e32^(-1)*e12^(-1), 
-                 e21*e13*e21^(-1)*e13^(-1)*e23^(-1), e23*e31*e23^(-1)*e31^(-1)*e21^(-1), 
+                 e12*e23*e12^(-1)*e23^(-1)*e13^(-1), e13*e32*e13^(-1)*e32^(-1)*e12^(-1),
+                 e21*e13*e21^(-1)*e13^(-1)*e23^(-1), e23*e31*e23^(-1)*e31^(-1)*e21^(-1),
                  e31*e12*e31^(-1)*e12^(-1)*e32^(-1), e32*e21*e32^(-1)*e21^(-1)*e31^(-1)]
 
     LowCohomologySOS.spectral_gaps_certification(quotient_hom, relations, half_basis, optimizer = scs_opt(eps = 1e-5, max_iters = 100_000))
