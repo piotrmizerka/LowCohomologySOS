@@ -100,5 +100,5 @@ function spectral_gaps_approximated(
     Δ₁_sos_problem = sos_problem_matrix(Δ₁x, Iₙ)
     λ, P, termination_status = sos_problem_solution(Δ₁_sos_problem, optimizer = optimizer)
 
-    return λ, P, termination_status, RG_ball_star, Δ₁x, Iₙ
+    return λ, P, termination_status, Δ₁, Iₙ
 end

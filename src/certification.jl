@@ -25,11 +25,11 @@ function certify_sos_decomposition(
     λ::Number,
     Q::AbstractMatrix,
     support,
-    RG::StarAlgebra,
 )
     λ_interval = @interval(λ)
     eoi = _eoi(X, λ_interval, order_unit)
 
+    RG = parent(first(X))
     residual = eoi - sos_from_matrix(Q, support, RG)
     l1_norm = sum(x -> norm(x, 1), residual)
 
@@ -46,7 +46,7 @@ function spectral_gaps_certification(
     half_basis;
     optimizer,
 )
-    λₐₚ, Pₐₚ, termination_status, RG, Δ₁, Iₙ = spectral_gaps_approximated(
+    λₐₚ, Pₐₚ, termination_status, Δ₁, Iₙ = spectral_gaps_approximated(
         h,
         relations,
         half_basis;
@@ -60,7 +60,7 @@ function spectral_gaps_certification(
 
     @info "Approximated λ: " λₐₚ
 
-    certified_sgap = certify_sos_decomposition(Δ₁, Iₙ, λₐₚ, Qₐₚ, half_basis, RG)
+    flag, certified_sgap = certify_sos_decomposition(Δ₁, Iₙ, λₐₚ, Qₐₚ, half_basis)
 
     @info "Certified λ (interval atithmetic): " certified_sgap
 

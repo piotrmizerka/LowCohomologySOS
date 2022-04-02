@@ -160,6 +160,8 @@ end
             optimizer = scs_opt(verbose = false),
         )
 
+    RG_ball_star = parent(first(Δ₁_1))
+    
     Δ₁_1_proper = reshape(
         [5 * one(RG_ball_star) + 2 * RG_ball_star(xx) + 2 * RG_ball_star(xx^2)],
         1,

@@ -68,7 +68,6 @@ end
             4,
             Q_1,
             half_basis_C_3,
-            RC₃,
         )
     end
 
@@ -83,7 +82,6 @@ end
             1,
             Q_1,
             half_basis_C_3,
-            RC₃,
         )
     end
     @test sup(certified_interval_1b) < 0
@@ -105,7 +103,6 @@ end
             1,
             Q_3,
             half_basis_C_2,
-            RC₂,
         )
     end
     @test 1 ∈ certified_interval_2
