@@ -1,18 +1,16 @@
-function sos_from_matrix(Q::AbstractMatrix, support, RG::StarAlgebra)
+function sos_from_matrix(RG::StarAlgebra, Q::AbstractMatrix, support)
     mn = LinearAlgebra.checksquare(Q)
 
     # Changing Q to the corresponding interval-entry matrix
     Q_interval = map(x->@interval(x), Symmetric((Q.+Q')./2))
-    P_interval_RG = RG.(Q_interval'*Q_interval)
+    P_interval = Q_interval'*Q_interval
 
     m = length(support)
     n,r = divrem(mn, m)
     @assert iszero(r)
-    Iₙ = [(i == j ? one(RG) : zero(RG)) for i in 1:n, j in 1:n]
 
-    x = reshape([RG(s) for s in support], m, 1)
-    xx = kron(Iₙ, x)
-    result = xx' * P_interval_RG * xx
+    x = kron(Matrix(I, n, n), [RG(s) for s in support])
+    result = permutedims(x) * P_interval * x
 
     return result
 end
@@ -30,7 +28,7 @@ function certify_sos_decomposition(
     λ_interval = @interval(λ)
     eoi = _eoi(X, λ_interval, order_unit)
 
-    residual = eoi - sos_from_matrix(Q, support, RG)
+    residual = eoi - sos_from_matrix(RG, Q, support)
     l1_norm = sum(x -> norm(x, 1), residual)
 
     @info "l₁ norm of the error in interval arithmetic:" l1_norm radius(l1_norm)
