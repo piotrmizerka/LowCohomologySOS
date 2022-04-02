@@ -44,23 +44,26 @@ function spectral_gaps_certification(
     half_basis;
     optimizer,
 )
-    λₐₚ, Pₐₚ, termination_status, RG, Δ₁, Iₙ = spectral_gaps_approximated(
+    solution = spectral_gaps_approximated(
         h,
         relations,
         half_basis;
         optimizer = optimizer,
     )
-    @info "Termination status: " termination_status
+    @info "Termination status: " solution.termination_status
 
-    termination_status != MOI.OPTIMAL && return termination_status, @interval(-1)
+    @info "Approximated λ: " solution.λ
 
-    Qₐₚ = real(sqrt(Symmetric((Pₐₚ .+ Pₐₚ') ./ 2)))
-
-    @info "Approximated λ: " λₐₚ
-
-    certified_sgap = certify_sos_decomposition(Δ₁, Iₙ, λₐₚ, Qₐₚ, half_basis, RG)
+    certified_sgap = certify_sos_decomposition(
+        solution.laplacian,
+        solution.unit,
+        solution.λ,
+        solution.Q,
+        half_basis,
+        parent(first(solution.laplacian)),
+    )
 
     @info "Certified λ (interval atithmetic): " certified_sgap
 
-    return termination_status, certified_sgap
+    return solution.termination_status, certified_sgap
 end
