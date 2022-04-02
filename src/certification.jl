@@ -11,7 +11,7 @@ function sos_from_matrix(Q::AbstractMatrix, support, RG::StarAlgebra)
     Iₙ = [(i == j ? one(RG) : zero(RG)) for i in 1:n, j in 1:n]
 
     x = reshape([RG(s) for s in support], m, 1)
-    xx = collect(Iₙ ⊗ x)
+    xx = kron(Iₙ, x)
     result = xx' * P_interval_RG * xx
 
     return result
