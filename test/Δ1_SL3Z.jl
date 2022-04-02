@@ -1,12 +1,6 @@
-using LinearAlgebra
-ENV["JULIA_NUM_THREADS"] = Sys.CPU_THREADS÷2
-LinearAlgebra.BLAS.set_num_threads(Sys.CPU_THREADS÷2)
-
-using LowCohomologySOS
 using Groups
-using PropertyT_new
-using JuMP
-include(joinpath(@__DIR__, "optimizers.jl"))
+
+include(joinpath(@__DIR__, "..", "scripts", "optimizers.jl"))
 
 Δ₁x, Iₙ, half_basis = let half_radius = 2
     SL(n, R) = PropertyT_new.SpecialLinearGroup{n}(R)
@@ -49,15 +43,11 @@ warm = nothing
 
 status, warm = PropertyT_new.solve(
     Δ₁x_sgap_problem,
-    scs_opt(eps = 1e-9, max_iters = 100, accel=-20),
+    scs_opt(max_iters = 10),
     warm,
 )
 
-@info "Termination status:" status
-
 λ_certified = let (λₐₚ, Qₐₚ) = LowCohomologySOS.get_solution(Δ₁x_sgap_problem)
-
-    @info "Approximated λ: " λₐₚ
 
     λ_certified = LowCohomologySOS.certify_sos_decomposition(
         Δ₁x,
@@ -68,6 +58,7 @@ status, warm = PropertyT_new.solve(
         parent(first(Δ₁x))
     )
 
-    @info "Certified λ (interval atithmetic): " λ_certified
     λ_certified
 end
+
+@test λ_certified < 0
