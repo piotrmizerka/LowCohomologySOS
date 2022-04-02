@@ -83,11 +83,12 @@ end
     sos_problem_infeasible =
         LowCohomologySOS.sos_problem_matrix(M_1, order_unit_1)
 
-    λ_1, P_1, termination_status_1 = LowCohomologySOS.sos_problem_solution(
-        sos_problem_infeasible,
-        optimizer = scs_opt(verbose = false),
-    )
-    @test termination_status_1 == MOI.INFEASIBLE
+    let model = sos_problem_infeasible
+        JuMP.set_optimizer(model, scs_opt(verbose = false))
+        JuMP.optimize!(model)
+        # λ, Q = LowCohomologySOS.get_solution(model)
+        @test JuMP.termination_status(model) == MOI.INFEASIBLE
+    end
 
     A = Alphabet([:x, :X], [2, 1])
     Z = FreeGroup(A)
@@ -104,12 +105,12 @@ end
         m
     end
 
-    λ_2, P_2, termination_status_2 = LowCohomologySOS.sos_problem_solution(
-        sos_problem_infeasible_2,
-        optimizer = scs_opt(verbose = false),
-    )
-
-    @test termination_status_2 == MOI.INFEASIBLE
+    let model = sos_problem_infeasible_2
+        JuMP.set_optimizer(model, scs_opt(verbose = false))
+        JuMP.optimize!(model)
+        # λ, Q = LowCohomologySOS.get_solution(model)
+        @test JuMP.termination_status(model) == MOI.INFEASIBLE
+    end
 
     M_3 = [
         4*one(RZ_star) zero(RZ_star) zero(RZ_star)
@@ -123,12 +124,14 @@ end
     ]
     sos_problem_3 = LowCohomologySOS.sos_problem_matrix(M_3, order_unit_3)
 
-    λ_3, P_3, termination_status_3 = LowCohomologySOS.sos_problem_solution(
-        sos_problem_3,
-        optimizer = scs_opt(verbose = false),
-    )
+    λ_3, Q_3, ts_3 = let model = sos_problem_3
+        JuMP.set_optimizer(model, scs_opt(verbose = false))
+        JuMP.optimize!(model)
+        λ, Q = LowCohomologySOS.get_solution(model)
+        λ, Q, JuMP.termination_status(model)
+    end
 
-    @test termination_status_3 == MOI.OPTIMAL
+    @test ts_3 == MOI.OPTIMAL
     @test λ_3 ≈ 3 rtol = 4.0e-10
 end
 
@@ -152,22 +155,19 @@ end
     relations = [x^3]
     half_basis, sizes = Groups.wlmetric_ball([xx, xx^(-1)], radius = 1)
 
-    λ_1, P_1, termination_status_1, RG_ball_star, Δ₁_1, I_1 =
-        LowCohomologySOS.spectral_gaps_approximated(
-            quotient_hom,
-            relations,
-            half_basis,
-            optimizer = scs_opt(verbose = false),
-        )
-
-    Δ₁_1_proper = reshape(
-        [5 * one(RG_ball_star) + 2 * RG_ball_star(xx) + 2 * RG_ball_star(xx^2)],
-        1,
-        1,
+    solution = LowCohomologySOS.spectral_gaps_approximated(
+        quotient_hom,
+        relations,
+        half_basis,
+        optimizer = scs_opt(verbose = false),
     )
-    I_1_proper = reshape([one(RG_ball_star)], 1, 1)
-    @test termination_status_1 == MOI.OPTIMAL
-    @test λ_1 ≈ 3 rtol = 1e-3
-    @test Δ₁_1 == Δ₁_1_proper
-    @test I_1 == I_1_proper
+
+    RG = parent(first(solution.laplacian))
+
+    Δ₁ = [5 * one(RG) + 2 * RG(xx) + 2 * RG(xx^2);;]
+    unit = [one(RG);;]
+    @test solution.termination_status == MOI.OPTIMAL
+    @test solution.λ ≈ 3 rtol = 1e-3
+    @test solution.laplacian == Δ₁
+    @test solution.unit == unit
 end
