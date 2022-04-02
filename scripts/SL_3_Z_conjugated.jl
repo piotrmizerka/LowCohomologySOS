@@ -1,3 +1,7 @@
+using LinearAlgebra
+ENV["JULIA_NUM_THREADS"] = Sys.CPU_THREADS÷2
+LinearAlgebra.BLAS.set_num_threads(Sys.CPU_THREADS÷2)
+
 using LowCohomologySOS
 using Groups
 using PropertyT_new

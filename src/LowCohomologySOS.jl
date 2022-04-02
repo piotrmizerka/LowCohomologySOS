@@ -1,8 +1,6 @@
 module LowCohomologySOS
 
 using LinearAlgebra
-ENV["JULIA_NUM_THREADS"] = 4
-LinearAlgebra.BLAS.set_num_threads(2)
 using IntervalArithmetic
 
 using StarAlgebras
