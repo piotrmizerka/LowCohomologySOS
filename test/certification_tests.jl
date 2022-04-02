@@ -61,7 +61,7 @@ end
 
     X_1a = reshape([33 * one(RC₃)], 1, 1)
 
-    certified_interval_1a = Logging.with_logger(Logging.NullLogger()) do
+    flag_1a, certified_interval_1a = Logging.with_logger(Logging.NullLogger()) do
         return LowCohomologySOS.certify_sos_decomposition(
             X_1a,
             order_unit_1,
@@ -71,11 +71,11 @@ end
         )
     end
 
-    @test 4 ∈ certified_interval_1a
+    @test flag_1a == true && 4 ∈ certified_interval_1a
 
     X_1b = reshape([28 * one(RC₃)], 1, 1)
 
-    certified_interval_1b = Logging.with_logger(Logging.NullLogger()) do
+    flag_1b, certified_interval_1b = Logging.with_logger(Logging.NullLogger()) do
         return LowCohomologySOS.certify_sos_decomposition(
             X_1b,
             order_unit_1,
@@ -84,7 +84,7 @@ end
             half_basis_C_3,
         )
     end
-    @test sup(certified_interval_1b) < 0
+    @test flag_1b == false && sup(certified_interval_1b) < 0
 
     # actually I did not verify if this is an order unit but this is irrelevant for the sake of the test
     order_unit_2 = [
@@ -96,7 +96,7 @@ end
         4*RC₂(x) 3*one(RC₂)
     ]
 
-    certified_interval_2 = Logging.with_logger(Logging.NullLogger()) do
+    flag_2, certified_interval_2 = Logging.with_logger(Logging.NullLogger()) do
         return LowCohomologySOS.certify_sos_decomposition(
             X_2,
             order_unit_2,
@@ -105,7 +105,7 @@ end
             half_basis_C_2,
         )
     end
-    @test 1 ∈ certified_interval_2
+    @test flag_2 == true && 1 ∈ certified_interval_2
 end
 
 @testset "spectral_gaps_certification" begin

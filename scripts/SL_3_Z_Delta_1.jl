@@ -1,29 +1,10 @@
-using LowCohomologySOS
-using Groups
-using PropertyT_new
-using JuMP
-using SCS
+using Pkg
 
-function scs_opt(;
-    accel = 10,
-    alpha = 1.5,
-    eps = 1e-9,
-    max_iters = 10_000,
-    verbose = true,
-)
-    return JuMP.optimizer_with_attributes(
-        SCS.Optimizer,
-        "acceleration_lookback" => accel,
-        "acceleration_interval" => max(abs(accel), 1),
-        "alpha" => alpha,
-        "eps_abs" => eps,
-        "eps_rel" => eps,
-        "linear_solver" => SCS.DirectSolver,
-        "max_iters" => max_iters,
-        "warm_start" => true,
-        "verbose" => verbose,
-    )
-end
+Pkg.activate(joinpath(@__DIR__, ".."))
+
+using Revise
+
+include(joinpath(@__DIR__, "..", "scripts", "utils.jl"))
 
 SL₃ℤ_spectral_gaps = let half_radius = 2
     SL(n, R) = PropertyT_new.SpecialLinearGroup{n}(R)
@@ -81,5 +62,25 @@ SL₃ℤ_spectral_gaps = let half_radius = 2
                  e21*e13*e21^(-1)*e13^(-1)*e23^(-1), e23*e31*e23^(-1)*e31^(-1)*e21^(-1),
                  e31*e12*e31^(-1)*e12^(-1)*e32^(-1), e32*e21*e32^(-1)*e21^(-1)*e31^(-1)]
 
-    LowCohomologySOS.spectral_gaps_certification(quotient_hom, relations, half_basis, optimizer = scs_opt(eps = 1e-5, max_iters = 100_000))
+    Δ₁_sos_problem, Δ₁, Iₙ, half_basis, RG_ball_star = LowCohomologySOS.sos_problem_delta_1(
+        quotient_hom, 
+        relations, 
+        half_basis
+    )
+
+    SL₃ℤ_data = let 
+        (
+            M = Δ₁,
+            order_unit = Iₙ,
+            half_basis = half_basis,
+            RG = RG_ball_star,
+        )
+    end
+
+    solve_in_loop(
+        Δ₁_sos_problem, 
+        logdir = "./logs", 
+        optimizer = scs_opt(eps = 1e-5, max_iters = 100_000),
+        data = SL₃ℤ_data
+    )
 end

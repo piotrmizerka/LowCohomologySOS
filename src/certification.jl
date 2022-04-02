@@ -30,6 +30,7 @@ function certify_sos_decomposition(
     eoi = _eoi(X, λ_interval, order_unit)
 
     RG = parent(first(X))
+
     residual = eoi - sos_from_matrix(Q, support, RG)
     l1_norm = sum(x -> norm(x, 1), residual)
 
@@ -37,7 +38,7 @@ function certify_sos_decomposition(
 
     result = λ_interval - l1_norm
 
-    return result
+    return result.lo > 0, result
 end
 
 function spectral_gaps_certification(
@@ -64,5 +65,5 @@ function spectral_gaps_certification(
 
     @info "Certified λ (interval atithmetic): " certified_sgap
 
-    return termination_status, certified_sgap
+    return termination_status, certified_sgap, flag
 end

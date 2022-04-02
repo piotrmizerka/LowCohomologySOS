@@ -152,7 +152,7 @@ end
     relations = [x^3]
     half_basis, sizes = Groups.wlmetric_ball([xx, xx^(-1)], radius = 1)
 
-    λ_1, P_1, termination_status_1, RG_ball_star, Δ₁_1, I_1 =
+    λ_1, P_1, termination_status_1, Δ₁_1, I_1 =
         LowCohomologySOS.spectral_gaps_approximated(
             quotient_hom,
             relations,

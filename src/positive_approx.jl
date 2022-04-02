@@ -69,11 +69,10 @@ function sos_problem_solution(sos_problem; optimizer)
 end
 
 # h:Free group --> our group G
-function spectral_gaps_approximated(
+function sos_problem_delta_1(
     h,
     relations::AbstractVector{<:FPGroupElement},
-    half_basis;
-    optimizer,
+    half_basis,
 )
     @assert !isempty(relations)
     F = parent(first(relations)) # source of h
@@ -98,6 +97,18 @@ function spectral_gaps_approximated(
     Iₙ = [i ≠ j ? zero(RG_ball_star) : one(RG_ball_star) for i in 1:n, j in 1:n]
 
     Δ₁_sos_problem = sos_problem_matrix(Δ₁x, Iₙ)
+
+    return Δ₁_sos_problem, Δ₁x, Iₙ, half_basis, RG_ball_star
+end
+
+# h:Free group --> our group G
+function spectral_gaps_approximated(
+    h,
+    relations::AbstractVector{<:FPGroupElement},
+    half_basis;
+    optimizer,
+)
+    Δ₁_sos_problem, Δ₁, Iₙ, half_basisx = sos_problem_delta_1(h, relations, half_basis)
     λ, P, termination_status = sos_problem_solution(Δ₁_sos_problem, optimizer = optimizer)
 
     return λ, P, termination_status, Δ₁, Iₙ
