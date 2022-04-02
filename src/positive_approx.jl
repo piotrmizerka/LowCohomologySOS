@@ -60,45 +60,70 @@ function sos_problem_matrix(
     return result
 end
 
-function sos_problem_solution(sos_problem; optimizer)
-    JuMP.set_optimizer(sos_problem, optimizer)
-    JuMP.optimize!(sos_problem)
-    λ, P, termination_status = JuMP.value(sos_problem[:λ]), JuMP.value.(sos_problem[:P]), JuMP.termination_status(sos_problem)
-
-    return λ, P, termination_status
-end
-
 # h:Free group --> our group G
-function spectral_gaps_approximated(
-    h,
-    relations::AbstractVector{<:FPGroupElement},
-    half_basis;
-    optimizer,
-)
+function spectral_gaps_elements(h, relations, half_basis)
     @assert !isempty(relations)
     F = parent(first(relations)) # source of h
     G = parent(h(first(relations))) # target of h
 
     d₁ = jacobian_matrix(relations)
 
-    RG_ball = group_ring(G, half_basis, star_multiplication = false)
+    Δ₁ = let RG = group_ring(G, half_basis, star_multiplication = false)
+        d₁x = embed.(Ref(h), d₁, Ref(RG))
+        d₀x = embed.(Ref(h), d₀(parent(first(d₁)), Groups.gens(F)), Ref(RG))
+        Δ₁⁺ = d₁x' * d₁x
+        Δ₁⁻ = d₀x * d₀x'
+        Δ₁⁺ + Δ₁⁻
+    end
 
-    d₁x = embed.(Ref(h), d₁, Ref(RG_ball))
-    d₀x = embed.(Ref(h), d₀(parent(first(d₁)), Groups.gens(F)), Ref(RG_ball))
-    Δ₁⁺ = d₁x' * d₁x
-    Δ₁⁻ = d₀x * d₀x'
-    Δ₁ = Δ₁⁺ + Δ₁⁻
+    RG = group_ring(G, half_basis, star_multiplication = true)
 
-    RG_ball_star = group_ring(G, half_basis, star_multiplication = true)
+    Δ₁x = embed.(identity, Δ₁, Ref(RG))
 
-    Δ₁x = embed.(identity, Δ₁, Ref(RG_ball_star))
-
-    n = length(Groups.gens(F))
+    n = Groups.ngens(F)
     @assert size(Δ₁x, 1) === size(Δ₁x, 2) === n
-    Iₙ = [i ≠ j ? zero(RG_ball_star) : one(RG_ball_star) for i in 1:n, j in 1:n]
+    Iₙ = [i ≠ j ? zero(RG) : one(RG) for i in 1:n, j in 1:n]
+
+    return Δ₁x, Iₙ
+end
+
+function get_solution(m::JuMP.Model)
+    λ = JuMP.value(m[:λ])
+    Q = let P = JuMP.value.(m[:P])
+        if any(isnan, P) || any(isinf, P)
+            @error "obtained solution contains NaNs or ±Inf"
+            P
+        else
+            real(sqrt(Symmetric((P + P')./2)))
+        end
+    end
+    return λ, Q
+end
+
+function spectral_gaps_approximated(
+    h,
+    relations::AbstractVector{<:FPGroupElement},
+    half_basis;
+    optimizer,
+)
+    Δ₁x, Iₙ = spectral_gaps_elements(h, relations, half_basis)
 
     Δ₁_sos_problem = sos_problem_matrix(Δ₁x, Iₙ)
-    λ, P, termination_status = sos_problem_solution(Δ₁_sos_problem, optimizer = optimizer)
 
-    return λ, P, termination_status, RG_ball_star, Δ₁x, Iₙ
+    JuMP.set_optimizer(Δ₁_sos_problem, optimizer)
+    JuMP.optimize!(Δ₁_sos_problem)
+
+    status = JuMP.termination_status(Δ₁_sos_problem)
+
+    λ, Q = get_solution(Δ₁_sos_problem)
+
+    solution = (
+        laplacian = Δ₁x,
+        unit = Iₙ,
+        termination_status = status,
+        λ = λ,
+        Q = Q
+    )
+
+    return solution
 end
