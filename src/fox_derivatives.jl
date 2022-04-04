@@ -33,6 +33,33 @@ function fox_derivative(RF::StarAlgebra, u::FPGroupElement, i::Integer)
     end
 end
 
+function fox_derivative(F::FreeGroup, u::FPGroupElement, i::Integer)
+    coeffs = Int[]
+    sizehint!(coeffs, length(word(u)))
+    elts = eltype(F)[]
+    sizehint!(elts, length(word(u)))
+
+    @assert alphabet(F) == alphabet(parent(u))
+    A = alphabet(F)
+    li = let g = Groups.gens(F, i)
+        @assert length(word(g)) != 0
+        first(word(g))
+    end
+    current = one(F)
+
+    for letter in word(u)
+        if letter == li
+            push!(coeffs, 1)
+            push!(elts, F(copy(word(current))))
+        elseif inv(A, letter) == li
+            push!(coeffs, -1)
+            push!(elts, current*inv(F([li])))
+        end
+        push!(word(current), letter)
+    end
+    return coeffs, elts
+end
+
 # Jacobian matrix in the free group ring.
 # Relations is an array of relators which are elements of the free group
 function jacobian_matrix(relations)
@@ -61,5 +88,5 @@ function suitable_group_ring(relations)
         end
     end
 
-    return group_ring(F, half_basis)
+    return group_ring(F, half_basis, additive_only = true)
 end
