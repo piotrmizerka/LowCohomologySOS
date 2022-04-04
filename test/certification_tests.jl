@@ -25,13 +25,13 @@ end
             1 0 1
         ]
 
-        proper_sos_1 = [29 * one(RC₃);;]
+        proper_sos_1 = reshape([29 * one(RC₃)], 1, 1) 
         @test matrix_in_interval(
             proper_sos_1,
             LowCohomologySOS.sos_from_matrix(RC₃, Q_1, half_basis_C_3),
         )
 
-        proper_sos_2 = [5 * one(RC₃) + 2 * RC₃(a) + 2 * RC₃(a^2);;]
+        proper_sos_2 = reshape([5 * one(RC₃) + 2 * RC₃(a) + 2 * RC₃(a^2)], 1, 1)
         @test matrix_in_interval(
             proper_sos_2,
             LowCohomologySOS.sos_from_matrix(RC₃, Q_2, half_basis_C_3),
