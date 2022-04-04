@@ -1,14 +1,8 @@
-using LinearAlgebra
-ENV["JULIA_NUM_THREADS"] = Sys.CPU_THREADS÷2
-LinearAlgebra.BLAS.set_num_threads(Sys.CPU_THREADS÷2)
-
-using LowCohomologySOS
 using Groups
-using PropertyT_new
-using JuMP
-include(joinpath(@__DIR__, "optimizers.jl"))
 
-Δ₁, Iₙ, half_basis = let half_radius = 2
+include(joinpath(@__DIR__, "..", "scripts", "optimizers.jl"))
+
+Δ₁x, Iₙ, half_basis = let half_radius = 2
     SL(n, R) = MatrixGroups.SpecialLinearGroup{n}(R)
     SL₃ℤ = SL(3, Int8)
 
@@ -39,22 +33,31 @@ include(joinpath(@__DIR__, "optimizers.jl"))
         e32 * e21 * e32^(-1) * e21^(-1) * e31^(-1),
     ]
 
-    Δ₁, Iₙ = LowCohomologySOS.spectral_gaps_elements(quotient_hom, relations, half_basis)
-    Δ₁, Iₙ, half_basis
+    Δ₁x, Iₙ = LowCohomologySOS.spectral_gap_elements(quotient_hom, relations, half_basis)
+    Δ₁x, Iₙ, half_basis
 end
 
-SL₃ℤ_data = (
-    M = Δ₁,
-    order_unit = Iₙ,
-    half_basis = half_basis,
-    RG = parent(first(Δ₁)),
+Δ₁x_sgap_problem = LowCohomologySOS.sos_problem_matrix(Δ₁x, Iₙ)
+
+warm = nothing
+
+status, warm = PropertyT_new.solve(
+    Δ₁x_sgap_problem,
+    scs_opt(max_iters = 10),
+    warm,
 )
 
-Δ₁_sos_problem = LowCohomologySOS.sos_problem_matrix(Δ₁, Iₙ)
+certified, λ_certified = let (λₐₚ, Qₐₚ) = LowCohomologySOS.get_solution(Δ₁x_sgap_problem)
 
-solve_in_loop(
-    Δ₁_sos_problem,
-    logdir = "./logs",
-    optimizer = scs_opt(eps = 1e-5, max_iters = 100),
-    data = SL₃ℤ_data
-)
+    λ_certified = LowCohomologySOS.certify_sos_decomposition(
+        Δ₁x,
+        Iₙ,
+        λₐₚ,
+        Qₐₚ,
+        half_basis,
+    )
+
+    λ_certified
+end
+
+@test λ_certified < 0

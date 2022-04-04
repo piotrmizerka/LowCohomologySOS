@@ -1,18 +1,16 @@
-function sos_from_matrix(Q::AbstractMatrix, support, RG::StarAlgebra)
+function sos_from_matrix(RG::StarAlgebra, Q::AbstractMatrix, support)
     mn = LinearAlgebra.checksquare(Q)
 
     # Changing Q to the corresponding interval-entry matrix
     Q_interval = map(x->@interval(x), Symmetric((Q.+Q')./2))
-    P_interval_RG = RG.(Q_interval'*Q_interval)
+    P_interval = Q_interval'*Q_interval
 
     m = length(support)
     n,r = divrem(mn, m)
     @assert iszero(r)
-    Iₙ = [(i == j ? one(RG) : zero(RG)) for i in 1:n, j in 1:n]
 
-    x = reshape([RG(s) for s in support], m, 1)
-    xx = collect(Iₙ ⊗ x)
-    result = xx' * P_interval_RG * xx
+    x = kron(Matrix(I, n, n), [RG(s) for s in support])
+    result = permutedims(x) * P_interval * x
 
     return result
 end
@@ -29,9 +27,7 @@ function certify_sos_decomposition(
     λ_interval = @interval(λ)
     eoi = _eoi(X, λ_interval, order_unit)
 
-    RG = parent(first(X))
-
-    residual = eoi - sos_from_matrix(Q, support, RG)
+    residual = eoi - sos_from_matrix(parent(first(X)), Q, support)
     l1_norm = sum(x -> norm(x, 1), residual)
 
     @info "l₁ norm of the error in interval arithmetic:" l1_norm radius(l1_norm)
@@ -47,23 +43,25 @@ function spectral_gaps_certification(
     half_basis;
     optimizer,
 )
-    λₐₚ, Pₐₚ, termination_status, Δ₁, Iₙ = spectral_gaps_approximated(
+    solution = spectral_gaps_approximated(
         h,
         relations,
         half_basis;
         optimizer = optimizer,
     )
-    @info "Termination status: " termination_status
+    @info "Termination status: " solution.termination_status
 
-    termination_status != MOI.OPTIMAL && return termination_status, @interval(-1)
+    @info "Approximated λ: " solution.λ
 
-    Qₐₚ = real(sqrt(Symmetric((Pₐₚ .+ Pₐₚ') ./ 2)))
-
-    @info "Approximated λ: " λₐₚ
-
-    flag, certified_sgap = certify_sos_decomposition(Δ₁, Iₙ, λₐₚ, Qₐₚ, half_basis)
+    certified_sgap = certify_sos_decomposition(
+        solution.laplacian,
+        solution.unit,
+        solution.λ,
+        solution.Q,
+        half_basis,
+    )
 
     @info "Certified λ (interval atithmetic): " certified_sgap
 
-    return termination_status, certified_sgap, flag
+    return solution.termination_status, certified_sgap
 end

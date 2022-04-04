@@ -7,8 +7,9 @@ using PropertyT_new
 
 import Logging
 import JuMP
-import SCS
 import JuMP.MOI
+
+include(joinpath(@__DIR__, "..", "scripts", "optimizers.jl"))
 
 function cyclic_group(n::Integer)
     A = Alphabet([:a, :A], [2, 1])
@@ -18,27 +19,6 @@ function cyclic_group(n::Integer)
     Cₙ = FPGroup(F, [a^n => e])
 
     return Cₙ
-end
-
-function scs_opt(;
-    accel = 10,
-    alpha = 1.5,
-    eps = 1e-9,
-    max_iters = 10_000,
-    verbose = true,
-)
-    return JuMP.optimizer_with_attributes(
-        SCS.Optimizer,
-        "acceleration_lookback" => accel,
-        "acceleration_interval" => max(abs(accel), 1),
-        "alpha" => alpha,
-        "eps_abs" => eps,
-        "eps_rel" => eps,
-        "linear_solver" => SCS.DirectSolver,
-        "max_iters" => max_iters,
-        "warm_start" => true,
-        "verbose" => verbose,
-    )
 end
 
 function test_homomorphism(hom)
@@ -56,5 +36,5 @@ end
     include("certification_tests.jl")
     include("integration_tests.jl")
 
-    include("Klein_group_script.jl" )
+    include("Δ1_SL3Z.jl")
 end
