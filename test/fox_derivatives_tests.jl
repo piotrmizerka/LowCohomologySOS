@@ -22,7 +22,7 @@ end
     RG = LowCohomologySOS.group_ring(G, 1)
 
     @testset "one homomorphism" begin
-        one_hom = PropertyT_new.Homomorphism(
+        one_hom = Groups.Homomorphism(
             (i,source, target) -> word(one(target)),
             F,
             G
@@ -46,7 +46,7 @@ end
                     throw("Unsupported")
                 end
             end
-            PropertyT_new.Homomorphism(f, source, target)
+            Groups.Homomorphism(f, source, target)
         end
 
         test_homomorphism(quotient_hom)

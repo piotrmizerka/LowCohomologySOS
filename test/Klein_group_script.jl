@@ -22,7 +22,7 @@ C₂²_spectral_gaps2 = let half_radius = 1
                 throw("Unsupported")
             end
         end
-        PropertyT_new.Homomorphism(f, source, target)
+        Groups.Homomorphism(f, source, target)
     end
 
     relations = [a^2, b^2, a*b*a^(-1)*b^(-1)]
@@ -34,12 +34,12 @@ C₂²_spectral_gaps2 = let half_radius = 1
     half_basis, sizes = Groups.wlmetric_ball(S, radius = half_radius)
 
     Δ₁_sos_problem, Δ₁, Iₙ, half_basis, RG_ball_star = LowCohomologySOS.sos_problem_delta_1(
-        quotient_hom, 
-        relations, 
+        quotient_hom,
+        relations,
         half_basis
     )
 
-    C₂²_data = let 
+    C₂²_data = let
         (
             M = Δ₁,
             order_unit = Iₙ,
@@ -49,8 +49,8 @@ C₂²_spectral_gaps2 = let half_radius = 1
     end
 
     solve_in_loop(
-        Δ₁_sos_problem, 
-        logdir = "./test_logs", 
+        Δ₁_sos_problem,
+        logdir = "./test_logs",
         optimizer = scs_opt(eps = 1e-5, max_iters = 100_000),
         data = C₂²_data
     )

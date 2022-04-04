@@ -3,7 +3,6 @@ using Groups
 using Test
 using LowCohomologySOS
 using IntervalArithmetic
-using PropertyT_new
 
 import Logging
 import JuMP

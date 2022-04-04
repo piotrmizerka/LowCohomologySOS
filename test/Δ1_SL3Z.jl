@@ -1,6 +1,7 @@
 using Groups
 
 include(joinpath(@__DIR__, "..", "scripts", "optimizers.jl"))
+include(joinpath(@__DIR__, "..", "scripts", "utils.jl"))
 
 Δ₁x, Iₙ, half_basis = let half_radius = 2
     SL(n, R) = MatrixGroups.SpecialLinearGroup{n}(R)
@@ -15,7 +16,7 @@ include(joinpath(@__DIR__, "..", "scripts", "optimizers.jl"))
     e12, e13, e21, e23, e31, e32 = Groups.gens(F_sl_3_z)
 
     quotient_hom = let source = F_sl_3_z, target = SL₃ℤ
-        PropertyT_new.Homomorphism((i, F, G) -> Groups.word_type(G)([i]), source, target)
+        Groups.Homomorphism((i, F, G) -> Groups.word_type(G)([i]), source, target)
     end
 
     relations = [
@@ -41,7 +42,7 @@ end
 
 warm = nothing
 
-status, warm = PropertyT_new.solve(
+status, warm = solve(
     Δ₁x_sgap_problem,
     scs_opt(max_iters = 10),
     warm,
@@ -60,4 +61,5 @@ certified, λ_certified = let (λₐₚ, Qₐₚ) = LowCohomologySOS.get_solutio
     λ_certified
 end
 
+@test !certified
 @test λ_certified < 0

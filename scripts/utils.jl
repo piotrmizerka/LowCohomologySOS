@@ -1,4 +1,5 @@
-using PropertyT_new
+import JuMP
+import JuMP.MOI
 
 using Dates
 using Serialization
@@ -19,7 +20,7 @@ function solve_in_loop(model; logdir, optimizer, data)
     while status != MOI.OPTIMAL
         date = now()
         log_file = joinpath(logdir, "solver_$date.log")
-        status, warm = @time PropertyT_new.solve(log_file, model, optimizer, warm)
+        status, warm = @time solve(log_file, model, optimizer, warm)
 
         λ, Q = LowCohomologySOS.get_solution(model)
         solution = Dict(:λ=>λ, :Q=>Q, :warm=>warm)
@@ -55,4 +56,69 @@ function solve_in_loop(model; logdir, optimizer, data)
     end
 
     return status == MOI.OPTIMAL ? old_lambda : NaN
+end
+
+##
+# Low-level solve
+
+setwarmstart!(model::JuMP.Model, ::Nothing) = model
+
+function setwarmstart!(model::JuMP.Model, warmstart)
+    constraint_map = Dict(
+        ct => JuMP.all_constraints(model, ct...) for
+        ct in JuMP.list_of_constraint_types(model)
+    )
+
+    JuMP.set_start_value.(JuMP.all_variables(model), warmstart.primal)
+
+    for (ct, idx) in pairs(constraint_map)
+        JuMP.set_start_value.(idx, warmstart.slack[ct])
+        JuMP.set_dual_start_value.(idx, warmstart.dual[ct])
+    end
+    return model
+end
+
+function getwarmstart(model::JuMP.Model)
+    constraint_map = Dict(
+        ct => JuMP.all_constraints(model, ct...) for
+        ct in JuMP.list_of_constraint_types(model)
+    )
+
+    primal = JuMP.value.(JuMP.all_variables(model))
+
+    slack = Dict(k => JuMP.value.(v) for (k, v) in constraint_map)
+    duals = Dict(k => JuMP.dual.(v) for (k, v) in constraint_map)
+
+    return (primal = primal, dual = duals, slack = slack)
+end
+
+function solve(m::JuMP.Model, optimizer, warmstart = nothing)
+
+    JuMP.set_optimizer(m, optimizer)
+    JuMP.MOIU.attach_optimizer(m)
+
+    m = setwarmstart!(m, warmstart)
+
+    JuMP.optimize!(m)
+    Base.Libc.flush_cstdio()
+
+    status = JuMP.termination_status(m)
+
+    return status, getwarmstart(m)
+end
+
+function solve(solverlog::String, m::JuMP.Model, optimizer, warmstart = nothing)
+
+    isdir(dirname(solverlog)) || mkpath(dirname(solverlog))
+
+    Base.flush(Base.stdout)
+    Base.Libc.flush_cstdio()
+    status, warmstart = open(solverlog, "a+") do logfile
+        redirect_stdout(logfile) do
+            status, warmstart = solve(m, optimizer, warmstart)
+            status, warmstart
+        end
+    end
+
+    return status, warmstart
 end

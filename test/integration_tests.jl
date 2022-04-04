@@ -11,7 +11,7 @@
     e12, e13, e21, e23, e31, e32 = Groups.gens(F)
 
     h = let source = F, target = SL₃ℤ
-        PropertyT_new.Homomorphism((i, F, G) -> Groups.word_type(G)([i]), source, target)
+        Groups.Homomorphism((i, F, G) -> Groups.word_type(G)([i]), source, target)
     end
 
     @testset "homomorphism basic tests" begin

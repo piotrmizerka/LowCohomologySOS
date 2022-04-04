@@ -4,7 +4,6 @@ LinearAlgebra.BLAS.set_num_threads(Sys.CPU_THREADS÷2)
 
 using LowCohomologySOS
 using Groups
-using PropertyT_new
 using JuMP
 include(joinpath(@__DIR__, "optimizers.jl"))
 
@@ -21,7 +20,7 @@ include(joinpath(@__DIR__, "optimizers.jl"))
     e12, e13, e21, e23, e31, e32 = Groups.gens(F_sl_3_z)
 
     quotient_hom = let source = F_sl_3_z, target = SL₃ℤ
-        PropertyT_new.Homomorphism((i, F, G) -> Groups.word_type(G)([i]), source, target)
+        Groups.Homomorphism((i, F, G) -> Groups.word_type(G)([i]), source, target)
     end
 
     relations = [
@@ -39,7 +38,7 @@ include(joinpath(@__DIR__, "optimizers.jl"))
         e32 * e21 * e32^(-1) * e21^(-1) * e31^(-1),
     ]
 
-    Δ₁, Iₙ = LowCohomologySOS.spectral_gaps_elements(quotient_hom, relations, half_basis)
+    Δ₁, Iₙ = LowCohomologySOS.spectral_gap_elements(quotient_hom, relations, half_basis)
     Δ₁, Iₙ, half_basis
 end
 

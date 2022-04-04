@@ -13,7 +13,6 @@ import JuMP.MOI
 using Dates
 using Serialization
 using Logging
-using PropertyT_new
 
 include("tensors.jl")
 include("group_rings.jl")
