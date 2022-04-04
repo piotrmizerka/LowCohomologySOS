@@ -4,20 +4,21 @@ authors = "piotrmizerka@impan.pl"
 version = "0.0.1"
 
 [deps]
+Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 Groups = "5d8bd718-bd84-11e8-3b40-ad14f4a32557"
 GroupsCore = "d5909c97-4eac-4ecc-a3dc-fdd0858a4120"
 IntervalArithmetic = "d1acc4aa-44c8-5952-acd4-ba5d80a2a253"
 JuMP = "4076af6c-e467-56ae-b986-b466b2749572"
-Kronecker = "2c470bb0-bcc8-11e8-3dad-c9649493f05e"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
-PropertyT_new = "8df21a36-ccc5-57bd-9352-45f2918782cf"
+Logging = "56ddb016-857b-54e1-b83d-db4d58db5568"
+SCS = "c946c3f1-0d1f-5ce8-9dea-7daa1f7e2d13"
+Serialization = "9e88b42a-f829-5b0c-bbe9-9e923198166b"
 StarAlgebras = "0c0c59c1-dc5f-42e9-9a8b-b5dc384a6cd1"
 
 [compat]
 Groups = "0.7"
 GroupsCore = "0.4.0"
 JuMP = "1.0"
-Kronecker = "0.5"
 SCS = "1.1"
 StarAlgebras = "0.1.7"
 

@@ -1,84 +1,59 @@
 @testset "constraints" begin
     A = reshape([i for i in 1:9], 3, 3)
-    cnstrs_proper = [Vector{Int}() for _ in 1:9]
-    cnstrs_proper[1] = [1]
-    cnstrs_proper[2] = [2]
-    cnstrs_proper[3] = [3]
-    cnstrs_proper[4] = [4]
-    cnstrs_proper[5] = [5]
-    cnstrs_proper[6] = [6]
-    cnstrs_proper[7] = [7]
-    cnstrs_proper[8] = [8]
-    cnstrs_proper[9] = [9]
-    @test LowCohomologySOS.constraints(A) == cnstrs_proper
+    cnstrs = [
+        (x = zeros(Int, 3, 3); x[i] = 1; x)
+        for i in 1:9]
 
-    B = reshape([1 for i in 1:9], 3, 3)
-    cnstrs_proper_B = [Vector{Int}()]
-    cnstrs_proper_B[1] = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+    @test all(LowCohomologySOS.constraints(A) .== cnstrs)
+
+    B = reshape([2 for i in 1:9], 3, 3)
+    cnstrs_proper_B = [zeros(Int, 3,3), ones(Int, 3,3)]
     @test LowCohomologySOS.constraints(B) == cnstrs_proper_B
 
-    pm = reshape([1 for i in 1:9], 3, 3)
-    pm[1, :] = [1, 2, 3]
-    pm[2, :] = [2, 3, 1]
-    pm[3, :] = [3, 1, 2]
-    cnstrs_proper_pm = [Vector{Int}() for _ in 1:3]
-    cnstrs_proper_pm[1] = [1, 6, 8]
-    cnstrs_proper_pm[2] = [2, 4, 9]
-    cnstrs_proper_pm[3] = [3, 5, 7]
-    @test LowCohomologySOS.constraints(pm) == cnstrs_proper_pm
+    pm = [1 2 3;
+          2 3 1;
+          3 1 5]
+
+    cnstrs = [zeros(Int, 3, 3) for _ in 1:5]
+    cnstrs[1][[1, 6, 8]] .= 1
+    cnstrs[2][[2, 4]] .= 1
+    cnstrs[3][[3, 5, 7]] .= 1
+    cnstrs[5][[9]] .= 1
+
+    @test LowCohomologySOS.constraints(pm) == cnstrs
 end
 
-@testset "entry_constraint" begin
+@testset "Tensors" begin
+    @test LowCohomologySOS.KroneckerDelta{3}(3,2) isa AbstractMatrix{Int}
+    @test LowCohomologySOS.KroneckerDelta{3}(3,2) == [0 0 0; 0 0 0; 0 1 0]
+
+    a = LowCohomologySOS.KroneckerDelta{3}(3,2)
+    b = LowCohomologySOS.KroneckerDelta{2}(1,2)
+    @test b == [0 1; 0 0]
+
+    @test LowCohomologySOS.Tensor(a, b) == kron(a, b)
+
+    A = rand(3,2)
+    @test LowCohomologySOS.Tensor(a, A) == kron(a, A)
+
+    a = LowCohomologySOS.KroneckerDelta{3}(3,2)
+    x = rand(3,3)
+    @test LowCohomologySOS.Tensor(a, x)[a] == x
+    @test kron(a, x)[a] == x
+
+    @test @view(LowCohomologySOS.Tensor(a, x)[a]) == x
+end
+
+@testset "indexing by KroneckerDelta" begin
     pm = reshape([1 for i in 1:9], 3, 3)
     pm[1, :] = [1, 2, 3]
     pm[2, :] = [2, 3, 1]
     pm[3, :] = [3, 1, 2]
-    cnstrs_proper = LowCohomologySOS.constraints(pm)
+    cnstrs = LowCohomologySOS.constraints(pm)
 
-    @test all(
-        LowCohomologySOS.entry_constraint(cnstrs_proper, 1, 1, k, 3, 1) ==
-        cnstrs_proper[k] for k in 1:3
-    )
+    # TODO: finish this
 
-    proper_1 = [
-        100 * 3^2 * 234 + 18 * 3 + 1,
-        100 * 3^2 * 234 + 3 * 234 + 18 * 3 + 3,
-        100 * 3^2 * 234 + 2 * 3 * 234 + 18 * 3 + 2,
-    ]
-    @test LowCohomologySOS.entry_constraint(
-        cnstrs_proper,
-        19,
-        101,
-        1,
-        3,
-        234,
-    ) == proper_1
-    proper_2 = [
-        100 * 3^2 * 234 + 18 * 3 + 2,
-        100 * 3^2 * 234 + 3 * 234 + 18 * 3 + 1,
-        100 * 3^2 * 234 + 2 * 3 * 234 + 18 * 3 + 3,
-    ]
-    @test LowCohomologySOS.entry_constraint(
-        cnstrs_proper,
-        19,
-        101,
-        2,
-        3,
-        234,
-    ) == proper_2
-    proper_3 = [
-        100 * 3^2 * 234 + 18 * 3 + 3,
-        100 * 3^2 * 234 + 3 * 234 + 18 * 3 + 2,
-        100 * 3^2 * 234 + 2 * 3 * 234 + 18 * 3 + 1,
-    ]
-    @test LowCohomologySOS.entry_constraint(
-        cnstrs_proper,
-        19,
-        101,
-        3,
-        3,
-        234,
-    ) == proper_3
+
 end
 
 @testset "sos_problem_matrix" begin
@@ -108,11 +83,12 @@ end
     sos_problem_infeasible =
         LowCohomologySOS.sos_problem_matrix(M_1, order_unit_1)
 
-    λ_1, P_1, termination_status_1 = LowCohomologySOS.sos_problem_solution(
-        sos_problem_infeasible,
-        optimizer = scs_opt(verbose = false),
-    )
-    @test termination_status_1 == MOI.INFEASIBLE
+    let model = sos_problem_infeasible
+        JuMP.set_optimizer(model, scs_opt(verbose = false))
+        JuMP.optimize!(model)
+        # λ, Q = LowCohomologySOS.get_solution(model)
+        @test JuMP.termination_status(model) == MOI.INFEASIBLE
+    end
 
     A = Alphabet([:x, :X], [2, 1])
     Z = FreeGroup(A)
@@ -129,12 +105,12 @@ end
         m
     end
 
-    λ_2, P_2, termination_status_2 = LowCohomologySOS.sos_problem_solution(
-        sos_problem_infeasible_2,
-        optimizer = scs_opt(verbose = false),
-    )
-
-    @test termination_status_2 == MOI.INFEASIBLE
+    let model = sos_problem_infeasible_2
+        JuMP.set_optimizer(model, scs_opt(verbose = false))
+        JuMP.optimize!(model)
+        # λ, Q = LowCohomologySOS.get_solution(model)
+        @test JuMP.termination_status(model) == MOI.INFEASIBLE
+    end
 
     M_3 = [
         4*one(RZ_star) zero(RZ_star) zero(RZ_star)
@@ -148,13 +124,15 @@ end
     ]
     sos_problem_3 = LowCohomologySOS.sos_problem_matrix(M_3, order_unit_3)
 
-    λ_3, P_3, termination_status_3 = LowCohomologySOS.sos_problem_solution(
-        sos_problem_3,
-        optimizer = scs_opt(verbose = false),
-    )
+    λ_3, Q_3, ts_3 = let model = sos_problem_3
+        JuMP.set_optimizer(model, scs_opt(verbose = false))
+        JuMP.optimize!(model)
+        λ, Q = LowCohomologySOS.get_solution(model)
+        λ, Q, JuMP.termination_status(model)
+    end
 
-    @test termination_status_3 == MOI.OPTIMAL
-    @test λ_3 ≈ 3 rtol = 4.0e-3
+    @test ts_3 == MOI.OPTIMAL
+    @test λ_3 ≈ 3 rtol = 4.0e-10
 end
 
 @testset "spectral_gaps_approximated" begin
@@ -177,22 +155,19 @@ end
     relations = [x^3]
     half_basis, sizes = Groups.wlmetric_ball([xx, xx^(-1)], radius = 1)
 
-    λ_1, P_1, termination_status_1, RG_ball_star, Δ₁_1, I_1 =
-        LowCohomologySOS.spectral_gaps_approximated(
-            quotient_hom,
-            relations,
-            half_basis,
-            optimizer = scs_opt(verbose = false),
-        )
-
-    Δ₁_1_proper = reshape(
-        [5 * one(RG_ball_star) + 2 * RG_ball_star(xx) + 2 * RG_ball_star(xx^2)],
-        1,
-        1,
+    solution = LowCohomologySOS.spectral_gaps_approximated(
+        quotient_hom,
+        relations,
+        half_basis,
+        optimizer = scs_opt(verbose = false),
     )
-    I_1_proper = reshape([one(RG_ball_star)], 1, 1)
-    @test termination_status_1 == MOI.OPTIMAL
-    @test λ_1 ≈ 3 rtol = 1e-3
-    @test Δ₁_1 == Δ₁_1_proper
-    @test I_1 == I_1_proper
+
+    RG = parent(first(solution.laplacian))
+
+    Δ₁ = reshape([5 * one(RG) + 2 * RG(xx) + 2 * RG(xx^2)], 1, 1)
+    unit = reshape([one(RG)], 1, 1)
+    @test solution.termination_status == MOI.OPTIMAL
+    @test solution.λ ≈ 3 rtol = 1e-3
+    @test solution.laplacian == Δ₁
+    @test solution.unit == unit
 end
