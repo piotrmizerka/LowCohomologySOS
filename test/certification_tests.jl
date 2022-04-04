@@ -25,13 +25,13 @@ end
             1 0 1
         ]
 
-        proper_sos_1 = [29 * one(RC₃);;]
+        proper_sos_1 = reshape([29 * one(RC₃)], 1, 1) 
         @test matrix_in_interval(
             proper_sos_1,
             LowCohomologySOS.sos_from_matrix(RC₃, Q_1, half_basis_C_3),
         )
 
-        proper_sos_2 = [5 * one(RC₃) + 2 * RC₃(a) + 2 * RC₃(a^2);;]
+        proper_sos_2 = reshape([5 * one(RC₃) + 2 * RC₃(a) + 2 * RC₃(a^2)], 1, 1)
         @test matrix_in_interval(
             proper_sos_2,
             LowCohomologySOS.sos_from_matrix(RC₃, Q_2, half_basis_C_3),
@@ -49,7 +49,6 @@ end
                     4,
                     Q_1,
                     half_basis_C_3,
-                    RC₃,
                 )
             end
 
@@ -57,16 +56,16 @@ end
 
             X_1b = reshape([28 * one(RC₃)], 1, 1)
 
-            certified_interval_1b = Logging.with_logger(Logging.NullLogger()) do
+            certified, certified_interval_1b = Logging.with_logger(Logging.NullLogger()) do
                 return LowCohomologySOS.certify_sos_decomposition(
                     X_1b,
                     order_unit_1,
                     1,
                     Q_1,
                     half_basis_C_3,
-                    RC₃,
                 )
             end
+            @test certified == false
             @test sup(certified_interval_1b) < 0
         end
     end
@@ -104,16 +103,16 @@ end
                 4*RC₂(x) 3*one(RC₂)
             ]
 
-            certified_interval_2 = Logging.with_logger(Logging.NullLogger()) do
+            certified, certified_interval_2 = Logging.with_logger(Logging.NullLogger()) do
                 return LowCohomologySOS.certify_sos_decomposition(
                     X_2,
                     order_unit_2,
                     1,
                     Q_3,
                     half_basis_C_2,
-                    RC₂,
                 )
             end
+            @test certified
             @test 1 ∈ certified_interval_2
         end
     end
@@ -141,7 +140,7 @@ end
     end
     relations = [ax^3]
 
-    termination_status, certified_interval = Logging.with_logger(Logging.NullLogger()) do
+    status, (certified, certified_interval) = Logging.with_logger(Logging.NullLogger()) do
         return LowCohomologySOS.spectral_gaps_certification(
             quotient_hom_1,
             relations,
@@ -150,6 +149,7 @@ end
         )
     end
 
-    @test termination_status == JuMP.MOI.OPTIMAL
+    @test status == MOI.OPTIMAL
+    @test certified
     @test 3 ∈ certified_interval + (-1e-7..1e-7)
 end

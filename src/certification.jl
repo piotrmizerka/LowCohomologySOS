@@ -23,19 +23,18 @@ function certify_sos_decomposition(
     λ::Number,
     Q::AbstractMatrix,
     support,
-    RG::StarAlgebra,
 )
     λ_interval = @interval(λ)
     eoi = _eoi(X, λ_interval, order_unit)
 
-    residual = eoi - sos_from_matrix(RG, Q, support)
+    residual = eoi - sos_from_matrix(parent(first(X)), Q, support)
     l1_norm = sum(x -> norm(x, 1), residual)
 
     @info "l₁ norm of the error in interval arithmetic:" l1_norm radius(l1_norm)
 
     result = λ_interval - l1_norm
 
-    return result
+    return result.lo > 0, result
 end
 
 function spectral_gaps_certification(
@@ -60,7 +59,6 @@ function spectral_gaps_certification(
         solution.λ,
         solution.Q,
         half_basis,
-        parent(first(solution.laplacian)),
     )
 
     @info "Certified λ (interval atithmetic): " certified_sgap

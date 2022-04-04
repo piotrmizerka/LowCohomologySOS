@@ -164,8 +164,8 @@ end
 
     RG = parent(first(solution.laplacian))
 
-    Δ₁ = [5 * one(RG) + 2 * RG(xx) + 2 * RG(xx^2);;]
-    unit = [one(RG);;]
+    Δ₁ = reshape([5 * one(RG) + 2 * RG(xx) + 2 * RG(xx^2)], 1, 1)
+    unit = reshape([one(RG)], 1, 1)
     @test solution.termination_status == MOI.OPTIMAL
     @test solution.λ ≈ 3 rtol = 1e-3
     @test solution.laplacian == Δ₁

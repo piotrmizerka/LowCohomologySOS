@@ -3,7 +3,6 @@ using Groups
 using Test
 using LowCohomologySOS
 using IntervalArithmetic
-using PropertyT_new
 
 import Logging
 import JuMP
@@ -37,6 +36,4 @@ end
     include("integration_tests.jl")
 
     include("Δ1_SL3Z.jl")
-
-    # include(joinpath(@__DIR__, "..", "scripts", "SL_3_Z_conjugated.jl"))
 end
