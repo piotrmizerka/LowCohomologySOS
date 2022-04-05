@@ -6,6 +6,7 @@ using LowCohomologySOS
 using Groups
 using JuMP
 include(joinpath(@__DIR__, "optimizers.jl"))
+include(joinpath(@__DIR__, "utils.jl"))
 
 Δ₁, Iₙ, half_basis = let half_radius = 2
     SL(n, R) = MatrixGroups.SpecialLinearGroup{n}(R)
