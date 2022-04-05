@@ -36,4 +36,5 @@ end
     include("integration_tests.jl")
 
     include("Δ1_SL3Z.jl")
+    include("Klein_group_script.jl")
 end

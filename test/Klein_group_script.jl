@@ -33,10 +33,15 @@ C₂²_spectral_gaps2 = let half_radius = 1
     end
     half_basis, sizes = Groups.wlmetric_ball(S, radius = half_radius)
 
-    Δ₁_sos_problem, Δ₁, Iₙ, half_basis, RG_ball_star = LowCohomologySOS.sos_problem_delta_1(
+    Δ₁, Iₙ = LowCohomologySOS.spectral_gap_elements(
         quotient_hom,
         relations,
         half_basis
+    )
+
+    Δ₁_sos_problem = LowCohomologySOS.sos_problem_matrix(
+        Δ₁,
+        Iₙ
     )
 
     C₂²_data = let
@@ -44,7 +49,7 @@ C₂²_spectral_gaps2 = let half_radius = 1
             M = Δ₁,
             order_unit = Iₙ,
             half_basis = half_basis,
-            RG = RG_ball_star,
+            RG = parent(first(Δ₁)),
         )
     end
 
