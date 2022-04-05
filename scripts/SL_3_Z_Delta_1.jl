@@ -55,6 +55,6 @@ SL₃ℤ_data = (
 solve_in_loop(
     Δ₁_sos_problem,
     logdir = "./logs",
-    optimizer = scs_opt(eps = 1e-5, max_iters = 100),
+    optimizer = scs_opt(eps = 1e-5, max_iters = 20_000),
     data = SL₃ℤ_data
 )
