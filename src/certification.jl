@@ -30,9 +30,9 @@ function certify_sos_decomposition(
     residual = eoi - sos_from_matrix(parent(first(X)), Q, support)
     l1_norm = sum(x -> norm(x, 1), residual)
 
-    @info "l₁ norm of the error in interval arithmetic:" l1_norm radius(l1_norm)
+    @info "3l₁ norm of the error in interval arithmetic:" 3*l1_norm radius(3*l1_norm)
 
-    result = λ_interval - l1_norm
+    result = λ_interval - 3*l1_norm
 
     return result.lo > 0, result
 end
