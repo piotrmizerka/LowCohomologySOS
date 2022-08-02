@@ -3,7 +3,7 @@ This repository provides rigorous proofs of the existence of a **sum of squares*
 
 $$\Delta_1=d_0d_0^*+d_1^*d_1,$$
 
-where $d_0=\left[1-s_i\right]\in\mathbb M_{n,1}(\mathbb RG)$ and $d_1$, also known as *Jacobian*, is given by $d_1=\left[\frac{\partial r_i}{\partial x_j}\right]\in\mathbb M_{m,n}(\mathbb RG)$, where $\frac{\partial r_i}{\partial x_j}\in\mathbb RG$ is the $(i,j)^{\text{th}}$ **Fox derivative** (for the definition of the Fox derivatives, see the original papers of Fox, [doi:10.2307/1969736](doi:10.2307/1969736) and [doi:10.2307/1969686](doi:10.2307/1969686)). The involution $*$ is given by the composition of the matrix transposition and the standard involution on the group ring $\mathbb RG$.  
+where $d_0=\left[1-s_i\right]\in\mathbb M_{n,1}(\mathbb RG)$ and $d_1$, also known as *Jacobian*, is given by $d_1=\left[\frac{\partial r_i}{\partial x_j}\right]\in\mathbb M_{m,n}(\mathbb RG)$, where $\frac{\partial r_i}{\partial x_j}\in\mathbb RG$ is the $(i,j)^{\text{th}}$ **Fox derivative** (for the definition of the Fox derivatives, see the original papers of Fox, [doi:10.2307/1969736](https://www.jstor.org/stable/1969736#metadata_info_tab_contents) and [doi:10.2307/1969686](https://www.jstor.org/stable/1969686#metadata_info_tab_contents)). The involution $*$ is given by the composition of the matrix transposition and the standard involution on the group ring $\mathbb RG$.  
 
 ## Group cohomology
 It has been shown by Lyndon, [doi:10.2307/1969440](https://www.jstor.org/stable/1969440?origin=crossref#metadata_info_tab_contents) , that, for any $G$-module $V$, the cohomology $H^*(G,V)$ can be computed from the following complex
