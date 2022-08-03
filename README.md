@@ -10,7 +10,7 @@ It has been shown by Lyndon in [doi:10.2307/1969440](https://www.jstor.org/stabl
 
 $$0\longrightarrow\mathbb RG\xrightarrow{\left[1-s_i\right]}(\mathbb RG)^n\xrightarrow{\left[\frac{\partial r_i}{\partial x_j}\right]}(\mathbb RG)^m\longrightarrow\cdots$$
 
-We focus on the vanishing of the first and the *reducibility* of the second cohomology with unitary coefficients (here reducibility means that the the image of differential $d_1$ is closed image for every unitary $G$-module $V$).
+We focus on the vanishing of the first and the *reducibility* of the second cohomology with unitary coefficients (here reducibility means that the the image of differential $d_1$ is closed for every unitary $G$-module $V$).
 By the recent work of Bader and Nowak [doi:10.1016/j.jfa.2020.108730](https://www.sciencedirect.com/science/article/pii/S0022123620302731) these two conditions are equivalent to the existence of a positive $\lambda>0$ such that $\Delta_1-\lambda I_n$ admits a sum of squares decomposition, that is, there exist matrices $M_1,\ldots,M_l$ such that
 
 $$
@@ -23,7 +23,7 @@ $$
 
 ## Replication for [2207.02783](https://arxiv.org/abs/2207.02783)
 
-Script [SL_3_Z_Delta_1.jl](./scripts/SL_3_Z_Delta_1.jl) provides a proof of the existence of $\lambda\geq 0.32$ such that $\Delta_1-\lambda I_6$ is a sum of squares for the Gersten presentation of $\operatorname{SL}_3(\mathbb{Z})$ on six generators (defined in Section 3 of [2207.02783](https://arxiv.org/abs/2207.02783)).
+Script [SL_3_Z_Delta_1.jl](./scripts/SL_3_Z_Delta_1.jl) provides a proof of the existence of $\lambda\geq 0.32$ such that $\Delta_1-\lambda I_6$ is a sum of squares for the Gersten presentation of $\operatorname{SL}_3(\mathbb{Z})$ on six generators (defined in Section 2 of [2207.02783](https://arxiv.org/abs/2207.02783)).
 
 The running time of the script will be approximately 3 hours on a standard laptop computer.
 
