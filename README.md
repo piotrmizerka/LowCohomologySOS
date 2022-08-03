@@ -20,4 +20,23 @@ $$
 
 ## The computation for $\operatorname{SL}_3(\mathbb{Z})$
 
-This repository was developed originally for computations concerning $\operatorname{SL}_3(\mathbb{Z})$, the special linear group $3\times 3$ matrices over integers. The computations provide a proof that there exists $\lambda\geq 0.32$ such that $\Delta_1-\lambda I_6$ is a sum of squares for a specific presentation of $\operatorname{SL}_3(\mathbb{Z})$ on six generators. The article on this subject is available at [2207.02783](https://arxiv.org/abs/2207.02783) and it contains the presentation of $\operatorname{SL}_3(\mathbb{Z})$ we used and the theory standing behind the proof of the existence of the positive spectral gap $\lambda$. The script [SL_3_Z_Delta_1.jl](./scripts/SL_3_Z_Delta_1.jl) can be used to replicate the main result. The computation shall last approximately 3 hours on the standard computer.
+
+## Replication for [2207.02783](https://arxiv.org/abs/2207.02783)
+
+Script [SL_3_Z_Delta_1.jl](./scripts/SL_3_Z_Delta_1.jl) provides a proof of the existence of $\lambda\geq 0.32$ such that $\Delta_1-\lambda I_6$ is a sum of squares for the Gersten presentation of $\operatorname{SL}_3(\mathbb{Z})$ on six generators (defined in Section 3 of [2207.02783](https://arxiv.org/abs/2207.02783)).
+
+The running time of the script will be approximately 3 hours on a standard laptop computer.
+
+## Citing
+If you use any code from this repository, or you find reading through the code enlightening please cite [2207.02783](https://arxiv.org/abs/2207.02783) as
+```bash
+@misc{https://doi.org/10.48550/arxiv.2207.02783,
+  doi = {10.48550/ARXIV.2207.02783},  
+  url = {https://arxiv.org/abs/2207.02783},  
+  author = {Kaluba, Marek and Mizerka, Piotr and Nowak, Piotr W.},  
+  keywords = {Group Theory (math.GR), Operator Algebras (math.OA), FOS: Mathematics, FOS: Mathematics},  
+  title = {Spectral gap for the cohomological Laplacian of $\operatorname{SL}_3(\mathbb{Z})$},
+  publisher = {arXiv},  
+  year = {2022},  
+  copyright = {arXiv.org perpetual, non-exclusive license}
+}
