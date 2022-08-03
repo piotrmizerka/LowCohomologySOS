@@ -10,7 +10,8 @@ It has been shown by Lyndon in [doi:10.2307/1969440](https://www.jstor.org/stabl
 
 $$0\longrightarrow\mathbb RG\xrightarrow{\left[1-s_i\right]}(\mathbb RG)^n\xrightarrow{\left[\frac{\partial r_i}{\partial x_j}\right]}(\mathbb RG)^m\longrightarrow\cdots$$
 
-We focus on vanishing of the first and *reducibility* of the second cohomology with unitary coefficients (the reducibility means that the differential given by $d_1$ has a closed image for every unitary representation). By the recent work of Bader and Nowak, [doi:10.1016/j.jfa.2020.108730](https://www.sciencedirect.com/science/article/pii/S0022123620302731?via%3Dihub), these two conditions are equivalent to the existence of the positive spectral gap $\lambda>0$ such that the expression $\Delta_1-\lambda I_n$ is a **sum of squares**, that is, there exist matrices $M_1,\ldots,M_l$ such that
+We focus on the vanishing of the first and the *reducibility* of the second cohomology with unitary coefficients (here reducibility means that the the image of differential $d_1$ is closed image for every unitary $G$-module $V$).
+By the recent work of Bader and Nowak [doi:10.1016/j.jfa.2020.108730](https://www.sciencedirect.com/science/article/pii/S0022123620302731) these two conditions are equivalent to the existence of a positive $\lambda>0$ such that $\Delta_1-\lambda I_n$ admits a sum of squares decomposition, that is, there exist matrices $M_1,\ldots,M_l$ such that
 
 $$
 \Delta_1-\lambda I_n=M_1^*M_1+\ldots+M_l^*M_l.
