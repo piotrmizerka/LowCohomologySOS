@@ -1,9 +1,13 @@
 # LowCohomologySOS
-This repository provides rigorous proofs of the existence of a **sum of squares** decomposition for the first **cohomological Laplacian** $\Delta_1$ for finitely presented groups. More precisely, it looks for a positive **spectral gap** $\lambda>0$ such that $\Delta_1-\lambda I_n$ is a sum of squares. Here the Laplacian $\Delta_1$ is the matrix over the group ring given by the prescribed presentation of the group, $G=\langle s_1,\ldots,s_n|r_1,\ldots,r_m\rangle$. The formula is
+This repository provides **sum of squares** witnesses for the existence of the **spectral gap** for the first **cohomological Laplacian** $\Delta_1$ for finitely presented groups. 
 
-$$\Delta_1=d_0d_0^*+d_1^*d_1,$$
+More precisely we are looking for a positive $\lambda$ such that $\Delta_1-\lambda I_n$ admits a sum of squares decomposition, which proves that $\lambda$ is a lower bound on the spectral gap of $\Delta_1$. 
 
-where $d_0=\left[1-s_i\right]\in\mathbb M_{n,1}(\mathbb RG)$ and $d_1$, also known as *Jacobian*, is given by $d_1=\left[\frac{\partial r_i}{\partial x_j}\right]\in\mathbb M_{m,n}(\mathbb RG)$, where $\frac{\partial r_i}{\partial x_j}\in\mathbb RG$ is the $(i,j)^{\text{th}}$ **Fox derivative** (for the definition of the Fox derivatives, see the original papers of Fox, [doi:10.2307/1969736](https://www.jstor.org/stable/1969736#metadata_info_tab_contents) and [doi:10.2307/1969686](https://www.jstor.org/stable/1969686#metadata_info_tab_contents)). The involution $*$ is given by the composition of the matrix transposition and the standard involution on the group ring $\mathbb RG$.  
+For a finitely presented group $G=\langle s_1,\ldots,s_n|r_1,\ldots,r_m\rangle$ the first Laplacian $\Delta_1$ is given by the formula
+
+$$\Delta_1=d_0d_0^*+d_1^*d_1\in\mathbb M_{n,n}(\mathbb RG),$$
+
+where $d_0=\left[1-s_i\right]\in\mathbb M_{n,1}(\mathbb RG)$ and $d_1$, known as *Jacobian*, is given by the $m\times n$ matrix of *Fox derivatives* of the relations (for the definition see the original papers of Fox, [doi:10.2307/1969736](https://www.jstor.org/stable/1969736#metadata_info_tab_contents) and [doi:10.2307/1969686](https://www.jstor.org/stable/1969686#metadata_info_tab_contents)). The involution $*$ is given by the composition of the matrix transposition and the standard involution on the group ring $\mathbb RG$.  
 
 ## Group cohomology
 It has been shown by Lyndon in [doi:10.2307/1969440](https://www.jstor.org/stable/1969440) that for any $G$-module $V$ the cohomology $H^*(G,V)$ can be computed from the following complex
