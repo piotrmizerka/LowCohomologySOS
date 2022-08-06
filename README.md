@@ -5,14 +5,14 @@ More precisely we are looking for a positive $\lambda$ such that $\Delta_1-\lamb
 
 For a finitely presented group $G=\langle s_1,\ldots,s_n|r_1,\ldots,r_m\rangle$ the first Laplacian $\Delta_1$ is given by the formula
 
-$$\Delta_1=d_0d_0^*+d_1^*d_1\in\mathbb M_{n,n}(\mathbb RG),$$
+$$\Delta_1=d_0d_0^*+d_1^*d_1\in\mathbb M_{n,n}(\mathbb ZG)\subseteq M_{n,n}(\mathbb RG),$$
 
-where $d_0=\left[1-s_i\right]\in\mathbb M_{n,1}(\mathbb RG)$ and $d_1$, known as *Jacobian*, is given by the $m\times n$ matrix of *Fox derivatives* of the relations (for the definition see the original papers of Fox, [doi:10.2307/1969736](https://www.jstor.org/stable/1969736#metadata_info_tab_contents) and [doi:10.2307/1969686](https://www.jstor.org/stable/1969686#metadata_info_tab_contents)). The involution $*$ is given by the composition of the matrix transposition and the standard involution on the group ring $\mathbb RG$.  
+where $d_0=\left[1-s_i\right]\in\mathbb M_{n,1}(\mathbb ZG)$ and $d_1$, known as *Jacobian*, is given by the $m\times n$ matrix of *Fox derivatives* of the relations (for the definition see the original papers of Fox, [doi:10.2307/1969736](https://www.jstor.org/stable/1969736#metadata_info_tab_contents) and [doi:10.2307/1969686](https://www.jstor.org/stable/1969686#metadata_info_tab_contents)). The involution $*$ is given by the composition of the matrix transposition and the standard involution on the group ring $\mathbb RG$.  
 
 ## Group cohomology
 It has been shown by Lyndon in [doi:10.2307/1969440](https://www.jstor.org/stable/1969440) that for any $G$-module $V$ the cohomology $H^*(G,V)$ can be computed from the following complex
 
-$$0\longrightarrow\mathbb RG\xrightarrow{\left[1-s_i\right]}(\mathbb RG)^n\xrightarrow{\left[\frac{\partial r_i}{\partial x_j}\right]}(\mathbb RG)^m\longrightarrow\cdots$$
+$$0\longrightarrow\mathbb ZG\xrightarrow{d_0}(\mathbb ZG)^n\xrightarrow{d_1}(\mathbb ZG)^m\longrightarrow\cdots$$
 
 We focus on the vanishing of the first and the *reducibility* of the second cohomology with unitary coefficients (here reducibility means that the the image of differential $d_1$ is closed for every unitary $G$-module $V$).
 By the recent work of Bader and Nowak [doi:10.1016/j.jfa.2020.108730](https://www.sciencedirect.com/science/article/pii/S0022123620302731) these two conditions are equivalent to the existence of a positive $\lambda>0$ such that $\Delta_1-\lambda I_n$ admits a sum of squares decomposition, that is, there exist matrices $M_1,\ldots,M_l$ such that
