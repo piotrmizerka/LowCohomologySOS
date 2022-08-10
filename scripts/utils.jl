@@ -16,16 +16,21 @@ function solve_in_loop(model; logdir, optimizer, data)
     catch
         nothing
     end
+
     old_lambda = 0.0
     while status != MOI.OPTIMAL
         date = now()
-        log_file = joinpath(logdir, "solver_$date.log")
+
+        date_string(date) = Sys.iswindows() ? replace(string(date), ':' => '_') : string(date)
+
+        log_file = joinpath(logdir, "solver_$(date_string(date)).log")
+        
         status, warm = @time solve(log_file, model, optimizer, warm)
 
         λ, Q = LowCohomologySOS.get_solution(model)
         solution = Dict(:λ=>λ, :Q=>Q, :warm=>warm)
-        serialize(joinpath(logdir, "solution_$date.sjl"), solution)
-        serialize(joinpath(logdir, "solution.sjl"), solution)
+        
+        serialize(joinpath(logdir, "solution_$(date_string(date)).sjl"), solution)
 
         flag, certified_λ = open(log_file, append=true) do io
             with_logger(SimpleLogger(io)) do
