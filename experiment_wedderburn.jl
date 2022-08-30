@@ -23,17 +23,6 @@ Base.hash(w::Word, h::UInt = UInt(0)) =
 # defining the symmetry group Σ
 Σ = S₃ = PermGroup(perm"(1,2,3)", perm"(1,2)")
 
-# defining the action (by permutations in this case)
-struct OnLetters <: SymbolicWedderburn.ByPermutations end
-function SymbolicWedderburn.action(
-    ::OnLetters,
-    p::PermutationGroups.AbstractPerm,
-    w::Word,
-)
-    return Word(w.alphabet, [l^p for l in w.letters])
-end
-action = OnLetters()
-
 # defining the set on which Σ acts
 E = words = let A = [:x, :y, :z], radius = 1
     words = [Word(A, [1]), Word(A, [2]), Word(A, [3])]
@@ -49,6 +38,17 @@ E = words = let A = [:x, :y, :z], radius = 1
     words
 end
 
+# defining the action (by letter permutations in this case)
+struct OnLetters <: SymbolicWedderburn.ByPermutations end
+function SymbolicWedderburn.action(
+    ::OnLetters,
+    p::PermutationGroups.AbstractPerm,
+    w::Word,
+)
+    return Word(w.alphabet, [l^p for l in w.letters])
+end
+action = OnLetters()
+
 sa = SymbolicWedderburn.symmetry_adapted_basis(Rational{Int}, Σ, action, E)
 
 mπs = SymbolicWedderburn.multiplicity.(sa)
@@ -56,8 +56,6 @@ mπs = SymbolicWedderburn.multiplicity.(sa)
 wdec = SymbolicWedderburn.WedderburnDecomposition(Float64, Σ, action, E, E)
 
 Uπs = direct_summands(wdec)
-
-pairs(Uπs)
 
 # let's compute the invariant matrix from sample block ones (see the notes pp. 9 and 10)
 using PropertyT_new
@@ -87,3 +85,56 @@ P₂ = [1]
 P_blocks = [P₂, P_trivial] # I noticed the order of direct summands is non-standard here
 
 P_invariant = PropertyT_new.reconstruct(P_blocks, wdec)
+
+
+# Matrix example
+
+# defining the action (by matrix entries permutations tensored with the action induced by letter permutations)
+struct MatrixAction <: SymbolicWedderburn.ByPermutations end
+struct SingleEntry
+    row_id::Integer
+    col_id::Integer
+    entry::Word
+end
+Base.:(==)(s::SingleEntry, t::SingleEntry) =
+    s.row_id == t.row_id && s.col_id == t.col_id && s.entry == t.entry
+Base.hash(se::SingleEntry, h::UInt = UInt(0)) =
+    hash(se.row_id, hash(se.col_id, hash(se.entry, h)))
+
+
+function permute_C₂(i::Integer, p::PermutationGroups.AbstractPerm)::Integer
+    if (1^p == 1 && 2^p == 2 && 3^p == 3) || (1^p == 2 && 2^p == 1 && 3^p == 3) # check if inside C₂ subgroup
+        return i^p
+    end
+    return i
+end
+function SymbolicWedderburn.action(
+    ::MatrixAction,
+    p::PermutationGroups.AbstractPerm,
+    single_entry::SingleEntry,
+)
+    permuted_row_id = permute_C₂(single_entry.row_id, p)
+    perumuted_col_id = permute_C₂(single_entry.col_id, p)
+    return SingleEntry(
+        # single_entry.row_id^p, # this shall be good for the desired action, not for this example
+        # single_entry.col_id^p,
+        permuted_row_id,
+        perumuted_col_id,
+        Word(single_entry.entry.alphabet, [l^p for l in single_entry.entry.letters])
+    )
+end
+matrix_action = MatrixAction()
+
+matrix_basis = let 
+    matrix_basis = SingleEntry[]
+    for i in [1,2]
+        for j in [1,2]
+            for e in E
+                push!(matrix_basis, SingleEntry(i, j, e))
+            end
+        end
+    end
+    matrix_basis
+end
+
+sa_matrix = SymbolicWedderburn.symmetry_adapted_basis(Rational{Int}, Σ, matrix_action, matrix_basis)
