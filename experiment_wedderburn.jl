@@ -70,21 +70,21 @@ P_trivial = [1]
 P₂ = [1]
 P_blocks = [P₂, P_trivial] # I noticed the order of direct summands is non-standard here
 
-P_invariant = PropertyT_new.reconstruct(P_blocks, wdec)
+P_invariant = round.(PropertyT_new.reconstruct(P_blocks, wdec), digits=3)
 
 # second reconstruction example
 P_trivial = [1]
 P₂ = [2]
 P_blocks = [P₂, P_trivial] # I noticed the order of direct summands is non-standard here
 
-P_invariant = PropertyT_new.reconstruct(P_blocks, wdec)
+P_invariant = round.(PropertyT_new.reconstruct(P_blocks, wdec), digits=3)
 
 # third reconstruction example
 P_trivial = [10]
 P₂ = [1]
 P_blocks = [P₂, P_trivial] # I noticed the order of direct summands is non-standard here
 
-P_invariant = PropertyT_new.reconstruct(P_blocks, wdec)
+P_invariant = round.(PropertyT_new.reconstruct(P_blocks, wdec), digits=3)
 
 
 # Matrix example
