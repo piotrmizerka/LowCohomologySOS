@@ -1,5 +1,3 @@
-# This is the code replicating the example from my sheet notes from 2022_07_16
-
 using Revise
 using SymbolicWedderburn
 using PermutationGroups
@@ -41,7 +39,7 @@ end
 
 #####################################################################################################
 
-# classical, non-matrix example
+# classical, non-matrix example - compare with the notes from 2022_07_16
 
 # defining the action (by letter permutations in this case)
 struct OnLetters <: SymbolicWedderburn.ByPermutations end
