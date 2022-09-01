@@ -3,6 +3,7 @@
 using Revise
 using SymbolicWedderburn
 using PermutationGroups
+using PropertyT_new
 
 struct Word{T}
     alphabet::Vector{T}
@@ -38,6 +39,10 @@ E = words = let A = [:x, :y, :z], radius = 1
     words
 end
 
+#####################################################################################################
+
+# classical, non-matrix example
+
 # defining the action (by letter permutations in this case)
 struct OnLetters <: SymbolicWedderburn.ByPermutations end
 function SymbolicWedderburn.action(
@@ -58,7 +63,6 @@ wdec = SymbolicWedderburn.WedderburnDecomposition(Float64, Σ, action, E, E)
 Uπs = direct_summands(wdec)
 
 # let's compute the invariant matrix from sample block ones (see the notes pp. 9 and 10)
-using PropertyT_new
 
 # Uπs - just to compare with the notes (the may be rescaled), we don't need them further, however, as the whole computation
 # is enclosed in the "reconstruct" function from the PropertyT-new package
@@ -87,54 +91,67 @@ P_blocks = [P₂, P_trivial] # I noticed the order of direct summands is non-sta
 P_invariant = round.(PropertyT_new.reconstruct(P_blocks, wdec), digits=3)
 
 
-# Matrix example
+# Matrix example - in the similar manner, compare with the notes "2022_07_28_matrix_Wedderburn"
 
 # defining the action (by matrix entries permutations tensored with the action induced by letter permutations)
 struct MatrixAction <: SymbolicWedderburn.ByPermutations end
-struct SingleEntry
-    row_id::Integer
-    col_id::Integer
+struct TensorSupportElement
+    generator_id::Integer
     entry::Word
 end
-Base.:(==)(s::SingleEntry, t::SingleEntry) =
-    s.row_id == t.row_id && s.col_id == t.col_id && s.entry == t.entry
-Base.hash(se::SingleEntry, h::UInt = UInt(0)) =
-    hash(se.row_id, hash(se.col_id, hash(se.entry, h)))
+Base.:(==)(s::TensorSupportElement, t::TensorSupportElement) =
+    s.generator_id == t.generator_id && s.entry == t.entry
+Base.hash(se::TensorSupportElement, h::UInt = UInt(0)) = hash(se.generator_id, hash(se.entry, h))
 
-
-function permute_C₂(i::Integer, p::PermutationGroups.AbstractPerm)::Integer
-    if (1^p == 1 && 2^p == 2 && 3^p == 3) || (1^p == 2 && 2^p == 1 && 3^p == 3) # check if inside C₂ subgroup
-        return i^p
+# denoting Σ={1,a,a²,b,ba,ba²}, we define the representation ϕ:Σ→GL₂(ℝ) by a↦[1 0; 0 1], b↦[0 1; 1 0]
+function permute_C₂(i::Integer, p::PermutationGroups.AbstractPerm)::Integer 
+    id_perm = p^6
+    if i∈[1,2] && p!=id_perm && p^2==id_perm
+        return i%2+1
     end
     return i
 end
+
+# Our action of Σ on the basis {1⊗x,1⊗y,1⊗z,2⊗x,2⊗y,2⊗z} is given by the tensor representation:
+# Σ→GL₆(ℝ), g↦ϕ(g)⊗σ(g), where σ:Σ→GL₃(ℝ) is the permutation representation defining the action
+# of Σ on the set E={x,y,z}.
 function SymbolicWedderburn.action(
     ::MatrixAction,
     p::PermutationGroups.AbstractPerm,
-    single_entry::SingleEntry,
+    tensor_support_element::TensorSupportElement,
 )
-    permuted_row_id = permute_C₂(single_entry.row_id, p)
-    perumuted_col_id = permute_C₂(single_entry.col_id, p)
-    return SingleEntry(
-        # single_entry.row_id^p, # this shall be good for the desired action, not for this example
-        # single_entry.col_id^p,
-        permuted_row_id,
-        perumuted_col_id,
-        Word(single_entry.entry.alphabet, [l^p for l in single_entry.entry.letters])
+    permuted_generator_id = permute_C₂(tensor_support_element.generator_id, p)
+    return TensorSupportElement(
+        permuted_generator_id,
+        Word(tensor_support_element.entry.alphabet, [l^p for l in tensor_support_element.entry.letters])
     )
 end
 matrix_action = MatrixAction()
 
 matrix_basis = let 
-    matrix_basis = SingleEntry[]
+    matrix_basis = TensorSupportElement[]
     for i in [1,2]
-        for j in [1,2]
-            for e in E
-                push!(matrix_basis, SingleEntry(i, j, e))
-            end
+        for e in E
+            push!(matrix_basis, TensorSupportElement(i, e))
         end
     end
     matrix_basis
 end
 
 sa_matrix = SymbolicWedderburn.symmetry_adapted_basis(Rational{Int}, Σ, matrix_action, matrix_basis)
+
+mπs_matrix = SymbolicWedderburn.multiplicity.(sa_matrix)
+
+wdec_matrix = SymbolicWedderburn.WedderburnDecomposition(Float64, Σ, matrix_action, matrix_basis, matrix_basis)
+
+Uπs_matrix = direct_summands(wdec_matrix)
+U_trivial_matrix = Uπs_matrix[2]
+U₁_matrix = Uπs_matrix[3]
+U₂_matrix = Uπs_matrix[1]
+
+P_trivial_matrix = [1]
+P₁_matrix = [10]
+P₂_matrix = [1 0;-1 2]
+P_blocks_matrix = [P₂_matrix, P_trivial_matrix, P₁_matrix]
+
+P_invariant_matrix = round.(PropertyT_new.reconstruct(P_blocks_matrix, wdec_matrix), digits=2)
