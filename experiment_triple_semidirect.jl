@@ -1,10 +1,12 @@
+using Revise
 using Groups
 using LowCohomologySOS
 
 include(joinpath(@__DIR__, "scripts", "optimizers.jl"))
 include(joinpath(@__DIR__, "scripts", "utils.jl"))
 
-function check_vanishing(G::Groups.AbstractFPGroup, d₁, d₂, half_basis)
+function check_vanishing(G::Groups.AbstractFPGroup, d₁, d₂, 
+    half_basis)
     ℝG_twisted = LowCohomologySOS.group_ring(G, half_basis, star_multiplication = true)
 
     # right multiplication convention reverses order of stars in multiplication ??
@@ -56,6 +58,7 @@ x, y, z = Groups.gens(F₃)
 
 const half_radius = 4
 
+
 # Π₀₁₋₁₋₁ ##############################################################################################
 G = Π₀₁₋₁₋₁ = FPGroup(F₃, [x*y => y*x, x*z => z^(-1)*x, y*z => z^(-1)*y], maxrules=24)
 
@@ -81,7 +84,57 @@ d₂ = [
 
 check_vanishing(G, d₁, d₂, half_basis)
 
-# TODO: vanishing fo other gorups G as well like for G = Π₀₁₋₁₋₁
+
+# Π₀₋₁₁₋₁ ##############################################################################################
+G = Π₀₋₁₁₋₁ = FPGroup(F₃, [x*y => y^(-1)*x, x*z => z*x, y*z => z^(-1)*y], maxrules=24)
+
+S = let s = gens(G)
+    [s; inv.(s)]
+end
+half_basis, sizes = Groups.wlmetric_ball(S, radius = half_radius)
+ℝG = LowCohomologySOS.group_ring(G, half_basis)
+quotient_hom_G = quotient_hom(F₃, G)
+xx, yy, zz = quotient_hom_G.([x, y, z])
+
+d₁ = [
+        -one(ℝG)+ℝG(yy^(-1)) -ℝG(zz^(-1))+one(ℝG) zero(ℝG);
+        one(ℝG)+ℝG(xx^(-1)*yy^(-1)) zero(ℝG) ℝG(zz^(-1))-one(ℝG);
+        zero(ℝG) -one(ℝG)+ℝG(xx^(-1)) one(ℝG)+ℝG(yy^(-1)*zz^(-1))
+]
+
+d₂ = [
+        one(ℝG)-ℝG(zz^(-1));
+        one(ℝG)+ℝG(yy^(-1)*zz^(-1));
+        ℝG(zz^(-1))-ℝG(xx^(-1)*yy^(-1)*zz^(-1))
+]
+
+check_vanishing(G, d₁, d₂, half_basis)
+
+
+# Π₁₋₁₁₋₁ ##############################################################################################
+G = Π₁₋₁₁₋₁ = FPGroup(F₃, [x*y => z*y^(-1)*x, x*z => z*x, y*z => z^(-1)*y], maxrules=24)
+
+S = let s = gens(G)
+    [s; inv.(s)]
+end
+half_basis, sizes = Groups.wlmetric_ball(S, radius = half_radius)
+ℝG = LowCohomologySOS.group_ring(G, half_basis)
+quotient_hom_G = quotient_hom(F₃, G)
+xx, yy, zz = quotient_hom_G.([x, y, z])
+
+d₁ = [
+        -one(ℝG)+ℝG(yy^(-1)*zz^(-1)) one(ℝG)-ℝG(zz^(-1)) zero(ℝG);
+        ℝG(zz^(-1))+ℝG(xx^(-1)*yy^(-1)*zz^(-1)) zero(ℝG) ℝG(zz^(-1))-one(ℝG);
+        one(ℝG) -one(ℝG)+ℝG(xx^(-1)) one(ℝG)+ℝG(yy^(-1)*zz^(-1))
+]
+
+d₂ = [
+        one(ℝG)-ℝG(zz^(-1));
+        one(ℝG)+ℝG(yy^(-1)*(zz^(-1))^2);
+        ℝG(zz^(-1))-ℝG(xx^(-1)*yy^(-1)*(zz^(-1))^2)
+]
+
+check_vanishing(G, d₁, d₂, half_basis)
 
 
 # check reducibility using lower Laplacian - caveat: the certification argument doees not work here!!! It has to be figured out!!!
