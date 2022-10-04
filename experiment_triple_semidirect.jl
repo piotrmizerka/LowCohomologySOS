@@ -33,7 +33,7 @@ function check_vanishing(G::Groups.AbstractFPGroup, d₁, d₂,
     solve_in_loop(
         Δ₂_sos_problem,
         logdir = "./logs",
-        optimizer = scs_opt(eps = 1e-5, max_iters = 100_000),
+        optimizer = scs_opt(eps = 1e-5, max_iters = 20_000),
         data = G_data
     )
 end
@@ -56,7 +56,7 @@ A = Alphabet([:x, :X, :y, :Y, :z, :Z], [2, 1, 4, 3, 6, 5])
 F₃ = FreeGroup(A)
 x, y, z = Groups.gens(F₃)
 
-const half_radius = 4
+const half_radius = 5
 
 
 # Π₀₁₋₁₋₁ ##############################################################################################
@@ -86,7 +86,7 @@ check_vanishing(G, d₁, d₂, half_basis)
 
 
 # Π₀₋₁₁₋₁ ##############################################################################################
-G = Π₀₋₁₁₋₁ = FPGroup(F₃, [x*y => y^(-1)*x, x*z => z*x, y*z => z^(-1)*y], maxrules=24)
+G = Π₀₋₁₁₋₁ = FPGroup(F₃, [x*y => y^(-1)*x, x*z => z*x, y*z => z^(-1)*y])
 
 S = let s = gens(G)
     [s; inv.(s)]
@@ -112,7 +112,7 @@ check_vanishing(G, d₁, d₂, half_basis)
 
 
 # Π₁₋₁₁₋₁ ##############################################################################################
-G = Π₁₋₁₁₋₁ = FPGroup(F₃, [x*y => z*y^(-1)*x, x*z => z*x, y*z => z^(-1)*y], maxrules=24)
+G = Π₁₋₁₁₋₁ = FPGroup(F₃, [x*y => z*y^(-1)*x, x*z => z*x, y*z => z^(-1)*y])
 
 S = let s = gens(G)
     [s; inv.(s)]
