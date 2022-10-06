@@ -7,6 +7,9 @@ using StarAlgebras
 using GroupsCore
 using Groups
 
+using SymbolicWedderburn
+using PermutationGroups
+
 import JuMP
 import JuMP.MOI
 
@@ -19,5 +22,6 @@ include("group_rings.jl")
 include("fox_derivatives.jl")
 include("positive_approx.jl")
 include("certification.jl")
+include("alphabet_permutation.jl")
 
 end
