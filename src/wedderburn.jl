@@ -76,3 +76,16 @@ basis, sizes = Groups.wlmetric_ball(S, radius = 2*half_radius)
 half_basis = basis[1:sizes[half_radius]]
 
 w_dec_matrix = wedderburn_decomposition_matrix(Σ, basis, half_basis, S)
+
+
+# check if the convention for the group operation in SAutFns is to compose the automorphisms 
+# first right then left (the classical way) or the other way round.
+S[1]
+S[2]
+elt = S[1]*S[2]
+s1, s2 = Groups.domain(S[1])
+evaluate(elt)
+evaluate(elt) == (s1*s2, s2*s1*s2) # first right then left
+evaluate(elt) == (s1*s2*s1, s2*s1) # first left then right
+# It turns out that the convention is the classical one: compose automorphisms first
+# from the right then from the left.
