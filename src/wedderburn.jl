@@ -52,7 +52,7 @@ function wedderburn_decomposition_matrix(
     Σ,
     basis,
     half_basis,
-    S # stands for the generating set we choose
+    S
 )
     action = LowCohomologySOS.AlphabetPermutation(alphabet(parent(first(S))), Σ, _conj)
     constraints_basis, psd_basis = matrix_bases(basis, half_basis, S)
