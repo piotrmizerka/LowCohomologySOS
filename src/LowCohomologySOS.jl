@@ -23,5 +23,6 @@ include("fox_derivatives.jl")
 include("positive_approx.jl")
 include("certification.jl")
 include("alphabet_permutation.jl")
+include("wedderburn.jl")
 
 end
