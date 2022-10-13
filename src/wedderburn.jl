@@ -1,9 +1,3 @@
-using Revise
-using SymbolicWedderburn
-using PermutationGroups
-using Groups
-using LowCohomologySOS
-
 function _conj(
     t::Groups.Transvection,
     σ::PermutationGroups.AbstractPerm,
@@ -59,33 +53,3 @@ function wedderburn_decomposition_matrix(
 
     return SymbolicWedderburn.WedderburnDecomposition(Float64, Σ, action, constraints_basis, psd_basis)
 end
-
-
-const n = 2
-
-SAutFn = Groups.SpecialAutomorphismGroup(FreeGroup(n))
-Σ = Groups.Constructions.WreathProduct(PermutationGroups.SymmetricGroup(2), PermutationGroups.SymmetricGroup(n))
-S = let s = Groups.gens(SAutFn)
-    [s; inv.(s)]
-end
-S = unique!(S)
-
-const half_radius = 1
-
-basis, sizes = Groups.wlmetric_ball(S, radius = 2*half_radius)
-half_basis = basis[1:sizes[half_radius]]
-
-w_dec_matrix = wedderburn_decomposition_matrix(Σ, basis, half_basis, S)
-
-
-# check if the convention for the group operation in SAutFns is to compose the automorphisms 
-# first right then left (the classical way) or the other way round.
-S[1]
-S[2]
-elt = S[1]*S[2]
-s1, s2 = Groups.domain(S[1])
-evaluate(elt)
-evaluate(elt) == (s1*s2, s2*s1*s2) # first right then left
-evaluate(elt) == (s1*s2*s1, s2*s1) # first left then right
-# It turns out that the convention is the classical one: compose automorphisms first
-# from the right then from the left.
