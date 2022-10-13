@@ -2,22 +2,11 @@ struct AlphabetPermutation{GEl,I} <: SymbolicWedderburn.ByPermutations
     perms::Dict{GEl,PermutationGroups.Perm{I}}
 end
 
-function AlphabetPermutation(
-    A::Alphabet,
-    Γ::PermutationGroups.AbstractPermutationGroup,
-    op,
-)
-    return AlphabetPermutation(
-        Dict(γ => inv(PermutationGroups.Perm([A[op(l, γ)] for l in A])) for γ in Γ),
-    )
-end
-
-function AlphabetPermutation(A::Alphabet, W::Groups.Constructions.WreathProduct, op)
+function AlphabetPermutation(A::Alphabet, G::Groups.Constructions.WreathProduct, op)
     return AlphabetPermutation(
         Dict(
-            # w => inv(PermutationGroups.Perm([A[op(op(l, w.n), w.p)] for l in A.letters])) for
-            w => inv(PermutationGroups.Perm([A[op(l, w)] for l in A.letters])) for # I think this is the right way to do - no need to compose op twice as in the line above
-            w in W
+            g => PermutationGroups.Perm([A[op(l, g)] for l in A.letters]) for
+            g in G
         ),
     )
 end
