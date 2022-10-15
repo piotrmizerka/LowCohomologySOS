@@ -9,6 +9,7 @@ using Groups
 
 using SymbolicWedderburn
 using PermutationGroups
+using Kronecker
 
 import JuMP
 import JuMP.MOI
@@ -24,5 +25,6 @@ include("positive_approx.jl")
 include("certification.jl")
 include("alphabet_permutation.jl")
 include("wedderburn.jl")
+include("positive_approx_symmetrized.jl")
 
 end
