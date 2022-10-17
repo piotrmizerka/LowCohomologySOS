@@ -1,4 +1,4 @@
-@testset "invariant_constraint_matrix" begin
+@testset "symmetrized matrix SOS problem" begin
     SAutF₂ = Groups.SpecialAutomorphismGroup(FreeGroup(2))
     S = let s = Groups.gens(SAutF₂)
         [s; inv.(s)]
