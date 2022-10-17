@@ -85,3 +85,22 @@ function sos_problem_symmetrized(
     
     return result
 end
+
+function get_solution_symmetrized(
+    m::JuMP.Model,
+    w_dec_matrix::SymbolicWedderburn.WedderburnDecomposition
+)
+    λ = JuMP.value(m[:λ])
+    Q = let 
+        P_diag = JuMP.value.(m[:P])
+        P_blocks = [P_diag[π] for (π, ds) in pairs(SymbolicWedderburn.direct_summands(w_dec_matrix))]
+        P = PropertyT_new.reconstruct(P_blocks, w_dec_matrix)
+        if any(isnan, P) || any(isinf, P)
+            @error "obtained solution contains NaNs or ±Inf"
+            P
+        else
+            real(sqrt(Symmetric((P + P')./2)))
+        end
+    end
+    return λ, Q
+end
