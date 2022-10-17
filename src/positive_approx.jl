@@ -63,7 +63,7 @@ end
 # h:Free group --> our group G
 function spectral_gap_elements(
     h,
-    relations::AbstractVector{<:FPGroupElement},
+    relations,
     half_basis
 )
     @assert !isempty(relations)
