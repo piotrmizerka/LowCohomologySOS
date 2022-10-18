@@ -78,6 +78,9 @@ function suitable_group_ring(relations)
     F = parent(first(relations))
 
     half_basis = [one(F)]
+    for s in gens(F)
+        append!(half_basis, [s])
+    end
     sizehint!(half_basis, length(relations) * maximum(length ∘ word, relations))
 
     for rel in relations
@@ -87,6 +90,8 @@ function suitable_group_ring(relations)
             end
         end
     end
+
+    half_basis = unique!(half_basis)
 
     return group_ring(F, half_basis, additive_only = true)
 end
