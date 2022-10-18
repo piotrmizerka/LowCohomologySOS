@@ -60,7 +60,7 @@ function free_group_saut_index(i::Integer, gs_no::Integer)
 end
 #################################################################
 
-Δ₁, Iₙ, half_basis, we_dec_matrix = let half_radius = 1, N = 2
+Δ₁, Iₙ, half_basis, w_dec_matrix, Σ, psd_basis, S = let half_radius = 2, N = 2
     SAut_F(n) = Groups.SpecialAutomorphismGroup(FreeGroup(n))
     SAut_F_N = SAut_F(N)
 
@@ -69,6 +69,9 @@ end
     end
     basis, sizes = Groups.wlmetric_ball(S, radius = 2*half_radius)
     half_basis = basis[1:sizes[half_radius]]
+
+    @info length(basis)
+    @info length(half_basis)
 
     F_SAut_F_2N = FreeGroup(length(S))
 
@@ -114,20 +117,41 @@ end
         [λ(i,j,true)*ϱ(j,k,true)*λ(i,j,true)^(-1)*ϱ(j,k,true)^(-1)*λ(i,k)^(-1) for (i,j,k) ∈ triples]
     )
 
-    Δ₁, Iₙ = LowCohomologySOS.spectral_gap_elements(quotient_hom, relations, half_basis) # this line throws key not found error!
+    Δ₁, Iₙ = LowCohomologySOS.spectral_gap_elements(quotient_hom, relations, half_basis)
+
+    @info "dasd"
+
     Z_2_wr_S(n) = Groups.Constructions.WreathProduct(PermutationGroups.SymmetricGroup(2), PermutationGroups.SymmetricGroup(n))
     Σ = Z_2_wr_S(N)
-    w_dec_matrix = LowCohomologySOS.wedderburn_decomposition_matrix(Σ, basis, half_basis, S)
-    w_dec_matrix=2
-    2, 3, half_basis, w_dec_matrix
+    constraints_basis, psd_basis = LowCohomologySOS.matrix_bases(basis, half_basis, S)
+
+    @info length(constraints_basis)
+    @info length(psd_basis)
+
+    w_dec_matrix = LowCohomologySOS.wedderburn_decomposition_matrix(Σ, constraints_basis, psd_basis, S)
+    Δ₁, Iₙ, half_basis, w_dec_matrix, Σ, psd_basis, S
 end
 
-Δ₁_sos_problem = LowCohomologySOS.sos_problem_matrix(Δ₁, Iₙ)
+Δ₁_sos_problem = LowCohomologySOS.sos_problem_symmetrized(
+    Δ₁, 
+    Iₙ,
+    w_dec_matrix,
+    Σ,
+    psd_basis,
+    S
+)
+
+SAut_F_4_data = (
+    M = Δ₁,
+    order_unit = Iₙ,
+    half_basis = half_basis,
+    RG = parent(first(Δ₁)),
+)
 
 solve_in_loop(
     Δ₁_sos_problem,
     logdir = "./logs",
     optimizer = scs_opt(eps = 1e-9, max_iters = 20_000),
-    data = SL₃ℤ_data,
+    data = SAut_F_4_data,
     w_dec_matrix
 )
