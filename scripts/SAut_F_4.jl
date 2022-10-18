@@ -70,9 +70,6 @@ end
     basis, sizes = Groups.wlmetric_ball(S, radius = 2*half_radius)
     half_basis = basis[1:sizes[half_radius]]
 
-    @info length(basis)
-    @info length(half_basis)
-
     F_SAut_F_2N = FreeGroup(length(S))
 
     quotient_hom = let source = F_SAut_F_2N, target = SAut_F_N
@@ -119,14 +116,9 @@ end
 
     Δ₁, Iₙ = LowCohomologySOS.spectral_gap_elements(quotient_hom, relations, half_basis)
 
-    @info "dasd"
-
     Z_2_wr_S(n) = Groups.Constructions.WreathProduct(PermutationGroups.SymmetricGroup(2), PermutationGroups.SymmetricGroup(n))
     Σ = Z_2_wr_S(N)
     constraints_basis, psd_basis = LowCohomologySOS.matrix_bases(basis, half_basis, S)
-
-    @info length(constraints_basis)
-    @info length(psd_basis)
 
     w_dec_matrix = LowCohomologySOS.wedderburn_decomposition_matrix(Σ, constraints_basis, psd_basis, S)
     Δ₁, Iₙ, half_basis, w_dec_matrix, Σ, psd_basis, S
