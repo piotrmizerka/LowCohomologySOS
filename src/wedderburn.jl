@@ -44,12 +44,12 @@ end
 
 function wedderburn_decomposition_matrix(
     Σ,
-    basis,
-    half_basis,
+    constraints_basis,
+    psd_basis,
     S
 )
     action = LowCohomologySOS.AlphabetPermutation(alphabet(parent(first(S))), Σ, _conj)
-    constraints_basis, psd_basis = matrix_bases(basis, half_basis, S)
+    # constraints_basis, psd_basis = matrix_bases(basis, half_basis, S)
 
     return SymbolicWedderburn.WedderburnDecomposition(Float64, Σ, action, constraints_basis, psd_basis)
 end
