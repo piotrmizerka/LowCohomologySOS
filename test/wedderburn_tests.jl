@@ -117,8 +117,6 @@ end
         @test size(w_dec_matrix.Uπs[i])[2] == length(S)*length(half_basis)
     end
 
-    _conj = LowCohomologySOS._conj
-    action = LowCohomologySOS.AlphabetPermutation(alphabet(parent(first(S))), Σ, _conj)
     sa = SymbolicWedderburn.symmetry_adapted_basis(Rational{Int}, Σ, action, psd_basis)
     mπs = SymbolicWedderburn.multiplicity.(sa)
 
