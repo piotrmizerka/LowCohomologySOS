@@ -48,7 +48,7 @@
 
     M = [i ≠ j ? zero(ℝSAutF₂_star) : one(ℝSAutF₂_star)+ℝSAutF₂_star(S[2]) for i in 1:length(S), j in 1:length(S)]
     order_unit = [i ≠ j ? zero(ℝSAutF₂_star) : one(ℝSAutF₂_star) for i in 1:length(S), j in 1:length(S)]
-    w_dec_matrix = LowCohomologySOS.wedderburn_decomposition_matrix(Σ, basis, half_basis, S)
+    w_dec_matrix = SymbolicWedderburn.WedderburnDecomposition(Float64, Σ, action, constraints_basis, psd_basis)
 
     sos_pr_sym = LowCohomologySOS.sos_problem_symmetrized(
         M,
