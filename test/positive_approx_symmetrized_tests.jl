@@ -53,6 +53,7 @@
         order_unit,
         w_dec_matrix,
         Σ,
+        basis,
         psd_basis,
         S
     )
