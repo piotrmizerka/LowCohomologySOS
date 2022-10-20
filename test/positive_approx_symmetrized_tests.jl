@@ -26,7 +26,6 @@
         length(S)
     )
     @test size(inv_cnstr_matrix) == (length(psd_basis), length(psd_basis))
-    # check invariance of inv_cnstr_matrix: this test is failed - study the invariance!
     half_basis_idies = Dict(half_basis[i] => i for i in 1:length(half_basis))
     for i in 1:length(S)
         for j in 1:length(S)
