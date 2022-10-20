@@ -60,7 +60,7 @@ function free_group_saut_index(i::Integer, gs_no::Integer)
 end
 #################################################################
 
-Δ₁, Iₙ, half_basis, w_dec_matrix, Σ, psd_basis, S = let half_radius = 2, N = 2
+Δ₁, Iₙ, half_basis, w_dec_matrix, Σ, basis, psd_basis, S = let half_radius = 2, N = 2
     SAut_F(n) = Groups.SpecialAutomorphismGroup(FreeGroup(n))
     SAut_F_N = SAut_F(N)
 
@@ -69,6 +69,10 @@ end
     end
     basis, sizes = Groups.wlmetric_ball(S, radius = 2*half_radius)
     half_basis = basis[1:sizes[half_radius]]
+
+    # @info length(basis)
+    # @info length(half_basis)
+    # @info length(S)
 
     F_SAut_F_2N = FreeGroup(length(S))
 
@@ -113,8 +117,13 @@ end
         [λ(i,j,true)*ϱ(j,k)*λ(i,j,true)^(-1)*ϱ(j,k)^(-1)*λ(i,k,true)^(-1) for (i,j,k) ∈ triples],
         [λ(i,j,true)*ϱ(j,k,true)*λ(i,j,true)^(-1)*ϱ(j,k,true)^(-1)*λ(i,k)^(-1) for (i,j,k) ∈ triples]
     )
+    
+    # @info length(relations)
+    # @info "1"
 
     Δ₁, Iₙ = LowCohomologySOS.spectral_gap_elements(quotient_hom, relations, half_basis)
+
+    # @info "2"
 
     Z_2_wr_S(n) = Groups.Constructions.WreathProduct(PermutationGroups.SymmetricGroup(2), PermutationGroups.SymmetricGroup(n))
     Σ = Z_2_wr_S(N)
@@ -125,6 +134,12 @@ end
     # @info "3"
 
     w_dec_matrix = SymbolicWedderburn.WedderburnDecomposition(Float64, Σ, action, constraints_basis, psd_basis)
+
+    # @info length(w_dec_matrix.invariants)
+    # @info w_dec_matrix.invariants[1]
+    # @info w_dec_matrix.invariants[2345]
+
+    Δ₁, Iₙ, half_basis, w_dec_matrix, Σ, basis, psd_basis, S
 end
 
 Δ₁_sos_problem = LowCohomologySOS.sos_problem_symmetrized(
@@ -132,6 +147,7 @@ end
     Iₙ,
     w_dec_matrix,
     Σ,
+    basis,
     psd_basis,
     S
 )
