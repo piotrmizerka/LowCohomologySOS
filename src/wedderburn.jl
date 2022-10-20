@@ -46,38 +46,9 @@ function _conj(
     return Groups.Transvection(new_id, tσ.i, tσ.j, new_inv)
 end
 
-function matrix_bases(
-    basis, 
-    half_basis,
-    S # stands for the generating set we choose
-)
-    constraints_basis = LowCohomologySOS.TensorSupportElement[]
-    psd_basis = LowCohomologySOS.TensorSupportElement[]
+function matrix_bases(basis, half_basis, S)
+    constr_basis = [TensorSupportElement(s, t, g) for s in S for t in S for g in basis]
+    psd_basis = [TensorSupportElement(s, s, g) for s in S for g in half_basis]
 
-    for i in eachindex(S)
-        for j in eachindex(S)
-            for e in basis
-                push!(constraints_basis, LowCohomologySOS.TensorSupportElement(S[i], S[j], e))
-            end
-            if i == j
-                for e in half_basis
-                    push!(psd_basis, LowCohomologySOS.TensorSupportElement(S[i], S[j], e)) # half_basis on diagonal
-                end
-            end
-        end
-    end
-
-    return constraints_basis, psd_basis
-end
-
-function wedderburn_decomposition_matrix(
-    Σ,
-    constraints_basis,
-    psd_basis,
-    S
-)
-    action = LowCohomologySOS.AlphabetPermutation(alphabet(parent(first(S))), Σ, _conj)
-    # constraints_basis, psd_basis = matrix_bases(basis, half_basis, S)
-
-    return SymbolicWedderburn.WedderburnDecomposition(Float64, Σ, action, constraints_basis, psd_basis)
+   return constr_basis, psd_basis
 end
