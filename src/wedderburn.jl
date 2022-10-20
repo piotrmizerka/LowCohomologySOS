@@ -1,3 +1,12 @@
+struct TensorSupportElement{GEl}
+    i::GEl
+    j::GEl
+    k::GEl
+end
+
+Base.:(==)(s::TensorSupportElement, t::TensorSupportElement) =
+    s.i == t.i && s.j == t.j && s.k == t.k
+Base.hash(se::TensorSupportElement, h::UInt = UInt(0)) = hash(se.i, hash(se.j, hash(se.k, h)))
 function _conj(
     t::Groups.Transvection,
     σ::PermutationGroups.AbstractPerm,

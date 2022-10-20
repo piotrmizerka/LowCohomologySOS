@@ -12,9 +12,9 @@ function invariant_constraint_matrix(
     result = zeros(eltype(first(A_gs)[2]), dim, dim)
     for σ ∈ Σ
         σ_orbit_representative = SymbolicWedderburn.action(action, σ, orbit_representative)
-        σi, σj = word(σ_orbit_representative.row_generator)[1], word(σ_orbit_representative.column_generator)[1]
+        σi, σj = word(σ_orbit_representative.i)[1], word(σ_orbit_representative.j)[1]
         δ_σi_σj = KroneckerDelta{generators_number}(σi, σj)
-        A_σg = A_gs[σ_orbit_representative.entry]
+        A_σg = A_gs[σ_orbit_representative.k]
         result += δ_σi_σj⊗A_σg
     end
     result /= length(collect(Σ))
@@ -66,19 +66,19 @@ function sos_problem_symmetrized(
     action = AlphabetPermutation(alphabet(parent(first(S))), Σ, _conj)
     A_gs = Dict(g => A_g for (A_g, g) in zip(cnstrs, basis(A)))
 
-    for constraint in constraints_basis
-        if considered_constraints[constraint] == false
-            i, j = word(constraint.row_generator)[1], word(constraint.column_generator)[1]
-            lhs = M[i,j](constraint.entry)
-            δ_i_j_g_invariant = invariant_constraint_matrix(constraint, Σ, action, psd_basis, A_gs, length(S))
-            rhs = 0
-            for (π, ds) in pairs(SymbolicWedderburn.direct_summands(w_dec_matrix))
+        i, j = word(constraint.i)[1], word(constraint.j)[1]
+        k = basis_idies[constraint.k]
+        if considered_constraints[i,j,k] == false
+            i, j = word(constraint.i)[1], word(constraint.j)[1]
+            lhs = M[i,j](constraint.k)
                 Uπ = SymbolicWedderburn.image_basis(ds)
                 rhs += dot(degree(ds)*Uπ*δ_i_j_g_invariant*Uπ', P[π])
             end
             JuMP.@constraint(result, lhs == rhs)
             for σ ∈ Σ
-                considered_constraints[SymbolicWedderburn.action(action, σ, constraint)] = true
+                σ_i, σ_j = word(σ_constraint.i)[1], word(σ_constraint.j)[1]
+                σ_k = basis_idies[σ_constraint.k]
+                considered_constraints[σ_i,σ_j,σ_k] = true
             end
         end
     end

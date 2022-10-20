@@ -34,7 +34,7 @@
             inv_cnstr_matrix_i_j = @view inv_cnstr_matrix[LowCohomologySOS.KroneckerDelta{length(S)}(i, j)]
             for σ ∈ Σ
                 σ_tse = SymbolicWedderburn.action(action, σ, LowCohomologySOS.TensorSupportElement(S[i], S[j], first(S)))
-                σi, σj = word(σ_tse.row_generator)[1], word(σ_tse.column_generator)[1]
+                σi, σj = word(σ_tse.i)[1], word(σ_tse.j)[1]
                 inv_cnstr_matrix_σi_σj = @view inv_cnstr_matrix[LowCohomologySOS.KroneckerDelta{length(S)}(σi, σj)]
                 for l in 1:3
                     e, f = rand(1:length(half_basis)), rand(1:length(half_basis))

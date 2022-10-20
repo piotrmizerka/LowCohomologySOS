@@ -58,16 +58,16 @@ end
     gl = length(S)
     bl = length(basis)
     for i in 1:3
-        row_gen, col_gen, entry = rand(1:gl), rand(1:gl), rand(1:bl)
-        basis_element = LowCohomologySOS.TensorSupportElement(S[row_gen], S[col_gen], basis[entry])
+        row_gen, col_gen, k = rand(1:gl), rand(1:gl), rand(1:bl)
+        basis_element = LowCohomologySOS.TensorSupportElement(S[row_gen], S[col_gen], basis[k])
         @test basis_element isa LowCohomologySOS.TensorSupportElement
-        @test basis_element.row_generator isa Groups.GroupElement
-        @test basis_element.column_generator isa Groups.GroupElement
-        @test basis_element.entry isa Groups.GroupElement
-        @test basis_element.row_generator == S[row_gen]
-        @test basis_element.column_generator == S[col_gen]
-        @test basis_element.entry == basis[entry]
-        @test basis_element == LowCohomologySOS.TensorSupportElement(S[row_gen], S[col_gen], basis[entry])
+        @test basis_element.i isa Groups.GroupElement
+        @test basis_element.j isa Groups.GroupElement
+        @test basis_element.k isa Groups.GroupElement
+        @test basis_element.i == S[row_gen]
+        @test basis_element.j == S[col_gen]
+        @test basis_element.k == basis[k]
+        @test basis_element == LowCohomologySOS.TensorSupportElement(S[row_gen], S[col_gen], basis[k])
     end
 end
 
@@ -83,14 +83,14 @@ end
     action = LowCohomologySOS.AlphabetPermutation(alphabet(parent(first(S))), Σ, _conj)
 
     for i in 1:3
-        row_gen, col_gen, entry = rand(1:gl), rand(1:gl), rand(1:gl)
-        basis_element = LowCohomologySOS.TensorSupportElement(S[row_gen], S[col_gen], S[entry])
+        row_gen, col_gen, k = rand(1:gl), rand(1:gl), rand(1:gl)
+        basis_element = LowCohomologySOS.TensorSupportElement(S[row_gen], S[col_gen], S[k])
         for σ ∈ Σ
             be_after_action = SymbolicWedderburn.action(action, σ, basis_element)
             @test be_after_action == LowCohomologySOS.TensorSupportElement(
-                SAutF₃(word(basis_element.row_generator)^action.perms[σ]),
-                SAutF₃(word(basis_element.column_generator)^action.perms[σ]),
-                SAutF₃(word(basis_element.entry)^action.perms[σ])
+                SAutF₃(word(basis_element.i)^action.perms[σ]),
+                SAutF₃(word(basis_element.j)^action.perms[σ]),
+                SAutF₃(word(basis_element.k)^action.perms[σ])
             )
         end
     end
