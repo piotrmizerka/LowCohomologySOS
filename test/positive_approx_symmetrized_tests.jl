@@ -6,7 +6,6 @@
     S = unique!(S)
     basis, sizes = Groups.wlmetric_ball(S, radius = 2)
     half_basis = basis[1:sizes[1]]
-    _conj = LowCohomologySOS._conj
     ℝSAutF₂_star = LowCohomologySOS.group_ring(SAutF₂, half_basis, star_multiplication = true)
     cnstrs = LowCohomologySOS.constraints(ℝSAutF₂_star.mstructure)
 
@@ -14,7 +13,7 @@
 
     orbit_representative = LowCohomologySOS.TensorSupportElement(S[i], S[j], basis[e])
     Σ = Groups.Constructions.WreathProduct(PermutationGroups.SymmetricGroup(2), PermutationGroups.SymmetricGroup(2))
-    action = LowCohomologySOS.AlphabetPermutation(alphabet(parent(first(S))), Σ, _conj)
+    action = LowCohomologySOS.AlphabetPermutation(alphabet(parent(first(S))), Σ, LowCohomologySOS._conj)
     constraints_basis, psd_basis = LowCohomologySOS.matrix_bases(basis, half_basis, S)
     A_gs = Dict(g => A_g for (A_g, g) in zip(cnstrs, basis))
 
