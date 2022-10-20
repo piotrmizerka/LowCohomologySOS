@@ -105,9 +105,10 @@ end
     half_basis = S
     basis, sizes = Groups.wlmetric_ball(S, radius = 2)
     Σ = Groups.Constructions.WreathProduct(PermutationGroups.SymmetricGroup(2), PermutationGroups.SymmetricGroup(2))
+    action = LowCohomologySOS.AlphabetPermutation(alphabet(parent(first(S))), Σ, LowCohomologySOS._conj)
     constraints_basis, psd_basis = LowCohomologySOS.matrix_bases(basis, half_basis, S)
 
-    w_dec_matrix = LowCohomologySOS.wedderburn_decomposition_matrix(Σ, constraints_basis, psd_basis, S)
+    w_dec_matrix = SymbolicWedderburn.WedderburnDecomposition(Float64, Σ, action, constraints_basis, psd_basis)
 
     @test eltype(w_dec_matrix.basis) == LowCohomologySOS.TensorSupportElement
     @test length(w_dec_matrix.basis) == length(S)^2*length(basis)

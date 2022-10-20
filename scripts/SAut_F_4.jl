@@ -118,10 +118,13 @@ end
 
     Z_2_wr_S(n) = Groups.Constructions.WreathProduct(PermutationGroups.SymmetricGroup(2), PermutationGroups.SymmetricGroup(n))
     Σ = Z_2_wr_S(N)
+    # w_dec_matrix = LowCohomologySOS.wedderburn_decomposition_matrix(Σ, constraints_basis, psd_basis, S)
+    action = LowCohomologySOS.AlphabetPermutation(alphabet(parent(first(S))), Σ, LowCohomologySOS._conj)
     constraints_basis, psd_basis = LowCohomologySOS.matrix_bases(basis, half_basis, S)
 
-    w_dec_matrix = LowCohomologySOS.wedderburn_decomposition_matrix(Σ, constraints_basis, psd_basis, S)
-    Δ₁, Iₙ, half_basis, w_dec_matrix, Σ, psd_basis, S
+    # @info "3"
+
+    w_dec_matrix = SymbolicWedderburn.WedderburnDecomposition(Float64, Σ, action, constraints_basis, psd_basis)
 end
 
 Δ₁_sos_problem = LowCohomologySOS.sos_problem_symmetrized(
