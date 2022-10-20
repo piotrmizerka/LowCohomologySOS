@@ -91,10 +91,10 @@ end
                      for j ∈ deleteat!(range_as_list, findall(j->j==i,range_as_list))]
     quadruples_1 = [(i,j,k,l) for k ∈ 1:N for l ∈ 1:N 
                               for i ∈ deleteat!(range_as_list, findall(i->i∈[k,l],range_as_list)) 
-                              for j ∈ deleteat!(range_as_list, findall(j->i==k,range_as_list))]
+                              for j ∈ deleteat!(range_as_list, findall(j->j==k,range_as_list))]
     quadruples_2 = [(i,j,k,l) for k ∈ 1:N for l ∈ 1:N 
                               for i ∈ deleteat!(range_as_list, findall(i->i==l,range_as_list)) 
-                              for j ∈ deleteat!(range_as_list, findall(j->i==k,range_as_list))]
+                              for j ∈ deleteat!(range_as_list, findall(j->j==k,range_as_list))]
     triples = [(i,j,k) for i ∈ 1:N
                        for j ∈ deleteat!(range_as_list, findall(j->j==i,range_as_list)) 
                        for k ∈ deleteat!(range_as_list, findall(k->k∈[i,j],range_as_list))]
