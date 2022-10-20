@@ -7,6 +7,25 @@ end
 Base.:(==)(s::TensorSupportElement, t::TensorSupportElement) =
     s.i == t.i && s.j == t.j && s.k == t.k
 Base.hash(se::TensorSupportElement, h::UInt = UInt(0)) = hash(se.i, hash(se.j, hash(se.k, h)))
+function SymbolicWedderburn.action(
+    act::AlphabetPermutation,
+    g::Groups.GroupElement,
+    gel,
+)
+    return parent(gel)(word(gel)^(act.perms[g]))
+end
+
+function SymbolicWedderburn.action(
+    act::AlphabetPermutation,
+    g::Groups.GroupElement,
+    tse::TensorSupportElement,
+)
+    s = SymbolicWedderburn.action(act, g, tse.i)
+    t = SymbolicWedderburn.action(act, g, tse.j)
+    g = SymbolicWedderburn.action(act, g, tse.k)
+
+    return TensorSupportElement(s, t, g)
+end
 function _conj(
     t::Groups.Transvection,
     σ::PermutationGroups.AbstractPerm,
