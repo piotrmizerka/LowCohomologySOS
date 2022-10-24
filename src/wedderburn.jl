@@ -59,11 +59,11 @@ function _conj(
     t::Groups.Transvection,
     x::Groups.Constructions.WreathProductElement,
 )
-    tσ = _conj(t, x.p)
+    tσ = _conj(t, inv(x.p))
     dual_id = ifelse(t.id == :ϱ, :λ, :ϱ)
     dual_inv = ifelse(t.inv, false, true)
-    new_id = isone(x.n.elts[tσ.i]) ? t.id : dual_id
-    new_inv = isone(x.n.elts[tσ.i]*x.n.elts[tσ.j]) ? t.inv : dual_inv
+    new_id = isone(x.n.elts[t.i]) ? t.id : dual_id
+    new_inv = isone(x.n.elts[t.i]*x.n.elts[t.j]) ? t.inv : dual_inv
 
     return Groups.Transvection(new_id, tσ.i, tσ.j, new_inv)
 end
