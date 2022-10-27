@@ -1,6 +1,6 @@
-function d₀(RG, generators)
-    result = [RG(g) - one(RG) for g in generators]
-    return reshape(result, length(generators), 1)
+function d₀(RG, S)
+    result = [RG(g) - one(RG) for g in S]
+    return reshape(result, length(S), 1)
 end
 
 # h is intended to be a homomorphism from a free group to G
@@ -10,13 +10,13 @@ function embed(h, X::AlgebraElement, RG::StarAlgebra)
     return sum(X(s) * RG(h(s)) for s in S)
 end
 
-function fox_derivative(RF::StarAlgebra, u::FPGroupElement, i::Integer)
+function fox_derivative(RF::StarAlgebra, u::FPGroupElement, i::Integer, S = gens(parent(u)))
     @assert parent(u) === StarAlgebras.object(RF)
 
     isone(u) && return zero(RF)
 
     if length(word(u)) == 1
-        g = Groups.gens(parent(u), i)
+        g = S[i]
         if u == g
             return one(RF)
         elseif u == inv(g)
@@ -29,11 +29,11 @@ function fox_derivative(RF::StarAlgebra, u::FPGroupElement, i::Integer)
         p = parent(u)(word(u)[1:d])
         s = parent(u)(word(u)[d+1:end])
 
-        return fox_derivative(RF, p, i) + RF(p) * fox_derivative(RF, s, i)
+        return fox_derivative(RF, p, i, S) + RF(p) * fox_derivative(RF, s, i, S)
     end
 end
 
-function fox_derivative(F::FreeGroup, u::FPGroupElement, i::Integer)
+function fox_derivative(F::FreeGroup, u::FPGroupElement, i::Integer, S = gens(F))
     coeffs = Int[]
     sizehint!(coeffs, length(word(u)))
     elts = eltype(F)[]
@@ -41,7 +41,7 @@ function fox_derivative(F::FreeGroup, u::FPGroupElement, i::Integer)
 
     @assert alphabet(F) == alphabet(parent(u))
     A = alphabet(F)
-    li = let g = Groups.gens(F, i)
+    li = let g = S[i]
         @assert length(word(g)) != 0
         first(word(g))
     end
@@ -62,12 +62,13 @@ end
 
 # Jacobian matrix in the free group ring.
 # Relations is an array of relators which are elements of the free group
-function jacobian_matrix(relations)
+function jacobian_matrix(relations, S = gens(parent(first(relations))))
     @assert !isempty(relations)
-    F = parent(first(relations))
+    @assert parent(rand(relations)) == parent(rand(S))
+
     RF = suitable_group_ring(relations)
 
-    jac = [fox_derivative(RF, r, j) for r in relations, j in 1:Groups.ngens(F)]
+    jac = [fox_derivative(RF, r, j, S) for r in relations, j in 1:length(S)]
 
     return jac
 end

@@ -152,4 +152,6 @@ end
     @test status == MOI.OPTIMAL
     @test certified
     @test 3 ∈ certified_interval + (-1e-7..1e-7)
+
+    # TODO: test this with symmetric S
 end

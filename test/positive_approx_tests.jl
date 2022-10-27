@@ -170,4 +170,6 @@ end
     @test solution.λ ≈ 3 rtol = 1e-3
     @test solution.laplacian == Δ₁
     @test solution.unit == unit
+
+    # TODO: test this with symmetric S
 end
