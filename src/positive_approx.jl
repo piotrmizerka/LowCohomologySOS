@@ -64,13 +64,14 @@ end
 function spectral_gap_elements(
     h,
     relations,
-    half_basis
+    half_basis,
+    S = gens(parent(first(relations)))
 )
     @assert !isempty(relations)
     F = parent(first(relations)) # source of h
     G = parent(h(first(relations))) # target of h
 
-    d₁ = jacobian_matrix(relations)
+    d₁ = jacobian_matrix(relations, S)
 
     Δ₁ = let RG = group_ring(G, half_basis, star_multiplication = false)
         d₁x = embed.(Ref(h), d₁, Ref(RG))
@@ -84,7 +85,7 @@ function spectral_gap_elements(
 
     Δ₁x = embed.(identity, Δ₁, Ref(RG))
 
-    n = Groups.ngens(F)
+    n = length(S)
     @assert size(Δ₁x, 1) === size(Δ₁x, 2) === n
     Iₙ = [i ≠ j ? zero(RG) : one(RG) for i in 1:n, j in 1:n]
 
@@ -107,10 +108,11 @@ end
 function spectral_gaps_approximated(
     h,
     relations::AbstractVector{<:FPGroupElement},
-    half_basis;
+    half_basis,
+    S = gens(parent(first(relations)));
     optimizer,
 )
-    Δ₁x, Iₙ = spectral_gap_elements(h, relations, half_basis)
+    Δ₁x, Iₙ = spectral_gap_elements(h, relations, half_basis, S)
 
     Δ₁_sos_problem = sos_problem_matrix(Δ₁x, Iₙ)
 
