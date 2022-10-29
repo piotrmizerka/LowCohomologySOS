@@ -10,55 +10,14 @@ using PermutationGroups
 include(joinpath(@__DIR__, "optimizers.jl"))
 include(joinpath(@__DIR__, "utils.jl"))
 
-function determine_transvection(
-    g::Groups.GroupElement # has to be a generating transvection or its inverse
-)
-    SAutFn = parent(g)
-    Fn = SAutFn.group
-    Fn_gens = Groups.gens(Fn)
-    g_id, g_i, g_j, g_inv = 0, 0, 0, 0
-    for k in eachindex(Fn_gens)
-        if g(Fn_gens[k]) != Fn_gens[k]
-            g_i = k
-            for l in eachindex(Fn_gens)
-                if g(Fn_gens[k]) == Fn_gens[k]*Fn_gens[l]
-                    g_id = :ϱ
-                    g_j = l
-                    g_inv = false
-                    break
-                elseif g(Fn_gens[k]) == Fn_gens[k]*Fn_gens[l]^(-1)
-                    g_id = :ϱ
-                    g_j = l
-                    g_inv = true
-                    break
-                elseif g(Fn_gens[k]) == Fn_gens[l]*Fn_gens[k]
-                    g_id = :λ
-                    g_j = l
-                    g_inv = false
-                    break
-                elseif g(Fn_gens[k]) == Fn_gens[l]^(-1)*Fn_gens[k]
-                    g_id = :λ
-                    g_j = l
-                    g_inv = true
-                    break
-                end
-            end
-            break    
-        end
-    end
+function determine_transvection(g::Automorphism)
+    @assert parent(g) isa Automorphism{<:FreeGroup}
+    @assert length(word(g)) = 1
 
-    return Groups.Transvection(g_id, g_i, g_j, g_inv)
-end
+    A = alphabet(parent(g))
 
-# TODO: deindexify this!! ######################################
-function free_group_saut_index(i::Integer, gs_no::Integer)
-    if i%2 == 1
-        return floor(Int, (i+1)/2)
-    else
-        return i<=gs_no ? free_group_saut_index(i-1, gs_no)+div(gs_no,2) : free_group_saut_index(i-1, gs_no)-div(gs_no,2)
+    return A[first(word(g))]
     end
-end
-#################################################################
 
 Δ₁, Iₙ, half_basis, w_dec_matrix, Σ, basis, psd_basis, S = let half_radius = 2, N = 2
     SAut_F(n) = Groups.SpecialAutomorphismGroup(FreeGroup(n))
