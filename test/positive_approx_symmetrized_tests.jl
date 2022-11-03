@@ -64,19 +64,17 @@ end
         end
     end
 
-    M = [i ≠ j ? zero(ℝSAutF₂_star) : one(ℝSAutF₂_star)+ℝSAutF₂_star(S[2]) for i in 1:length(S), j in 1:length(S)]
-    order_unit = [i ≠ j ? zero(ℝSAutF₂_star) : one(ℝSAutF₂_star) for i in 1:length(S), j in 1:length(S)]
-    w_dec_matrix = SymbolicWedderburn.WedderburnDecomposition(Float64, Σ, action, constraints_basis, psd_basis)
+    M = [i ≠ j ? zero(ℝSAutF_N_star) : one(ℝSAutF_N_star)+ℝSAutF_N_star(S[2]) for i in 1:length(S), j in 1:length(S)]
+    order_unit = [i ≠ j ? zero(ℝSAutF_N_star) : one(ℝSAutF_N_star) for i in 1:length(S), j in 1:length(S)]
 
-    sos_pr_sym = LowCohomologySOS.sos_problem_symmetrized(
+    sos_pr_sym = LowCohomologySOS.sos_problem(
         M,
         order_unit,
         w_dec_matrix,
-        Σ,
-        basis,
-        psd_basis,
-        S
+        1.0
     )
 
-    # TODO: more tests - especially the missing ones for sos_problem_symmetrized
+    # @info sos_pr_sym
+
+    # TODO: more tests - especially the missing ones for sos_problem in a symmetrized version
 end

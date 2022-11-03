@@ -50,7 +50,7 @@ SL₃ℤ_data = (
     RG = parent(first(Δ₁)),
 )
 
-Δ₁_sos_problem = LowCohomologySOS.sos_problem_matrix(Δ₁, Iₙ)
+Δ₁_sos_problem = LowCohomologySOS.sos_problem(Δ₁, Iₙ)
 
 solve_in_loop(
     Δ₁_sos_problem,

@@ -39,7 +39,7 @@ C₂²_spectral_gaps2 = let half_radius = 1
         half_basis
     )
 
-    Δ₁_sos_problem = LowCohomologySOS.sos_problem_matrix(
+    Δ₁_sos_problem = LowCohomologySOS.sos_problem(
         Δ₁,
         Iₙ
     )

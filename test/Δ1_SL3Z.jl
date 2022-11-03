@@ -38,7 +38,7 @@ include(joinpath(@__DIR__, "..", "scripts", "utils.jl"))
     Δ₁x, Iₙ, half_basis
 end
 
-Δ₁x_sgap_problem = LowCohomologySOS.sos_problem_matrix(Δ₁x, Iₙ)
+Δ₁x_sgap_problem = LowCohomologySOS.sos_problem(Δ₁x, Iₙ)
 
 warm = nothing
 
