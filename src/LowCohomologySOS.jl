@@ -18,6 +18,8 @@ using Dates
 using Serialization
 using Logging
 
+using SparseArrays
+
 include("tensors.jl")
 include("group_rings.jl")
 include("fox_derivatives.jl")
