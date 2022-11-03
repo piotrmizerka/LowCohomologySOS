@@ -6,11 +6,11 @@ using Serialization
 using Logging
 
 function solve_in_loop(
-    model; 
+    model,
+    w_dec_matrix = false; 
     logdir, 
     optimizer, 
-    data,
-    w_dec_matrix =false
+    data
 )
     @info "logging to $logdir"
     status = MOI.UNKNOWN_RESULT_STATUS
@@ -33,7 +33,7 @@ function solve_in_loop(
         
         status, warm = @time solve(log_file, model, optimizer, warm)
 
-        λ, Q = (!w_dec_matrix ? LowCohomologySOS.get_solution(model) : LowCohomologySOS.get_solution(model, w_dec_matrix))
+        λ, Q = (w_dec_matrix  == false ? LowCohomologySOS.get_solution(model) : LowCohomologySOS.get_solution_symmetrized(model, w_dec_matrix))
         solution = Dict(:λ=>λ, :Q=>Q, :warm=>warm)
         
         serialize(joinpath(logdir, "solution_$(date_string(date)).sjl"), solution)

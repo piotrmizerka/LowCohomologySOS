@@ -51,7 +51,7 @@ function fox_derivative(F::FreeGroup, u::FPGroupElement, i::Integer, S = gens(F)
         if letter == li
             push!(coeffs, 1)
             push!(elts, F(copy(word(current))))
-        elseif inv(A, letter) == li
+        elseif inv(letter, A) == li
             push!(coeffs, -1)
             push!(elts, current*inv(F([li])))
         end

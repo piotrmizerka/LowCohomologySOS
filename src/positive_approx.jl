@@ -16,7 +16,7 @@ function constraints(pm::AbstractMatrix{<:Integer})
     return [BinaryMatrix(c, a, b, 1, sorted = true) for c in cnstrs]
 end
 
-function sos_problem_matrix(
+function sos_problem(
     M::AbstractMatrix{<:AlgebraElement},
     order_unit::AbstractMatrix{<:AlgebraElement},
     upper_bound::Float64 = Inf,
@@ -68,14 +68,15 @@ function spectral_gap_elements(
     S = gens(parent(first(relations)))
 )
     @assert !isempty(relations)
-    F = parent(first(relations)) # source of h
+    
     G = parent(h(first(relations))) # target of h
 
     d₁ = jacobian_matrix(relations, S)
 
     Δ₁ = let RG = group_ring(G, half_basis, star_multiplication = false)
         d₁x = embed.(Ref(h), d₁, Ref(RG))
-        d₀x = embed.(Ref(h), d₀(parent(first(d₁)), Groups.gens(F)), Ref(RG))
+        d₀x = embed.(Ref(h), d₀(parent(first(d₁)), S), Ref(RG))
+
         Δ₁⁺ = d₁x' * d₁x
         Δ₁⁻ = d₀x * d₀x'
         Δ₁⁺ + Δ₁⁻
@@ -114,7 +115,7 @@ function spectral_gaps_approximated(
 )
     Δ₁x, Iₙ = spectral_gap_elements(h, relations, half_basis, S)
 
-    Δ₁_sos_problem = sos_problem_matrix(Δ₁x, Iₙ)
+    Δ₁_sos_problem = sos_problem(Δ₁x, Iₙ)
 
     JuMP.set_optimizer(Δ₁_sos_problem, optimizer)
     JuMP.optimize!(Δ₁_sos_problem)
