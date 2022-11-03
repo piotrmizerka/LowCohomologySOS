@@ -1,55 +1,38 @@
 using JuMP # without this won't precompile (why???? - it is already present in the definition of LowCohomologySOS module, though through "import")
 
-function invariant_constraint_matrix(
-    orbit_representative::TensorSupportElement,
-    Σ::Groups.Constructions.WreathProduct,
-    action,
-    A_gs::Dict,
-    psd_basis_length::Integer,
-    generators_number::Integer
+basis(A::StarAlgebras.StarAlgebra) = A.basis
+basis(w::WedderburnDecomposition) = w.basis
+
+function coeffs(
+    M::AbstractMatrix{<:AlgebraElement},
+    n::Integer # generators number
 )
-    result = zeros(eltype(first(A_gs)[2]), psd_basis_length, psd_basis_length)
-    for σ ∈ Σ
-        σ_orbit_representative = SymbolicWedderburn.action(action, σ, orbit_representative)
-        σi, σj = word(σ_orbit_representative.i)[1], word(σ_orbit_representative.j)[1]
-        δ_σi_σj = KroneckerDelta{generators_number}(σi, σj)
-        A_σg = A_gs[σ_orbit_representative.k]
-        result += δ_σi_σj⊗A_σg
+    # basis = basis(parent(first(M))) # this ain't working somehow....
+    basis = parent(first(M)).basis
+
+    return [M[i,j](g) for i in 1:n for j in 1:n for g in basis]
+end
+
+function invariant_constraint_matrix(
+    v_inv::AbstractVector,
+    A_gs,
+    m::Integer # stands for half_basis size
+)
+    bs = length(A_gs)
+    n = floor(Int, sqrt(div(length(v_inv), bs)))
+    result = zeros(eltype(first(A_gs)[2]), m*n, m*n)
+    for it in SparseArrays.nonzeroinds(v_inv)
+        i, j, k = div(it-1,bs*n)+1, div((it-1)%(bs*n),bs)+1, (it-1)%bs+1
+        result += v_inv[it]*KroneckerDelta{n}(i, j)⊗A_gs[k]
     end
-    result /= length(collect(Σ))
 
     return result
 end
 
-# function invariant_constraint_matrix(
-#     invariant_vector,
-#     constraints_basis,
-#     psd_basis,
-#     A_gs::Dict,
-#     generators_number::Integer,
-#     Σ_size::Integer
-# )
-#     dim = length(psd_basis)
-#     result = zeros(eltype(first(A_gs)[2]), dim, dim)
-#     for l in 1:length(constraints_basis)
-#         i, j = word(constraints_basis[l].i)[1], word(constraints_basis[l].j)[1]
-#         δ_i_j = KroneckerDelta{generators_number}(i, j)
-#         A_g = A_gs[constraints_basis[l].k]
-#         result += δ_i_j⊗A_g
-#     end
-#     result /= Σ_size
-
-#     return result
-# end
-
-function sos_problem_symmetrized(
+function sos_problem(
     M::AbstractMatrix{<:AlgebraElement},
     order_unit::AbstractMatrix{<:AlgebraElement},
     w_dec_matrix::SymbolicWedderburn.WedderburnDecomposition,
-    Σ::Groups.Constructions.WreathProduct,
-    basis_elts, # group metric ball basis
-    psd_basis, # try to deal without this parameter!
-    S, # try to deal without this parameter!
     upper_bound::Float64 = Inf
 )
     @assert size(M) == size(order_unit)
@@ -72,78 +55,33 @@ function sos_problem_symmetrized(
     JuMP.@objective(result, Max, λ)
 
     if upper_bound < Inf
-        λ = JuMP.@constraint(result, λ <= upper_bound)
+        JuMP.@constraint(result, λ <= upper_bound)
     end
 
     cnstrs = constraints(A.mstructure)
     @assert length(cnstrs) == length(basis(A))
 
-    # @info length(basis_elts)*length(S)^2
-
-    action = AlphabetPermutation(alphabet(parent(first(S))), Σ, _conj)
-    A_gs = Dict(g => A_g for (A_g, g) in zip(cnstrs, basis(A)))
-    basis_idies = Dict(basis_elts[i] => i for i in 1:length(basis_elts))
-
-    # @info "1"
-
-    considered_constraints = fill(false, length(S), length(S), div(length(w_dec_matrix.basis),length(S)^2))
-
-    # @info "2"
-
-    # it = 0
-
-    direct_summands_pairs = pairs(SymbolicWedderburn.direct_summands(w_dec_matrix))
-    psd_basis_length = length(psd_basis)
-
-    for constraint in w_dec_matrix.basis
-        
-        # if it%100 === 0
-        #     @info it
+    m = size(first(cnstrs))[1] # this is equal to the half_basis' size
+    n = floor(Int, sqrt(div(length(basis(w_dec_matrix)), length(basis(A)))))
+    M_c = convert(Vector{eltype(w_dec_matrix)}, coeffs(M,n))
+    U_c = convert(Vector{eltype(w_dec_matrix)}, coeffs(order_unit,n))
+    
+    it = 1
+    for v_inv in w_dec_matrix.invariants
+        m_c = dot(M_c, v_inv)
+        u_c = dot(U_c, v_inv)
+        lhs = m_c-λ*u_c
+        rhs = zero(typeof(lhs))
+        matrix_inv = invariant_constraint_matrix(v_inv, cnstrs, m)
+        # for (π, ds) in pairs(SymbolicWedderburn.direct_summands(w_dec_matrix))
+        #     Uπ = SymbolicWedderburn.image_basis(ds)
+        #     rhs += degree(ds)*dot(Uπ*matrix_inv*Uπ', P[π])
         # end
-        # it += 1
+        JuMP.@constraint(result, lhs == rhs)
 
-        i, j = word(constraint.i)[1], word(constraint.j)[1]
-        k = basis_idies[constraint.k]
-        if considered_constraints[i,j,k] == false
-            i, j = word(constraint.i)[1], word(constraint.j)[1]
-            lhs = M[i,j](constraint.k)
-            δ_i_j_g_invariant = invariant_constraint_matrix(constraint, Σ, action, A_gs, psd_basis_length, length(S))
-            rhs = zero(typeof(lhs))
-            for (π, ds) in direct_summands_pairs
-                Uπ = SymbolicWedderburn.image_basis(ds)
-                rhs += degree(ds)*dot(Uπ*δ_i_j_g_invariant*Uπ', P[π])
-            end
-            JuMP.@constraint(result, lhs == rhs)
-            for σ ∈ Σ
-                σ_constraint = SymbolicWedderburn.action(action, σ, constraint)
-                σ_i, σ_j = word(σ_constraint.i)[1], word(σ_constraint.j)[1]
-                σ_k = basis_idies[σ_constraint.k]
-                considered_constraints[σ_i,σ_j,σ_k] = true
-            end
-        end
+        @info it
+        it += 1
     end
-
-    # for v_inv in w_dec_matrix.invariants
-    #     i, j = word(constraint.i)[1], word(constraint.j)[1]
-    #     k = basis_idies[constraint.k]
-    #     if considered_constraints[i,j,k] == false
-    #         i, j = word(constraint.i)[1], word(constraint.j)[1]
-    #         lhs = M[i,j](constraint.k)
-    #         δ_i_j_g_invariant = invariant_constraint_matrix(constraint, Σ, action, psd_basis, A_gs, length(S))
-    #         rhs = zero(typeof(lhs))
-    #         for (π, ds) in pairs(SymbolicWedderburn.direct_summands(w_dec_matrix))
-    #             Uπ = SymbolicWedderburn.image_basis(ds)
-    #             rhs += degree(ds)*dot(Uπ*δ_i_j_g_invariant*Uπ', P[π])
-    #         end
-    #         JuMP.@constraint(result, lhs == rhs)
-    #         for σ ∈ Σ
-    #             σ_constraint = SymbolicWedderburn.action(action, σ, constraint)
-    #             σ_i, σ_j = word(σ_constraint.i)[1], word(σ_constraint.j)[1]
-    #             σ_k = basis_idies[σ_constraint.k]
-    #             considered_constraints[σ_i,σ_j,σ_k] = true
-    #         end
-    #     end
-    # end
     
     return result
 end

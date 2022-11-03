@@ -2,7 +2,7 @@ struct AlphabetPermutation{GEl,I} <: SymbolicWedderburn.ByPermutations
     perms::Dict{GEl,PermutationGroups.Perm{I}}
 end
 
-function AlphabetPermutation(A::Alphabet, G::Groups.Constructions.WreathProduct, op)
+function AlphabetPermutation(A::Alphabet, G, op)
     return AlphabetPermutation(
         Dict(
             g => PermutationGroups.Perm([A[op(l, g)] for l in A.letters]) for
