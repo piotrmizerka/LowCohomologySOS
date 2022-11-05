@@ -107,17 +107,17 @@ function sos_problem(
         it += 1
     end
     
-    return result
+    return result, P
 end
 
-function get_solution_symmetrized(
+function get_solution(
     m::JuMP.Model,
+    P, # positive definite blocks
     w_dec_matrix::SymbolicWedderburn.WedderburnDecomposition
 )
     λ = JuMP.value(m[:λ])
     Q = let 
-        P_diag = JuMP.value.(m[:P])
-        P_blocks = [P_diag[π] for (π, ds) in pairs(SymbolicWedderburn.direct_summands(w_dec_matrix))]
+        P_blocks = [JuMP.value.(P[π]) for (π, ds) in pairs(SymbolicWedderburn.direct_summands(w_dec_matrix))]
         P = PropertyT_new.reconstruct(P_blocks, w_dec_matrix)
         if any(isnan, P) || any(isinf, P)
             @error "obtained solution contains NaNs or ±Inf"
