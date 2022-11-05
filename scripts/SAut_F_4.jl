@@ -1,117 +1,170 @@
+using Revise
 using LinearAlgebra
 ENV["JULIA_NUM_THREADS"] = Sys.CPU_THREADS÷2
 LinearAlgebra.BLAS.set_num_threads(Sys.CPU_THREADS÷2)
 
 using LowCohomologySOS
 using Groups
-using JuMP
 using SymbolicWedderburn
 using PermutationGroups
+
 include(joinpath(@__DIR__, "optimizers.jl"))
 include(joinpath(@__DIR__, "utils.jl"))
 
-function determine_transvection(g::Automorphism)
-    @assert parent(g) isa Automorphism{<:FreeGroup}
-    @assert length(word(g)) = 1
-
-    A = alphabet(parent(g))
-
-    return A[first(word(g))]
-    end
-
-Δ₁, Iₙ, half_basis, w_dec_matrix, Σ, basis, psd_basis, S = let half_radius = 2, N = 2
+function group_data(half_radius, N, symmetric)
     SAut_F(n) = Groups.SpecialAutomorphismGroup(FreeGroup(n))
     SAut_F_N = SAut_F(N)
 
-    S = let s = gens(SAut_F_N)
+    S_inv = let s = gens(SAut_F_N)
         [s; inv.(s)]
     end
-    basis, sizes = Groups.wlmetric_ball(S, radius = 2*half_radius)
+    S = (symmetric ? gens(SAut_F_N) : S_inv)
+    basis, sizes = Groups.wlmetric_ball(S_inv, radius = 2*half_radius)
     half_basis = basis[1:sizes[half_radius]]
 
-    # @info length(basis)
-    # @info length(half_basis)
-    # @info length(S)
+    return SAut_F_N, basis, half_basis, S
+end
 
-    F_SAut_F_2N = FreeGroup(length(S))
-
-    quotient_hom = let source = F_SAut_F_2N, target = SAut_F_N
-        Groups.Homomorphism((i, F, G) -> Groups.word_type(G)([free_group_saut_index(i,length(S))]), source, target)
+function wedderburn_data(basis, half_basis, S, N, symmetric)
+    @time "matrix bases" begin
+        if !symmetric
+            Z_2_wr_S(n) = Groups.Constructions.WreathProduct(PermutationGroups.SymmetricGroup(2), PermutationGroups.SymmetricGroup(n))
+            Σ = Z_2_wr_S(N)
+        else
+            Σ = PermutationGroups.SymmetricGroup(N)
+        end
+        action = LowCohomologySOS.AlphabetPermutation(alphabet(parent(first(S))), Σ, LowCohomologySOS._conj)
+        constraints_basis, psd_basis = LowCohomologySOS.matrix_bases(basis, half_basis, S)
     end
 
-    transvection_gen_dict = Dict([(determine_transvection(S[i]), gens(F_SAut_F_2N, i)) for i in 1:length(S)])
+    return constraints_basis, psd_basis, Σ, action
+end
+
+function determine_transvection(g)
+    # @assert parent(g) isa Groups.Automorphism{<:FreeGroup}
+    @assert length(word(g)) == 1
+    
+    A = alphabet(parent(g))
+
+    return A[first(word(g))]
+end
+
+# TODO: deindexify this!! ######################################
+function free_group_saut_index(i::Integer, gs_no::Integer)
+    if i%2 == 1
+        return floor(Int, (i+1)/2)
+    else
+        return i<=gs_no ? free_group_saut_index(i-1, gs_no)+div(gs_no,2) : free_group_saut_index(i-1, gs_no)-div(gs_no,2)
+    end
+end
+#################################################################
+
+const half_radius = 2;
+const N = 2;
+const symmetric = true;
+
+SAut_F_N, basis, half_basis, S = group_data(half_radius, N, symmetric)
+constraints_basis, psd_basis, Σ, action = wedderburn_data(basis, half_basis, S, N, symmetric);
+
+@time "\tWedderburn total" begin
+    @info "Wedderburn:"
+    w_dec_matrix = SymbolicWedderburn.WedderburnDecomposition(Float64, Σ, action, constraints_basis, psd_basis)
+end
+
+Δ₁, Iₙ = let
+    range_as_list = [i for i in 1:N]
+    quadruples_1 = [(i,j,k,l) for k ∈ 1:N
+                            for l ∈ deleteat!(copy(range_as_list), findall(l->l==k,copy(range_as_list))) 
+                            for i ∈ deleteat!(copy(range_as_list), findall(i->i∈[k,l],copy(range_as_list))) 
+                            for j ∈ deleteat!(copy(range_as_list), findall(j->j∈[i,k],copy(range_as_list)))]
+    quadruples_2 = [(i,j,k,l) for k ∈ 1:N
+                            for l ∈ deleteat!(copy(range_as_list), findall(l->l==k,copy(range_as_list)))
+                            for i ∈ deleteat!(copy(range_as_list), findall(i->i==l,copy(range_as_list))) 
+                            for j ∈ deleteat!(copy(range_as_list), findall(j->j∈[i,k],copy(range_as_list)))]
+    triples = [(i,j,k) for i ∈ 1:N
+                    for j ∈ deleteat!(copy(range_as_list), findall(j->j==i,copy(range_as_list))) 
+                    for k ∈ deleteat!(copy(range_as_list), findall(k->k∈[i,j],copy(range_as_list)))]
+
+    if symmetric
+        F_G = FreeGroup(alphabet(SAut_F_N))
+        quotient_hom = let source = F_G, target = SAut_F_N
+            Groups.Homomorphism((i, F, G) -> Groups.word_type(G)([i]), source, target)
+        end
+    else
+        F_G = FreeGroup(length(S))
+        quotient_hom = let source = F_G, target = SAut_F_N
+            Groups.Homomorphism((i, F, G) -> Groups.word_type(G)([free_group_saut_index(i,length(S))]), source, target)
+        end
+    end
+
+    transvection_gen_dict = Dict([(determine_transvection(S[i]), gens(F_G, i)) for i in 1:length(S)])
     ϱ(i,j, ε) = transvection_gen_dict[Groups.Transvection(:ϱ, i, j, ε)]
     λ(i,j, ε) = transvection_gen_dict[Groups.Transvection(:λ, i, j, ε)]
     ϱ(i,j) = ϱ(i,j,false)
     λ(i,j) = λ(i,j,false)
 
-    range_as_list = [i for i in 1:N]
-    pairs = [(i,j) for i ∈ 1:N
-                     for j ∈ deleteat!(range_as_list, findall(j->j==i,range_as_list))]
-    quadruples_1 = [(i,j,k,l) for k ∈ 1:N for l ∈ 1:N 
-                              for i ∈ deleteat!(range_as_list, findall(i->i∈[k,l],range_as_list)) 
-                              for j ∈ deleteat!(range_as_list, findall(j->j==k,range_as_list))]
-    quadruples_2 = [(i,j,k,l) for k ∈ 1:N for l ∈ 1:N 
-                              for i ∈ deleteat!(range_as_list, findall(i->i==l,range_as_list)) 
-                              for j ∈ deleteat!(range_as_list, findall(j->j==k,range_as_list))]
-    triples = [(i,j,k) for i ∈ 1:N
-                       for j ∈ deleteat!(range_as_list, findall(j->j==i,range_as_list)) 
-                       for k ∈ deleteat!(range_as_list, findall(k->k∈[i,j],range_as_list))]
-    # TODO: I think these relation are in "first right, then left" composition convention - have to be changed!
-    relations = vcat(
-        [ϱ(i,j,ε)*ϱ(i,j,!ε) for (i,j) ∈ pairs for ε ∈ [true,false]],
-        [λ(i,j,ε)*λ(i,j,ε) for (i,j) ∈ pairs for ε ∈ [true,false]],
+    # The relations are derived from the Gersten's article, https://www.sciencedirect.com/science/article/pii/0022404984900628,
+    # Theorem 2.8. Note that our convention assumes the automorphism composition order reversed with respect to Gersten's.
+    # Therefore, the order of letters in the relators had to be reversed as well (earlier, we had to change Gertsen's symbols E_a_b
+    # to the ϱ and λ notation used in https://annals.math.princeton.edu/2021/193-2/p03).
+    if symmetric
+        relations = vcat(
+            [ϱ(k,l)^(-1)*ϱ(i,j)^(-1)*ϱ(k,l)*ϱ(i,j) for (i,j,k,l) ∈ quadruples_1],
+            [λ(k,l)^(-1)*λ(i,j)^(-1)*λ(k,l)*λ(i,j) for (i,j,k,l) ∈ quadruples_1],
+            [λ(k,l)^(-1)*ϱ(i,j)^(-1)*λ(k,l)*ϱ(i,j) for (i,j,k,l) ∈ quadruples_2],
 
-        [ϱ(i,j,ε₁)*ϱ(k,l,ε₂)*ϱ(i,j,!ε₁)*ϱ(k,l,!ε₂) for (i,j,k,l) ∈ quadruples_1 for ε₁ ∈ [true,false] for ε₂ ∈ [true,false]],
-        [λ(i,j,ε₁)*λ(k,l,ε₂)*λ(i,j,!ε₁)*λ(k,l,!ε₂) for (i,j,k,l) ∈ quadruples_1 for ε₁ ∈ [true,false] for ε₂ ∈ [true,false]],
-        [ϱ(i,j,ε₁)*λ(k,l,ε₂)*ϱ(i,j,!ε₁)*λ(k,l,!ε₂) for (i,j,k,l) ∈ quadruples_2 for ε₁ ∈ [true,false] for ε₂ ∈ [true,false]],
-        [λ(i,j,ε₁)*ϱ(k,l,ε₂)*λ(i,j,!ε₁)*ϱ(k,l,!ε₂) for (i,j,k,l) ∈ quadruples_2 for ε₁ ∈ [true,false] for ε₂ ∈ [true,false]],
+            [ϱ(i,k)^(-1)*ϱ(j,k)^(-1)*ϱ(i,j)^(-1)*ϱ(j,k)*ϱ(i,j) for (i,j,k) ∈ triples],
+            [ϱ(i,k)*ϱ(j,k)*ϱ(i,j)^(-1)*ϱ(j,k)^(-1)*ϱ(i,j) for (i,j,k) ∈ triples],
+            [λ(i,k)^(-1)*λ(j,k)^(-1)*λ(i,j)^(-1)*λ(j,k)*λ(i,j) for (i,j,k) ∈ triples],
+            [λ(i,k)*λ(j,k)*λ(i,j)^(-1)*λ(j,k)^(-1)*λ(i,j) for (i,j,k) ∈ triples],
+            [ϱ(i,k)*λ(j,k)^(-1)*ϱ(i,j)*λ(j,k)*ϱ(i,j)^(-1) for (i,j,k) ∈ triples],
+            [ϱ(i,k)^(-1)*λ(j,k)*ϱ(i,j)*λ(j,k)^(-1)*ϱ(i,j)^(-1) for (i,j,k) ∈ triples],
+            [λ(i,k)*ϱ(j,k)^(-1)*λ(i,j)*ϱ(j,k)*λ(i,j)^(-1) for (i,j,k) ∈ triples],
+            [λ(i,k)^(-1)*ϱ(j,k)*λ(i,j)*ϱ(j,k)^(-1)*λ(i,j)^(-1) for (i,j,k) ∈ triples]
+        )
 
-        [ϱ(i,j)*ϱ(j,k)*ϱ(i,j)^(-1)*ϱ(j,k)^(-1)*ϱ(i,k)^(-1) for (i,j,k) ∈ triples],
-        [ϱ(i,j)*ϱ(j,k,true)*ϱ(i,j)^(-1)*ϱ(j,k,true)^(-1)*ϱ(i,k,true)^(-1) for (i,j,k) ∈ triples],
-        [λ(i,j)*λ(j,k)*λ(i,j)^(-1)*λ(j,k)^(-1)*λ(i,k)^(-1) for (i,j,k) ∈ triples],
-        [λ(i,j)*λ(j,k,true)*λ(i,j)^(-1)*λ(j,k,true)^(-1)*λ(i,k,true)^(-1) for (i,j,k) ∈ triples],
-        [ϱ(i,j,true)*λ(j,k)*ϱ(i,j,true)^(-1)*λ(j,k)^(-1)*ϱ(i,k,true)^(-1) for (i,j,k) ∈ triples],
-        [ϱ(i,j,true)*λ(j,k,true)*ϱ(i,j,true)^(-1)*λ(j,k,true)^(-1)*ϱ(i,k)^(-1) for (i,j,k) ∈ triples],
-        [λ(i,j,true)*ϱ(j,k)*λ(i,j,true)^(-1)*ϱ(j,k)^(-1)*λ(i,k,true)^(-1) for (i,j,k) ∈ triples],
-        [λ(i,j,true)*ϱ(j,k,true)*λ(i,j,true)^(-1)*ϱ(j,k,true)^(-1)*λ(i,k)^(-1) for (i,j,k) ∈ triples]
-    )
-    
-    # @info length(relations)
-    # @info "1"
+    else
+        pairs = [(i,j) for i ∈ 1:N for j ∈ deleteat!(copy(range_as_list), findall(j->j==i,copy(range_as_list)))]
 
-    Δ₁, Iₙ = LowCohomologySOS.spectral_gap_elements(quotient_hom, relations, half_basis)
+        relations = vcat(
+            [ϱ(i,j,ε)*ϱ(i,j,!ε) for (i,j) ∈ pairs for ε ∈ [true,false]],
+            [λ(i,j,ε)*λ(i,j,ε) for (i,j) ∈ pairs for ε ∈ [true,false]],
 
-    # @info "2"
+            [ϱ(k,l,!ε₂)*ϱ(i,j,!ε₁)*ϱ(k,l,ε₂)*ϱ(i,j,ε₁) for (i,j,k,l) ∈ quadruples_1 for ε₁ ∈ [true,false] for ε₂ ∈ [true,false]],
+            [λ(k,l,!ε₂)*λ(i,j,!ε₁)*λ(k,l,ε₂)*λ(i,j,ε₁) for (i,j,k,l) ∈ quadruples_1 for ε₁ ∈ [true,false] for ε₂ ∈ [true,false]],
+            [λ(k,l,!ε₂)*ϱ(i,j,!ε₁)*λ(k,l,ε₂)*ϱ(i,j,ε₁) for (i,j,k,l) ∈ quadruples_2 for ε₁ ∈ [true,false] for ε₂ ∈ [true,false]],
+            [λ(i,j,ε₁)*ϱ(k,l,ε₂)*λ(i,j,!ε₁)*ϱ(k,l,!ε₂) for (i,j,k,l) ∈ quadruples_2 for ε₁ ∈ [true,false] for ε₂ ∈ [true,false]],
+            
+            [ϱ(k,l,!ε₂)*ϱ(i,j,!ε₁)*ϱ(k,l,ε₂)*ϱ(i,j,ε₁) for (i,j,k,l) ∈ quadruples_1 for ε₁ ∈ [true,false] for ε₂ ∈ [true,false]],
+            [λ(k,l,!ε₂)*λ(i,j,!ε₁)*λ(k,l,ε₂)*λ(i,j,ε₁) for (i,j,k,l) ∈ quadruples_1 for ε₁ ∈ [true,false] for ε₂ ∈ [true,false]],
+            [λ(k,l,!ε₂)*ϱ(i,j,!ε₁)*λ(k,l,ε₂)*ϱ(i,j,ε₁) for (i,j,k,l) ∈ quadruples_2 for ε₁ ∈ [true,false] for ε₂ ∈ [true,false]],
+            [ϱ(k,l,!ε₂)*λ(i,j,!ε₁)*ϱ(k,l,ε₂)*λ(i,j,ε₁) for (i,j,k,l) ∈ quadruples_2 for ε₁ ∈ [true,false] for ε₂ ∈ [true,false]],
 
-    Z_2_wr_S(n) = Groups.Constructions.WreathProduct(PermutationGroups.SymmetricGroup(2), PermutationGroups.SymmetricGroup(n))
-    Σ = Z_2_wr_S(N)
-    # w_dec_matrix = LowCohomologySOS.wedderburn_decomposition_matrix(Σ, constraints_basis, psd_basis, S)
-    action = LowCohomologySOS.AlphabetPermutation(alphabet(parent(first(S))), Σ, LowCohomologySOS._conj)
-    constraints_basis, psd_basis = LowCohomologySOS.matrix_bases(basis, half_basis, S)
+            [ϱ(i,k)^(-1)*ϱ(j,k)^(-1)*ϱ(i,j)^(-1)*ϱ(j,k)*ϱ(i,j) for (i,j,k) ∈ triples],
+            [ϱ(i,k,true)^(-1)*ϱ(j,k,true)^(-1)*ϱ(i,j)^(-1)*ϱ(j,k,true)*ϱ(i,j) for (i,j,k) ∈ triples],
+            [λ(i,k)^(-1)*λ(j,k)^(-1)*λ(i,j)^(-1)*λ(j,k)*λ(i,j) for (i,j,k) ∈ triples],
+            [λ(i,k,true)^(-1)*λ(j,k,true)^(-1)*λ(i,j)^(-1)*λ(j,k,true)*λ(i,j) for (i,j,k) ∈ triples],
+            [ϱ(i,k,true)^(-1)*λ(j,k)^(-1)*ϱ(i,j,true)^(-1)*λ(j,k)*ϱ(i,j,true) for (i,j,k) ∈ triples],
+            [ϱ(i,k)^(-1)*λ(j,k,true)^(-1)*ϱ(i,j,true)^(-1)*λ(j,k,true)*ϱ(i,j,true) for (i,j,k) ∈ triples],
+            [λ(i,k,true)^(-1)*ϱ(j,k)^(-1)*λ(i,j,true)^(-1)*ϱ(j,k)*λ(i,j,true) for (i,j,k) ∈ triples],
+            [λ(i,k)^(-1)*ϱ(j,k,true)^(-1)*λ(i,j,true)^(-1)*ϱ(j,k,true)*λ(i,j,true) for (i,j,k) ∈ triples]
+        )
+    end
 
-    # @info "3"
-
-    w_dec_matrix = SymbolicWedderburn.WedderburnDecomposition(Float64, Σ, action, constraints_basis, psd_basis)
-
-    # @info length(w_dec_matrix.invariants)
-    # @info w_dec_matrix.invariants[1]
-    # @info w_dec_matrix.invariants[2345]
-
-    Δ₁, Iₙ, half_basis, w_dec_matrix, Σ, basis, psd_basis, S
+    LowCohomologySOS.spectral_gap_elements(quotient_hom, relations, half_basis)
 end
 
-Δ₁_sos_problem = LowCohomologySOS.sos_problem_symmetrized(
-    Δ₁, 
-    Iₙ,
-    w_dec_matrix,
-    Σ,
-    basis,
-    psd_basis,
-    S
-)
+@time "SOS problem" begin
+    Δ₁_sos_problem = LowCohomologySOS.sos_problem(
+        Δ₁, 
+        Iₙ,
+        w_dec_matrix,
+        length(collect(Σ)),
+        1.0
+    )
+end
 
-SAut_F_4_data = (
+SAut_F_N_data = (
     M = Δ₁,
     order_unit = Iₙ,
     half_basis = half_basis,
@@ -120,8 +173,9 @@ SAut_F_4_data = (
 
 solve_in_loop(
     Δ₁_sos_problem,
+    w_dec_matrix,
     logdir = "./logs",
     optimizer = scs_opt(eps = 1e-9, max_iters = 20_000),
-    data = SAut_F_4_data,
-    w_dec_matrix
+    data = SAut_F_N_data
 )
+|
