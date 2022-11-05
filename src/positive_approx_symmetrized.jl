@@ -30,7 +30,7 @@ function invariant_constraint_matrix(
     Σ_order::Integer
 )
     bs = length(A_gs_cart)
-    n = floor(Int, sqrt(div(length(v_inv), bs)))
+    n = isqrt(div(length(v_inv), bs))
     result = spzeros(Int, m*n, m*n)
     dropzeros!(result)
     for it in SparseArrays.nonzeroinds(v_inv)
@@ -83,7 +83,7 @@ function sos_problem(
     @assert length(cnstrs) == length(basis(A))
 
     m = size(first(cnstrs))[1] # this is equal to the half_basis' size
-    n = floor(Int, sqrt(div(length(basis(w_dec_matrix)), length(basis(A)))))
+    n = isqrt(div(length(basis(w_dec_matrix)), length(basis(A))))
     M_c = convert(Vector{eltype(w_dec_matrix)}, coeffs(M,n))
     U_c = convert(Vector{eltype(w_dec_matrix)}, coeffs(order_unit,n))
     
