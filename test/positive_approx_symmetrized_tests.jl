@@ -22,8 +22,8 @@ function act_on_matrix(
     return result
 end
 
-@testset "symmetrized matrix SOS problem" begin
-    N = 3
+# @testset "symmetrized matrix SOS problem" begin
+    N = 4
     half_radius = 1
 
     SAutF_N = Groups.SpecialAutomorphismGroup(FreeGroup(N))
@@ -34,7 +34,8 @@ end
     basis, sizes = Groups.wlmetric_ball(S, radius = 2*half_radius)
     half_basis = basis[1:sizes[half_radius]]
     ℝSAutF_N_star = LowCohomologySOS.group_ring(SAutF_N, half_basis, star_multiplication = true)
-    cnstrs = LowCohomologySOS.constraints(ℝSAutF_N_star.mstructure)
+    cnstrs =  dropzeros!.(sparse.(LowCohomologySOS.constraints(ℝSAutF_N_star.mstructure)))
+    A_gs_cart = [findall(!iszero,c) for c in cnstrs]
 
     Σ = Groups.Constructions.WreathProduct(PermutationGroups.SymmetricGroup(2), PermutationGroups.SymmetricGroup(N))
     action = LowCohomologySOS.AlphabetPermutation(alphabet(parent(first(S))), Σ, LowCohomologySOS._conj)
@@ -43,8 +44,9 @@ end
 
     inv_cnstr_matrix = LowCohomologySOS.invariant_constraint_matrix(
         rand(w_dec_matrix.invariants),
-        cnstrs,
-        length(half_basis)
+        A_gs_cart,
+        length(half_basis),
+        length(collect(Σ))
     )
 
     @test size(inv_cnstr_matrix) == (length(psd_basis), length(psd_basis))
@@ -71,10 +73,11 @@ end
         M,
         order_unit,
         w_dec_matrix,
+        length(collect(Σ)),
         1.0
     )
 
     # @info sos_pr_sym
 
     # TODO: more tests - especially the missing ones for sos_problem in a symmetrized version
-end
+# end
