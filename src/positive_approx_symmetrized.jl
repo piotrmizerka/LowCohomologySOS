@@ -1,5 +1,3 @@
-using JuMP # without this won't precompile (why???? - it is already present in the definition of LowCohomologySOS module, though through "import")
-
 basis(A::StarAlgebras.StarAlgebra) = A.basis
 basis(w::WedderburnDecomposition) = w.basis
 
@@ -17,7 +15,7 @@ function dot_fast(A::SparseMatrixCSC, B::SparseMatrixCSC)
     result = zero(eltype(B))
 
     for idx in findall(!iszero,A)
-        add_to_expression!(result, A[idx], B[idx])
+        JuMP.add_to_expression!(result, A[idx], B[idx])
     end
 
     return result
@@ -66,7 +64,7 @@ function sos_problem(
     P = map(SymbolicWedderburn.direct_summands(w_dec_matrix)) do ds
         dim = size(ds, 1)
         P = JuMP.@variable(result, [1:dim, 1:dim], Symmetric)
-        @constraint(result, P in JuMP.PSDCone())
+        JuMP.@constraint(result, P in JuMP.PSDCone())
         P
     end
     
@@ -97,7 +95,7 @@ function sos_problem(
         rhs = zero(typeof(lhs))
         matrix_inv = invariant_constraint_matrix(v_inv, A_gs_cart, m, Σ_order)
         for (Uπ, Pπ, deg) in Uπs_Pπs_degrees
-            add_to_expression!(rhs, deg, dot_fast(Uπ*matrix_inv*Uπ', Pπ))
+            JuMP.add_to_expression!(rhs, deg, dot_fast(Uπ*matrix_inv*Uπ', Pπ))
         end
         JuMP.@constraint(result, lhs == rhs)
 
