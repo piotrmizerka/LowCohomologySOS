@@ -14,6 +14,8 @@ using Kronecker
 import JuMP
 import JuMP.MOI
 
+using PropertyT
+
 using Dates
 using Serialization
 using Logging
