@@ -101,7 +101,7 @@ function sos_problem(
         end
         JuMP.@constraint(result, lhs == rhs)
 
-        if it%100 == 0
+        if it%100_000 == 0
             @info it
         end
         it += 1
