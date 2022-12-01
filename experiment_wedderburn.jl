@@ -1,7 +1,7 @@
 using Revise
 using SymbolicWedderburn
 using PermutationGroups
-using PropertyT_new
+using PropertyT
 
 struct Word{T}
     alphabet::Vector{T}
@@ -72,21 +72,21 @@ P_trivial = [1]
 P₂ = [1]
 P_blocks = [P₂, P_trivial] # I noticed the order of direct summands is non-standard here
 
-P_invariant = round.(PropertyT_new.reconstruct(P_blocks, wdec), digits=3)
+P_invariant = round.(PropertyT.reconstruct(P_blocks, wdec), digits=3)
 
 # second reconstruction example
 P_trivial = [1]
 P₂ = [2]
 P_blocks = [P₂, P_trivial] # I noticed the order of direct summands is non-standard here
 
-P_invariant = round.(PropertyT_new.reconstruct(P_blocks, wdec), digits=3)
+P_invariant = round.(PropertyT.reconstruct(P_blocks, wdec), digits=3)
 
 # third reconstruction example
 P_trivial = [10]
 P₂ = [1]
 P_blocks = [P₂, P_trivial] # I noticed the order of direct summands is non-standard here
 
-P_invariant = round.(PropertyT_new.reconstruct(P_blocks, wdec), digits=3)
+P_invariant = round.(PropertyT.reconstruct(P_blocks, wdec), digits=3)
 
 
 # Matrix example - in the similar manner, compare with the notes "2022_07_28_matrix_Wedderburn"
@@ -152,4 +152,4 @@ P₁_matrix = [10]
 P₂_matrix = [1 0;-1 2]
 P_blocks_matrix = [P₂_matrix, P_trivial_matrix, P₁_matrix]
 
-P_invariant_matrix = round.(PropertyT_new.reconstruct(P_blocks_matrix, wdec_matrix), digits=2)
+P_invariant_matrix = round.(PropertyT.reconstruct(P_blocks_matrix, wdec_matrix), digits=2)
