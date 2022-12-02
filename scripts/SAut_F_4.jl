@@ -154,12 +154,12 @@ end
 
 constraints_basis, psd_basis, Σ, action = wedderburn_data(basis, half_basis, S, N, wreath_action);
 
-@time "\tWedderburn total" begin
+@time begin
     @info "Wedderburn:"
     w_dec_matrix = SymbolicWedderburn.WedderburnDecomposition(Float64, Σ, action, constraints_basis, psd_basis)
 end
 
-@time "SOS problem" begin
+@time begin
     Δ₁_sos_problem = LowCohomologySOS.sos_problem(
         Δ₁, 
         Iₙ,
