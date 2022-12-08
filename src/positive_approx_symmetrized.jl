@@ -1,5 +1,5 @@
 basis(A::StarAlgebras.StarAlgebra) = A.basis
-basis(w::WedderburnDecomposition) = w.basis
+basis(w::SymbolicWedderburn.WedderburnDecomposition) = w.basis
 
 function coeffs(
     M::AbstractMatrix{<:AlgebraElement},
@@ -32,7 +32,7 @@ function invariant_constraint_matrix(
     result = spzeros(Int, m*n, m*n)
     dropzeros!(result)
     for it in SparseArrays.nonzeroinds(v_inv)
-        i, j, k = div(it-1,bs*n)+1, div((it-1)%(bs*n),bs)+1, (it-1)%bs+1
+        i, j, k = id_2_triple(it, bs, n)
         out_left = (j-1)*m^2*n
         out_up = (i-1)*m
         for ci in A_gs_cart[k]

@@ -33,11 +33,11 @@ function wedderburn_data(basis, half_basis, S, N, wreath_action)
         else
             Σ = PermutationGroups.SymmetricGroup(N)
         end
-        action = LowCohomologySOS.AlphabetPermutation(alphabet(parent(first(S))), Σ, LowCohomologySOS._conj)
+        actions = LowCohomologySOS.WedderburnActions(alphabet(parent(first(S))), Σ, LowCohomologySOS._conj, S, basis)
         constraints_basis, psd_basis = LowCohomologySOS.matrix_bases(basis, half_basis, S)
     end
 
-    return constraints_basis, psd_basis, Σ, action
+    return constraints_basis, psd_basis, Σ, actions
 end
 
 function determine_transvection(g)
@@ -62,7 +62,7 @@ function free_group_saut_index(i::Integer, F_G, S)
 end
 
 const half_radius = 2;
-const N = 2;
+const N = 3;
 const wreath_action = true;
 
 SAut_F_N, basis, half_basis, S = group_data(half_radius, N, wreath_action)
@@ -152,14 +152,16 @@ SAut_F_N, basis, half_basis, S = group_data(half_radius, N, wreath_action)
     LowCohomologySOS.spectral_gap_elements(quotient_hom, relations, half_basis)
 end
 
-constraints_basis, psd_basis, Σ, action = wedderburn_data(basis, half_basis, S, N, wreath_action);
+@info "before Wedderburn yet"
 
-@time "\tWedderburn total" begin
+constraints_basis, psd_basis, Σ, actions = wedderburn_data(basis, half_basis, S, N, wreath_action);
+
+@time begin
     @info "Wedderburn:"
-    w_dec_matrix = SymbolicWedderburn.WedderburnDecomposition(Float64, Σ, action, constraints_basis, psd_basis)
+    w_dec_matrix = SymbolicWedderburn.WedderburnDecomposition(Float64, Σ, actions, constraints_basis, psd_basis)
 end
 
-@time "SOS problem" begin
+@time begin
     Δ₁_sos_problem = LowCohomologySOS.sos_problem(
         Δ₁, 
         Iₙ,
@@ -179,8 +181,13 @@ SAut_F_N_data = (
 solve_in_loop(
     Δ₁_sos_problem,
     w_dec_matrix,
-    logdir = "./logs",
-    optimizer = scs_opt(eps = 1e-9, max_iters = 20_000),
+    logdir = "./LowCohomologySOS/logs",
+    optimizer = scs_opt(eps = 1e-9, max_iters = 10_000),
     data = SAut_F_N_data
 )
-|
+
+id, bs, n = Int32(900_000), Int32(8), Int32(7)
+a, b, c = div(id-1,bs*n)+1, div((id-1)%(bs*n),bs)+1, (id-1)%bs+1
+typeof(div(id,bs)+1)
+typeof(id)
+_1 = Int32(1)

@@ -41,7 +41,7 @@ end
     end
 end
 
-@testset "constructions of basis elements for the matrix SOS problem" begin
+@testset "constructions of psd basis elements for the matrix SOS problem" begin
     SAutF₂ = Groups.SpecialAutomorphismGroup(FreeGroup(2))
     S = let s = Groups.gens(SAutF₂)
         [s; inv.(s)]
@@ -56,18 +56,16 @@ end
     @test length(psd_basis) == length(S)*length(half_basis)
 
     gl = length(S)
-    bl = length(basis)
-    for i in 1:3
-        row_gen, col_gen, k = rand(1:gl), rand(1:gl), rand(1:bl)
-        basis_element = LowCohomologySOS.TensorSupportElement(S[row_gen], S[col_gen], basis[k])
-        @test basis_element isa LowCohomologySOS.TensorSupportElement
-        @test basis_element.i isa Groups.GroupElement
-        @test basis_element.j isa Groups.GroupElement
-        @test basis_element.k isa Groups.GroupElement
-        @test basis_element.i == S[row_gen]
-        @test basis_element.j == S[col_gen]
-        @test basis_element.k == basis[k]
-        @test basis_element == LowCohomologySOS.TensorSupportElement(S[row_gen], S[col_gen], basis[k])
+    hbl = sizes[1]
+    for l in 1:3
+        i, k = rand(1:gl), rand(1:hbl)
+        psd_basis_element = LowCohomologySOS.PSDBasisElement(S[i], basis[k])
+        @test psd_basis_element isa LowCohomologySOS.PSDBasisElement
+        @test psd_basis_element.s isa Groups.GroupElement
+        @test psd_basis_element.g isa Groups.GroupElement
+        @test psd_basis_element.s == S[i]
+        @test psd_basis_element.g == basis[k]
+        @test psd_basis_element == LowCohomologySOS.PSDBasisElement(S[i], basis[k])
     end
 end
 
@@ -77,24 +75,40 @@ end
         [s; inv.(s)]
     end
     S = unique!(S)
-    gl = length(S)
+    basis, sizes = Groups.wlmetric_ball(S, radius = 2)
     Σ = Groups.Constructions.WreathProduct(PermutationGroups.SymmetricGroup(2), PermutationGroups.SymmetricGroup(3))
-    _conj = LowCohomologySOS._conj
-    action = LowCohomologySOS.AlphabetPermutation(alphabet(parent(first(S))), Σ, _conj)
+    actions = LowCohomologySOS.WedderburnActions(alphabet(parent(first(S))), Σ, LowCohomologySOS._conj, S, basis)
 
-    for i in 1:3
-        row_gen, col_gen, k = rand(1:gl), rand(1:gl), rand(1:gl)
-        basis_element = LowCohomologySOS.TensorSupportElement(S[row_gen], S[col_gen], S[k])
+    for l in 1:3
+        i, k = rand(1:length(S)), rand(1:length(basis))
+        basis_element = LowCohomologySOS.PSDBasisElement(S[i], basis[k])
         for σ ∈ Σ
-            be_after_action = SymbolicWedderburn.action(action, σ, basis_element)
-            @test be_after_action == LowCohomologySOS.TensorSupportElement(
-                SAutF₃(word(basis_element.i)^action.perms[σ]),
-                SAutF₃(word(basis_element.j)^action.perms[σ]),
-                SAutF₃(word(basis_element.k)^action.perms[σ])
+            be_after_action = SymbolicWedderburn.action(actions, σ, basis_element)
+            @test be_after_action == LowCohomologySOS.PSDBasisElement(
+                SAutF₃(word(basis_element.s)^actions.alphabet_perm.perms[σ]),
+                SAutF₃(word(basis_element.g)^actions.alphabet_perm.perms[σ])
+            )
+        end
+    end
+
+    for l in 1:3
+        basis_element = rand(1:length(S)^2*length(basis))
+        be_i, be_j, be_k = LowCohomologySOS.id_2_triple(basis_element, length(basis), length(S))
+        for σ ∈ Σ
+            be_after_action = SymbolicWedderburn.action(actions, σ, basis_element)
+            @test be_after_action == LowCohomologySOS.triple_2_id(
+                actions.S_action[σ][be_i], 
+                actions.S_action[σ][be_j], 
+                actions.basis_action[σ][be_k],
+                length(basis),
+                length(S)
             )
         end
     end
 end
+
+induce(ac::LowCohomologySOS.WedderburnActions, chom, g::Groups.GroupElement) =
+    SymbolicWedderburn._induce(ac.alphabet_perm, chom, g)
 
 @testset "wedderburn_decomposition_matrix" begin
     SAutF₂ = Groups.SpecialAutomorphismGroup(FreeGroup(2))
@@ -105,12 +119,12 @@ end
     half_basis = S
     basis, sizes = Groups.wlmetric_ball(S, radius = 2)
     Σ = Groups.Constructions.WreathProduct(PermutationGroups.SymmetricGroup(2), PermutationGroups.SymmetricGroup(2))
-    action = LowCohomologySOS.AlphabetPermutation(alphabet(parent(first(S))), Σ, LowCohomologySOS._conj)
+    actions = LowCohomologySOS.WedderburnActions(alphabet(parent(first(S))), Σ, LowCohomologySOS._conj, S, basis)
     constraints_basis, psd_basis = LowCohomologySOS.matrix_bases(basis, half_basis, S)
     
-    w_dec_matrix = SymbolicWedderburn.WedderburnDecomposition(Float64, Σ, action, constraints_basis, psd_basis)
+    w_dec_matrix = SymbolicWedderburn.WedderburnDecomposition(Float64, Σ, actions, constraints_basis, psd_basis)
 
-    @test eltype(w_dec_matrix.basis) <: LowCohomologySOS.TensorSupportElement
+    @test eltype(w_dec_matrix.basis) <: Integer
     @test length(w_dec_matrix.basis) == length(S)^2*length(basis)
     @test length(w_dec_matrix.invariants[rand(1:456)]) == length(S)^2*length(basis)
     for i in 1:length(w_dec_matrix.Uπs)
@@ -122,5 +136,19 @@ end
 
     for i in 1:length(mπs)
         @test size(w_dec_matrix.Uπs[i])[1] == mπs[i]
+    end
+end
+
+@testset "expressing bases: idies and triples agreement" begin
+    bs, n = Int32(rand(10:1_700_000)), Int32(rand(2:49))
+
+    for it in 1:100
+        i, j, k = rand(Int32(1):n), rand(Int32(1):n), rand(Int32(1):bs)
+        @test LowCohomologySOS.id_2_triple(LowCohomologySOS.triple_2_id(i, j, k, bs, n), bs, n) == (i, j, k)
+    end
+    for it in 1:100
+        id = rand(Int32(1):n^2*bs)
+        i, j, k = LowCohomologySOS.id_2_triple(id, bs, n)
+        @test LowCohomologySOS.triple_2_id(i, j, k, bs, n) == id
     end
 end
