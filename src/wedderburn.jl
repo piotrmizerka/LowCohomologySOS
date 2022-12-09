@@ -68,7 +68,7 @@ function preprocess_actions(
     return S_action, basis_action
 end
 
-struct WedderburnActions <: SymbolicWedderburn.Action
+struct WedderburnActions <: SymbolicWedderburn.ByPermutations
     alphabet_perm::AlphabetPermutation
     S_action::Dict
     basis_action::Dict

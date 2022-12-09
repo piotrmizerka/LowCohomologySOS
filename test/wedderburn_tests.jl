@@ -107,9 +107,6 @@ end
     end
 end
 
-induce(ac::LowCohomologySOS.WedderburnActions, chom, g::Groups.GroupElement) =
-    SymbolicWedderburn._induce(ac.alphabet_perm, chom, g)
-
 @testset "wedderburn_decomposition_matrix" begin
     SAutF₂ = Groups.SpecialAutomorphismGroup(FreeGroup(2))
     S = let s = Groups.gens(SAutF₂)
