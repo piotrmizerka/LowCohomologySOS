@@ -18,10 +18,44 @@ function Base.:^(
     return typeof(w)([l^p for l in w])
 end
 
-struct TensorSupportElement{GEl}
-    i::GEl
-    j::GEl
-    k::GEl
+function action_on_group(
+    act::AlphabetPermutation,
+    g::Groups.GroupElement,
+    gel,
+)
+    return parent(gel)(word(gel)^(act.perms[g]))
+end
+
+function subset_permutation(
+    subset, 
+    g::Groups.GroupElement,
+    act::AlphabetPermutation
+)
+    subset_idies = Dict(subset[i] => i for i in Int32.(eachindex(subset)))
+
+    return PermutationGroups.Perm([subset_idies[action_on_group(act, g, gel)] for gel in subset])
+end
+
+function preprocess_actions(
+    S, 
+    basis, 
+    G,
+    act::AlphabetPermutation
+)
+    S_action = Dict(g => subset_permutation(S, g, act) for g in G)
+    basis_action = Dict(g => subset_permutation(basis, g, act) for g in G)
+
+    return S_action, basis_action
+end
+
+struct WedderburnActions <: SymbolicWedderburn.ByPermutations
+    alphabet_perm::AlphabetPermutation
+    S_action::Dict
+    basis_action::Dict
+    S
+    basis
+    S_size::Integer
+    basis_size::Integer
 end
 
 Base.:(==)(s::TensorSupportElement, t::TensorSupportElement) =
