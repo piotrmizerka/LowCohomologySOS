@@ -21,7 +21,7 @@ function group_data(half_radius, N, wreath_action)
     S = (wreath_action ? S_inv : gens(SAut_F_N))
     basis, sizes = Groups.wlmetric_ball(S_inv, radius = 2*half_radius)
     half_basis = basis[1:sizes[half_radius]]
-    ℝSAutF_N_star = LowCohomologySOS.group_ring(SAutF_N, half_basis, star_multiplication = true)
+    ℝSAutF_N_star = LowCohomologySOS.group_ring(SAut_F_N, half_basis, star_multiplication = true)
 
     return SAut_F_N, ℝSAutF_N_star.basis, half_basis, S
 end
@@ -63,8 +63,8 @@ function free_group_saut_index(i::Integer, F_G, S)
 end
 
 const half_radius = 2;
-const N = 3;
-const wreath_action = true;
+const N = 4;
+const wreath_action = false;
 
 SAut_F_N, basis, half_basis, S = group_data(half_radius, N, wreath_action)
 
