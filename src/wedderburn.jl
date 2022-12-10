@@ -31,9 +31,9 @@ function subset_permutation(
     g::Groups.GroupElement,
     act::AlphabetPermutation
 )
-    subset_idies = Dict(subset[i] => i for i in Int32.(eachindex(subset)))
+    subset_idies = Dict(subset[i] => i for i in UInt32.(eachindex(subset)))
 
-    return PermutationGroups.Perm([subset_idies[action_on_group(act, g, gel)] for gel in subset])
+    return PermutationGroups.Perm([subset_idies[action_on_group(act, g, subset[i])] for i in UInt32.(eachindex(subset))])
 end
 
 function preprocess_actions(
@@ -58,9 +58,27 @@ struct WedderburnActions <: SymbolicWedderburn.ByPermutations
     basis_size::Integer
 end
 
-Base.:(==)(s::TensorSupportElement, t::TensorSupportElement) =
-    s.i == t.i && s.j == t.j && s.k == t.k
-Base.hash(se::TensorSupportElement, h::UInt = UInt(0)) = hash(se.i, hash(se.j, hash(se.k, h)))
+function WedderburnActions(A::Alphabet, G, op, S, basis)
+    alphabet_perm = AlphabetPermutation(
+        Dict(
+            g => PermutationGroups.Perm([A[op(l, g)] for l in A.letters]) for
+            g in G
+        ),
+    )
+    S_action, basis_action = preprocess_actions(S, basis, G, alphabet_perm)
+
+    return WedderburnActions(alphabet_perm, S_action, basis_action, S, basis, UInt32(length(S)), UInt32(length(basis)))
+end
+
+# action on psd_basis ###########################
+struct PSDBasisElement{GEl}
+    s::GEl
+    g::GEl
+end
+
+Base.:(==)(a::PSDBasisElement, b::PSDBasisElement) =
+    a.s == b.s && a.g == b.g
+Base.hash(pbe::PSDBasisElement, h::UInt = UInt(0)) = hash(pbe.s, hash(pbe.g, h))
 
 function SymbolicWedderburn.action(
     act::AlphabetPermutation,
@@ -82,11 +100,25 @@ function SymbolicWedderburn.action(
     return TensorSupportElement(s, t, g)
 end
 
-function _conj(
-    t::Groups.Transvection,
-    σ::PermutationGroups.AbstractPerm,
+# action on constraints_basis ###################
+function id_2_triple(
+    id::Integer,
+    bs::Integer, # stands for basis_size
+    n::Integer # stands for generators' number
 )
-    return Groups.Transvection(t.id, t.i^σ, t.j^σ, t.inv)
+    _1 = UInt32(1)
+    return div(id-_1,bs*n)+_1, div((id-_1)%(bs*n),bs)+_1, (id-_1)%bs+_1
+end
+
+function triple_2_id(
+    i::Integer,
+    j::Integer,
+    k::Integer,
+    bs::Integer,
+    n::Integer
+)
+    _1 = UInt32(1)
+    return (i-_1)*n*bs+(j-_1)*bs+k
 end
 
 function _conj(

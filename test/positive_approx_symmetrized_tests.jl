@@ -13,7 +13,7 @@ function act_on_matrix(
     for e in half_basis
         for f in half_basis
             id_e, id_f = half_basis_idies[e], half_basis_idies[f]
-            eσ_inv, fσ_inv = SymbolicWedderburn.action(action, σ^(-1), e), SymbolicWedderburn.action(action, σ^(-1), f)
+            eσ_inv, fσ_inv = LowCohomologySOS.action_on_group(action, σ^(-1), e), LowCohomologySOS.action_on_group(action, σ^(-1), f)
             id_eσ_inv, id_fσ_inv = half_basis_idies[eσ_inv], half_basis_idies[fσ_inv]
             result[id_e, id_f] = P[id_eσ_inv, id_fσ_inv]
         end
@@ -25,7 +25,7 @@ end
 const N = 2
 const half_radius = 1
 
-S, ℝSAutF_N_star, half_basis, w_dec_matrix, A_gs_cart, Σ, psd_basis_length, action = let
+S, ℝSAutF_N_star, half_basis, w_dec_matrix, A_gs_cart, Σ, psd_basis_length, actions = let
     SAutF_N = Groups.SpecialAutomorphismGroup(FreeGroup(N))
 
     S = let s = Groups.gens(SAutF_N)
@@ -38,14 +38,14 @@ S, ℝSAutF_N_star, half_basis, w_dec_matrix, A_gs_cart, Σ, psd_basis_length, a
     ℝSAutF_N_star = LowCohomologySOS.group_ring(SAutF_N, half_basis, star_multiplication = true)
 
     Σ = Groups.Constructions.WreathProduct(PermutationGroups.SymmetricGroup(2), PermutationGroups.SymmetricGroup(N))
-    action = LowCohomologySOS.AlphabetPermutation(alphabet(parent(first(S))), Σ, LowCohomologySOS._conj)
+    actions = LowCohomologySOS.WedderburnActions(alphabet(parent(first(S))), Σ, LowCohomologySOS._conj, S, ℝSAutF_N_star.basis)
     constraints_basis, psd_basis = LowCohomologySOS.matrix_bases(ℝSAutF_N_star.basis, half_basis, S)
-    w_dec_matrix = SymbolicWedderburn.WedderburnDecomposition(Float64, Σ, action, constraints_basis, psd_basis)
+    w_dec_matrix = SymbolicWedderburn.WedderburnDecomposition(Float64, Σ, actions, constraints_basis, psd_basis)
 
     cnstrs =  dropzeros!.(sparse.(LowCohomologySOS.constraints(ℝSAutF_N_star.mstructure)))
     A_gs_cart = [findall(!iszero,c) for c in cnstrs]
 
-    S, ℝSAutF_N_star, half_basis, w_dec_matrix, A_gs_cart, Σ, length(psd_basis), action
+    S, ℝSAutF_N_star, half_basis, w_dec_matrix, A_gs_cart, Σ, length(psd_basis), actions
 end
 
 @testset "invariant_constraint_matrix" begin
@@ -64,10 +64,10 @@ end
         for j in 1:length(S)
             lhs = @view inv_cnstr_matrix[LowCohomologySOS.KroneckerDelta{length(S)}(i, j)]
             for σ ∈ Σ
-                tse_σ_inv = SymbolicWedderburn.action(action, σ^(-1), LowCohomologySOS.TensorSupportElement(S[i], S[j], first(S)))
-                iσ_inv, jσ_inv = S_idies[tse_σ_inv.i], S_idies[tse_σ_inv.j]
+                pbe_σ_inv = SymbolicWedderburn.action(actions.alphabet_perm, σ^(-1), LowCohomologySOS.PSDBasisElement(S[i], S[j]))
+                iσ_inv, jσ_inv = S_idies[pbe_σ_inv.s], S_idies[pbe_σ_inv.g]
                 P = @view inv_cnstr_matrix[LowCohomologySOS.KroneckerDelta{length(S)}(iσ_inv, jσ_inv)]
-                rhs = act_on_matrix(P, σ, half_basis, half_basis_idies, action)
+                rhs = act_on_matrix(P, σ, half_basis, half_basis_idies, actions.alphabet_perm)
                 @test lhs == rhs
             end
         end
