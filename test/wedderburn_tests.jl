@@ -128,7 +128,7 @@ end
         @test size(w_dec_matrix.Uπs[i])[2] == length(S)*length(half_basis)
     end
 
-    sa = SymbolicWedderburn.symmetry_adapted_basis(Rational{Int}, Σ, action, psd_basis)
+    sa = SymbolicWedderburn.symmetry_adapted_basis(Rational{Int}, Σ, actions, psd_basis)
     mπs = SymbolicWedderburn.multiplicity.(sa)
 
     for i in 1:length(mπs)

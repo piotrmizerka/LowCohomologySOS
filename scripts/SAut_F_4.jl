@@ -21,8 +21,9 @@ function group_data(half_radius, N, wreath_action)
     S = (wreath_action ? S_inv : gens(SAut_F_N))
     basis, sizes = Groups.wlmetric_ball(S_inv, radius = 2*half_radius)
     half_basis = basis[1:sizes[half_radius]]
+    ℝSAutF_N_star = LowCohomologySOS.group_ring(SAutF_N, half_basis, star_multiplication = true)
 
-    return SAut_F_N, basis, half_basis, S
+    return SAut_F_N, ℝSAutF_N_star.basis, half_basis, S
 end
 
 function wedderburn_data(basis, half_basis, S, N, wreath_action)
@@ -183,9 +184,3 @@ solve_in_loop(
     optimizer = scs_opt(eps = 1e-9, max_iters = 10_000),
     data = SAut_F_N_data
 )
-
-id, bs, n = Int32(900_000), Int32(8), Int32(7)
-a, b, c = div(id-1,bs*n)+1, div((id-1)%(bs*n),bs)+1, (id-1)%bs+1
-typeof(div(id,bs)+1)
-typeof(id)
-_1 = Int32(1)

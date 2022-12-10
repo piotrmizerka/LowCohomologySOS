@@ -5,6 +5,12 @@ Base.copy(X::AlgebraElement) =
     AlgebraElement(copy(StarAlgebras.coeffs(X)), parent(X))
 
 StarAlgebras.star(g::Groups.AbstractFPGroupElement) = inv(g)
+function StarAlgebras.Basis{I}(basis::AbstractVector) where {I}
+    length(basis) <= typemax(I) ||
+        throw("index type $I is to small for basis of length $(length(basis))")
+    # @assert !(eltype(basis) <: Integer)
+    return StarAlgebras.Basis(basis, Dict(b => I(idx) for (idx, b) in pairs(basis)))
+end
 
 # Group ring with the basis given by the prescribed support
 function group_ring(

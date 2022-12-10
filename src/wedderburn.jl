@@ -51,9 +51,9 @@ function subset_permutation(
     g::Groups.GroupElement,
     act::AlphabetPermutation
 )
-    subset_idies = Dict(subset[i] => i for i in Int32.(eachindex(subset)))
+    subset_idies = Dict(subset[i] => i for i in UInt32.(eachindex(subset)))
 
-    return PermutationGroups.Perm([subset_idies[action_on_group(act, g, gel)] for gel in subset])
+    return PermutationGroups.Perm([subset_idies[action_on_group(act, g, subset[i])] for i in UInt32.(eachindex(subset))])
 end
 
 function preprocess_actions(
@@ -87,7 +87,7 @@ function WedderburnActions(A::Alphabet, G, op, S, basis)
     )
     S_action, basis_action = preprocess_actions(S, basis, G, alphabet_perm)
 
-    return WedderburnActions(alphabet_perm, S_action, basis_action, S, basis, Int32(length(S)), Int32(length(basis)))
+    return WedderburnActions(alphabet_perm, S_action, basis_action, S, basis, UInt32(length(S)), UInt32(length(basis)))
 end
 
 # action on psd_basis ###########################
@@ -129,7 +129,7 @@ function id_2_triple(
     bs::Integer, # stands for basis_size
     n::Integer # stands for generators' number
 )
-    _1 = Int32(1)
+    _1 = UInt32(1)
     return div(id-_1,bs*n)+_1, div((id-_1)%(bs*n),bs)+_1, (id-_1)%bs+_1
 end
 
@@ -140,7 +140,7 @@ function triple_2_id(
     bs::Integer,
     n::Integer
 )
-    _1 = Int32(1)
+    _1 = UInt32(1)
     return (i-_1)*n*bs+(j-_1)*bs+k
 end
 
