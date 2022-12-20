@@ -97,38 +97,23 @@ function SymbolicWedderburn.action(
     return TensorSupportElement(s, t, g)
 end
 
-# action on constraints_basis ###################
-function id_2_triple(
-    id::Integer,
-    bs::Integer, # stands for basis_size
-    n::Integer # stands for generators' number
-)
-    _1 = UInt32(1)
-    return div(id-_1,bs*n)+_1, div((id-_1)%(bs*n),bs)+_1, (id-_1)%bs+_1
-end
+function SymbolicWedderburn.action(
+    act::WedderburnActions,
+    g::Groups.GroupElement,
+    idx::Integer
+) where {T}
+    N = length(basis(act.basis_action))
+    n = length(basis(act.S_action))
 
-function triple_2_id(
-    i::Integer,
-    j::Integer,
-    k::Integer,
-    bs::Integer,
-    n::Integer
-)
-    _1 = UInt32(1)
-    return (i-_1)*n*bs+(j-_1)*bs+k
-end
+    C_indicies = CartesianIndices((N, n, n))
+    L_indices = LinearIndices(C_indicies)
+    k, j, i = Tuple(C_indicies[idx.id])
 
-function _conj(
-    t::Groups.Transvection,
-    x::Groups.Constructions.WreathProductElement,
-)
-    tσ = _conj(t, inv(x.p))
-    dual_id = ifelse(t.id == :ϱ, :λ, :ϱ)
-    dual_inv = ifelse(t.inv, false, true)
-    new_id = isone(x.n.elts[t.i]) ? t.id : dual_id
-    new_inv = isone(x.n.elts[t.i]*x.n.elts[t.j]) ? t.inv : dual_inv
+    ig = i^SymbolicWedderburn.induce(act.S_action, g)
+    jg = j^SymbolicWedderburn.induce(act.S_action, g)
+    kg = k^SymbolicWedderburn.induce(act.basis_action, g)
 
-    return Groups.Transvection(new_id, tσ.i, tσ.j, new_inv)
+    return oftype(id, L_indices[kg, jg, ig])
 end
 
 function matrix_bases(basis, half_basis, S)
