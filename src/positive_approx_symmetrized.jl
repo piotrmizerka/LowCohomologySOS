@@ -1,6 +1,3 @@
-basis(A::StarAlgebras.StarAlgebra) = A.basis
-basis(w::WedderburnDecomposition) = w.basis
-
 function coeffs(
     M::AbstractMatrix{<:AlgebraElement},
     n::Integer # generators number
