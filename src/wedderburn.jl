@@ -118,36 +118,23 @@ function SymbolicWedderburn.action(
 end
 #################################################
 
-# action on constraints_basis ###################
-function id_2_triple(
-    id::Integer,
-    bs::Integer, # stands for basis_size
-    n::Integer # stands for generators' number
-)
-    _1 = UInt32(1)
-    return div(id-_1,bs*n)+_1, div((id-_1)%(bs*n),bs)+_1, (id-_1)%bs+_1
-end
-
-function triple_2_id(
-    i::Integer,
-    j::Integer,
-    k::Integer,
-    bs::Integer,
-    n::Integer
-)
-    _1 = UInt32(1)
-    return (i-_1)*n*bs+(j-_1)*bs+k
-end
-
 function SymbolicWedderburn.action(
     act::WedderburnActions,
     g::Groups.GroupElement,
-    id::Integer
-)
-    i, j, k = id_2_triple(id, act.basis_size, act.S_size)
-    iσ, jσ, kσ = act.S_action[g][i], act.S_action[g][j], act.basis_action[g][k]
+    idx::Integer
+) where {T}
+    N = length(basis(act.basis_action))
+    n = length(basis(act.S_action))
 
-    return triple_2_id(iσ, jσ, kσ, act.basis_size, act.S_size)
+    C_indicies = CartesianIndices((N, n, n))
+    L_indices = LinearIndices(C_indicies)
+    k, j, i = Tuple(C_indicies[idx.id])
+
+    ig = i^SymbolicWedderburn.induce(act.S_action, g)
+    jg = j^SymbolicWedderburn.induce(act.S_action, g)
+    kg = k^SymbolicWedderburn.induce(act.basis_action, g)
+
+    return oftype(id, L_indices[kg, jg, ig])
 end
 #########################################################
 
