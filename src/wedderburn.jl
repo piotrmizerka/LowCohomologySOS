@@ -36,27 +36,13 @@ function subset_permutation(
     return PermutationGroups.Perm([subset_idies[SymbolicWedderburn.action(act, g, subset[i])] for i in UInt32.(eachindex(subset))])
 end
 
-function preprocess_actions(
-    S, 
-    basis, 
-    G,
-    act::AlphabetPermutation
-)
-    S_action = Dict(g => subset_permutation(S, g, act) for g in G)
-    basis_action = Dict(g => subset_permutation(basis, g, act) for g in G)
-
-    return S_action, basis_action
+struct WedderburnActions{AP,CEH1,CEH2} <: SymbolicWedderburn.ByPermutations
+    alphabet_perm::AP
+    S_action::CEH1
+    basis_action::CEH2
 end
 
-struct WedderburnActions <: SymbolicWedderburn.ByPermutations
-    alphabet_perm::AlphabetPermutation
-    S_action::Dict
-    basis_action::Dict
-    S
-    basis
-    S_size::Integer
-    basis_size::Integer
-end
+SymbolicWedderburn._int_type(::Type{<:InducedActionHomomorphism{<:WedderburnActions}}) = UInt32
 
 function WedderburnActions(A::Alphabet, G, op, S, basis)
     alphabet_perm = AlphabetPermutation(
@@ -65,9 +51,20 @@ function WedderburnActions(A::Alphabet, G, op, S, basis)
             g in G
         ),
     )
-    S_action, basis_action = preprocess_actions(S, basis, G, alphabet_perm)
 
-    return WedderburnActions(alphabet_perm, S_action, basis_action, S, basis, UInt32(length(S)), UInt32(length(basis)))
+    S_action = SymbolicWedderburn.CachedExtensionHomomorphism(
+        G,
+        alphabet_perm,
+        S
+    )
+
+    basis_action = SymbolicWedderburn.CachedExtensionHomomorphism(
+        G,
+        alphabet_perm,
+        basis
+    )
+
+    return WedderburnActions(alphabet_perm, S_action, basis_action)
 end
 
 # action on psd_basis ###########################
