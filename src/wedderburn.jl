@@ -38,7 +38,7 @@ function Base.:^(
     return typeof(w)([l^p for l in w])
 end
 
-function action_on_group(
+function SymbolicWedderburn.action(
     act::AlphabetPermutation,
     g::Groups.GroupElement,
     gel,
@@ -47,13 +47,13 @@ function action_on_group(
 end
 
 function subset_permutation(
-    subset, 
+    subset,
     g::Groups.GroupElement,
     act::AlphabetPermutation
 )
     subset_idies = Dict(subset[i] => i for i in UInt32.(eachindex(subset)))
 
-    return PermutationGroups.Perm([subset_idies[action_on_group(act, g, subset[i])] for i in UInt32.(eachindex(subset))])
+    return PermutationGroups.Perm([subset_idies[SymbolicWedderburn.action(act, g, subset[i])] for i in UInt32.(eachindex(subset))])
 end
 
 function preprocess_actions(
@@ -105,10 +105,7 @@ function SymbolicWedderburn.action(
     g::Groups.GroupElement,
     pbe::PSDBasisElement,
 )
-    s = action_on_group(act.alphabet_perm, g, pbe.s)
-    g = action_on_group(act.alphabet_perm, g, pbe.g)
-
-    return PSDBasisElement(s, g)
+    return SymbolicWedderburn.action(act.alphabet_perm, g, pbe)
 end
 
 function SymbolicWedderburn.action(
@@ -116,8 +113,8 @@ function SymbolicWedderburn.action(
     g::Groups.GroupElement,
     pbe::PSDBasisElement,
 )
-    s = action_on_group(act, g, pbe.s)
-    g = action_on_group(act, g, pbe.g)
+    s = SymbolicWedderburn.action(act, g, pbe.generator)
+    g = SymbolicWedderburn.action(act, g, pbe.basis_elt)
 
     return PSDBasisElement(s, g)
 end
