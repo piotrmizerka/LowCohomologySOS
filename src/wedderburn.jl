@@ -100,7 +100,7 @@ end
 function SymbolicWedderburn.action(
     act::WedderburnActions,
     g::Groups.GroupElement,
-    idx::Integer
+    idx::LinIdx{T}
 ) where {T}
     N = length(basis(act.basis_action))
     n = length(basis(act.S_action))
@@ -113,12 +113,17 @@ function SymbolicWedderburn.action(
     jg = j^SymbolicWedderburn.induce(act.S_action, g)
     kg = k^SymbolicWedderburn.induce(act.basis_action, g)
 
-    return oftype(id, L_indices[kg, jg, ig])
+    return LinIdx{T}(L_indices[kg, jg, ig])
+end
+
+struct LinIdx{T}
+    id::T
 end
 
 function matrix_bases(basis, half_basis, S)
-    constr_basis = [TensorSupportElement(s, t, g) for s in S for t in S for g in basis]
-    psd_basis = [TensorSupportElement(s, s, g) for s in S for g in half_basis]
-    
-   return constr_basis, psd_basis
+    n = length(S)^2 * length(basis)
+    constr_basis = [LinIdx{UInt32}(i) for i in 1:n]
+    psd_basis = [PSDBasisElement(s, g) for s in S for g in half_basis]
+
+    return constr_basis, psd_basis
 end
