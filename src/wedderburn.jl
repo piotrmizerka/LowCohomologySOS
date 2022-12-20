@@ -89,13 +89,14 @@ end
 
 # action on psd_basis ###########################
 struct PSDBasisElement{GEl}
-    s::GEl
-    g::GEl
+    generator::GEl # generator
+    basis_elt::GEl # elt of the half-basis
 end
 
 Base.:(==)(a::PSDBasisElement, b::PSDBasisElement) =
-    a.s == b.s && a.g == b.g
-Base.hash(pbe::PSDBasisElement, h::UInt = UInt(0)) = hash(pbe.s, hash(pbe.g, h))
+    a.generator == b.generator && a.basis_elt == b.basis_elt
+Base.hash(pbe::PSDBasisElement, h::UInt) =
+    hash(pbe.generator, hash(pbe.basis_elt, h))
 
 function SymbolicWedderburn.action(
     act::WedderburnActions,
