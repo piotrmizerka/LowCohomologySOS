@@ -40,13 +40,15 @@ end
 function spectral_gaps_certification(
     h,
     relations,
-    half_basis;
+    half_basis,
+    S = gens(parent(first(relations)));
     optimizer,
 )
     solution = spectral_gaps_approximated(
         h,
         relations,
-        half_basis;
+        half_basis,
+        S;
         optimizer = optimizer,
     )
     @info "Termination status: " solution.termination_status

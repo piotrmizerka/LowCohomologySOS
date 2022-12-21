@@ -72,7 +72,7 @@ end
 
     @testset "Cyclic(2)" begin
 
-        C₂ = cyclic_group(2)
+        C₂ = cyclic_group(2) # this causes an error (at least in Windows 10 and online, on Ubuntu 20.4 works :))
         x, = Groups.gens(C₂)
         half_basis_C_2 = [one(C₂), x]
         RC₂ = LowCohomologySOS.group_ring(C₂, 2, true)
@@ -152,4 +152,6 @@ end
     @test status == MOI.OPTIMAL
     @test certified
     @test 3 ∈ certified_interval + (-1e-7..1e-7)
+
+    # TODO: test this with symmetric S
 end

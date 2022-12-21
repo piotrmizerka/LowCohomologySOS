@@ -56,13 +56,13 @@ end
 
 end
 
-@testset "sos_problem_matrix" begin
+@testset "sos_problem (non symmetrized version)" begin
     C₃ = cyclic_group(3)
     a, = Groups.gens(C₃)
     RC₃ = LowCohomologySOS.group_ring(C₃, [one(C₃), a, a^2])
     M = reshape([RC₃(a)], 1, 1)
     order_unit = reshape([one(RC₃)], 1, 1)
-    m = LowCohomologySOS.sos_problem_matrix(M, order_unit)
+    m = LowCohomologySOS.sos_problem(M, order_unit)
     output = sprint(print, m)
 
     @test occursin("Max λ", output)
@@ -81,7 +81,7 @@ end
     M_1 = reshape([RC₃_star(a)], 1, 1)
     order_unit_1 = reshape([one(RC₃_star)], 1, 1)
     sos_problem_infeasible =
-        LowCohomologySOS.sos_problem_matrix(M_1, order_unit_1)
+        LowCohomologySOS.sos_problem(M_1, order_unit_1)
 
     let model = sos_problem_infeasible
         JuMP.set_optimizer(model, scs_opt(verbose = false))
@@ -100,7 +100,7 @@ end
     M_2 = LowCohomologySOS.embed.(identity, Δ^2, Ref(RZ_star))
     order_unit_2 = LowCohomologySOS.embed.(identity, Δ, Ref(RZ_star))
     sos_problem_infeasible_2 = let elt = M_2, unit = order_unit_2
-        m = LowCohomologySOS.sos_problem_matrix(M_2, order_unit_2)
+        m = LowCohomologySOS.sos_problem(M_2, order_unit_2)
         JuMP.@constraint(m, m[:λ] >= 0.2)
         m
     end
@@ -122,7 +122,7 @@ end
         zero(RZ_star) one(RZ_star) zero(RZ_star)
         zero(RZ_star) zero(RZ_star) one(RZ_star)
     ]
-    sos_problem_3 = LowCohomologySOS.sos_problem_matrix(M_3, order_unit_3)
+    sos_problem_3 = LowCohomologySOS.sos_problem(M_3, order_unit_3)
 
     λ_3, Q_3, ts_3 = let model = sos_problem_3
         JuMP.set_optimizer(model, scs_opt(verbose = false))
@@ -170,4 +170,6 @@ end
     @test solution.λ ≈ 3 rtol = 1e-3
     @test solution.laplacian == Δ₁
     @test solution.unit == unit
+
+    # TODO: test this with symmetric S
 end

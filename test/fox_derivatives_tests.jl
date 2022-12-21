@@ -93,6 +93,12 @@ end
             one(RF) + RF(x * y)
         @test LowCohomologySOS.fox_derivative(RF, x * y * x * y, 2) ==
             RF(x) + RF(x * y * x)
+
+        S = [x^(-1), y^(-1)]
+        @test LowCohomologySOS.fox_derivative(RF, x, 1, S) == -RF(x)
+        @test LowCohomologySOS.fox_derivative(RF, x^(-1), 1, S) == one(RF)
+        @test LowCohomologySOS.fox_derivative(RF, y, 2, S) == -RF(y)
+        @test LowCohomologySOS.fox_derivative(RF, y^(-1), 2, S) == one(RF)
     end
 
     @testset "via FreeGroup, return vectors" begin
@@ -155,21 +161,28 @@ end
     A = Alphabet([:x, :X, :y, :Y], [2, 1, 4, 3])
     F = FreeGroup(A)
     x, y = Groups.gens(F)
+    S = [x, y, x^(-1), y^(-1)]
     relations = [x, x * y, x * y * x^(-1)]
-    J = LowCohomologySOS.jacobian_matrix(relations)
-    RF_J = parent(rand(J))
+    J = LowCohomologySOS.jacobian_matrix(relations, S)
+    RF_J = parent(first(J))
     RF_J_proper = LowCohomologySOS.suitable_group_ring(relations)
     @test RF_J.object == RF_J_proper.object
     @test RF_J.basis == RF_J_proper.basis
     @test_broken RF_J.mstructure == RF_J_proper.mstructure
     @test typeof(RF_J) == typeof(RF_J_proper)
-    J_proper = reshape([zero(RF_J) for i in 1:6], 3, 2)
+    J_proper = reshape([zero(RF_J) for i in 1:12], 3, 4)
     J_proper[1, 1] = one(RF_J)
     J_proper[1, 2] = zero(RF_J)
+    J_proper[1, 3] = -RF_J(x)
+    J_proper[1, 4] = zero(RF_J)
     J_proper[2, 1] = one(RF_J)
     J_proper[2, 2] = RF_J(x)
+    J_proper[2, 3] = -RF_J(x)
+    J_proper[2, 4] = -RF_J(x*y)
     J_proper[3, 1] = one(RF_J) - RF_J(x * y * x^(-1))
     J_proper[3, 2] = RF_J(x)
+    J_proper[3, 3] = -RF_J(x) + RF_J(x * y)
+    J_proper[3, 4] = -RF_J(x*y)
     @test J == J_proper
 
     A2 = Alphabet(

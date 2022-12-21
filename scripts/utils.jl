@@ -5,7 +5,13 @@ using Dates
 using Serialization
 using Logging
 
-function solve_in_loop(model; logdir, optimizer, data)
+function solve_in_loop(
+    model,
+    w_dec_matrix = false; 
+    logdir, 
+    optimizer, 
+    data
+)
     @info "logging to $logdir"
     status = MOI.UNKNOWN_RESULT_STATUS
     warm = try
@@ -25,9 +31,9 @@ function solve_in_loop(model; logdir, optimizer, data)
 
         log_file = joinpath(logdir, "solver_$(date_string(date)).log")
         
-        status, warm = @time solve(log_file, model, optimizer, warm)
+        status, warm = (w_dec_matrix  == false ? (@time solve(log_file, model, optimizer, warm)) : (@time solve(log_file, model[1], optimizer, warm)))
 
-        λ, Q = LowCohomologySOS.get_solution(model)
+        λ, Q = (w_dec_matrix  == false ? LowCohomologySOS.get_solution(model) : LowCohomologySOS.get_solution(model[1], model[2], w_dec_matrix))
         solution = Dict(:λ=>λ, :Q=>Q, :warm=>warm)
         
         serialize(joinpath(logdir, "solution_$(date_string(date)).sjl"), solution)

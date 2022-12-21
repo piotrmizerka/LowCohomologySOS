@@ -3,6 +3,8 @@ using Groups
 using Test
 using LowCohomologySOS
 using IntervalArithmetic
+using SymbolicWedderburn
+using PermutationGroups
 
 import Logging
 import JuMP
@@ -31,7 +33,9 @@ end
 @testset "LowCohomologySOS" begin
     include("group_rings_tests.jl")
     include("fox_derivatives_tests.jl")
+    include("wedderburn_tests.jl")
     include("positive_approx_tests.jl")
+    include("positive_approx_symmetrized_tests.jl")
     include("certification_tests.jl")
     include("integration_tests.jl")
 
