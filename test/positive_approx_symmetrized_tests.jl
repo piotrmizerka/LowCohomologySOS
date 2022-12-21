@@ -13,7 +13,7 @@ function act_on_matrix(
     for e in half_basis
         for f in half_basis
             id_e, id_f = half_basis_idies[e], half_basis_idies[f]
-            eσ_inv, fσ_inv = LowCohomologySOS.action_on_group(action, σ^(-1), e), LowCohomologySOS.action_on_group(action, σ^(-1), f)
+            eσ_inv, fσ_inv = SymbolicWedderburn.action(action, σ^(-1), e), SymbolicWedderburn.action(action, σ^(-1), f)
             id_eσ_inv, id_fσ_inv = half_basis_idies[eσ_inv], half_basis_idies[fσ_inv]
             result[id_e, id_f] = P[id_eσ_inv, id_fσ_inv]
         end
@@ -65,7 +65,7 @@ end
             lhs = @view inv_cnstr_matrix[LowCohomologySOS.KroneckerDelta{length(S)}(i, j)]
             for σ ∈ Σ
                 pbe_σ_inv = SymbolicWedderburn.action(actions.alphabet_perm, σ^(-1), LowCohomologySOS.PSDBasisElement(S[i], S[j]))
-                iσ_inv, jσ_inv = S_idies[pbe_σ_inv.s], S_idies[pbe_σ_inv.g]
+                iσ_inv, jσ_inv = S_idies[pbe_σ_inv.generator], S_idies[pbe_σ_inv.basis_elt]
                 P = @view inv_cnstr_matrix[LowCohomologySOS.KroneckerDelta{length(S)}(iσ_inv, jσ_inv)]
                 rhs = act_on_matrix(P, σ, half_basis, half_basis_idies, actions.alphabet_perm)
                 @test lhs == rhs

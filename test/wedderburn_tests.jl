@@ -61,10 +61,10 @@ end
         i, k = rand(1:gl), rand(1:hbl)
         psd_basis_element = LowCohomologySOS.PSDBasisElement(S[i], basis[k])
         @test psd_basis_element isa LowCohomologySOS.PSDBasisElement
-        @test psd_basis_element.s isa Groups.GroupElement
-        @test psd_basis_element.g isa Groups.GroupElement
-        @test psd_basis_element.s == S[i]
-        @test psd_basis_element.g == basis[k]
+        @test psd_basis_element.generator isa Groups.GroupElement
+        @test psd_basis_element.basis_elt isa Groups.GroupElement
+        @test psd_basis_element.generator == S[i]
+        @test psd_basis_element.basis_elt == basis[k]
         @test psd_basis_element == LowCohomologySOS.PSDBasisElement(S[i], basis[k])
     end
 end
@@ -85,24 +85,24 @@ end
         for σ ∈ Σ
             be_after_action = SymbolicWedderburn.action(actions, σ, basis_element)
             @test be_after_action == LowCohomologySOS.PSDBasisElement(
-                SAutF₃(word(basis_element.s)^actions.alphabet_perm.perms[σ]),
-                SAutF₃(word(basis_element.g)^actions.alphabet_perm.perms[σ])
+                SAutF₃(word(basis_element.generator)^actions.alphabet_perm.perms[σ]),
+                SAutF₃(word(basis_element.basis_elt)^actions.alphabet_perm.perms[σ])
             )
         end
     end
 
+    C_ind = CartesianIndices((length(basis),length(S),length(S)))
+    L_ind = LinearIndices(C_ind)
     for l in 1:3
-        basis_element = rand(1:length(S)^2*length(basis))
-        be_i, be_j, be_k = LowCohomologySOS.id_2_triple(basis_element, length(basis), length(S))
+        basis_element = LowCohomologySOS.LinIdx(rand(1:length(S)^2*length(basis)))
+        be_k, be_j, be_i = Tuple(C_ind[basis_element.id])
         for σ ∈ Σ
             be_after_action = SymbolicWedderburn.action(actions, σ, basis_element)
-            @test be_after_action == LowCohomologySOS.triple_2_id(
-                actions.S_action[σ][be_i], 
-                actions.S_action[σ][be_j], 
-                actions.basis_action[σ][be_k],
-                length(basis),
-                length(S)
-            )
+            be_k_σ = be_k^SymbolicWedderburn.induce(actions.basis_action, σ)
+            be_j_σ = be_j^SymbolicWedderburn.induce(actions.S_action, σ)
+            be_i_σ = be_i^SymbolicWedderburn.induce(actions.S_action, σ)
+            rhs = LowCohomologySOS.LinIdx(L_ind[be_k_σ,be_j_σ,be_i_σ])
+            @test be_after_action == rhs
         end
     end
 end
@@ -121,7 +121,7 @@ end
     
     w_dec_matrix = SymbolicWedderburn.WedderburnDecomposition(Float64, Σ, actions, constraints_basis, psd_basis)
 
-    @test eltype(w_dec_matrix.basis) <: Integer
+    @test eltype(w_dec_matrix.basis) <: LowCohomologySOS.LinIdx
     @test length(w_dec_matrix.basis) == length(S)^2*length(basis)
     @test length(w_dec_matrix.invariants[rand(1:456)]) == length(S)^2*length(basis)
     for i in 1:length(w_dec_matrix.Uπs)
@@ -136,16 +136,19 @@ end
     end
 end
 
-@testset "expressing bases: idies and triples agreement" begin
+@testset "expressing bases: idies and triples agreement and proper order" begin
     bs, n = Int32(rand(10:1_700_000)), Int32(rand(2:49))
 
+    C_indicies = CartesianIndices((bs, n, n))
+    L_indices = LinearIndices(C_indicies)
+
     for it in 1:100
-        i, j, k = rand(Int32(1):n), rand(Int32(1):n), rand(Int32(1):bs)
-        @test LowCohomologySOS.id_2_triple(LowCohomologySOS.triple_2_id(i, j, k, bs, n), bs, n) == (i, j, k)
+        k, j, i = rand(UInt32(1):bs), rand(UInt32(1):n), rand(UInt32(1):n)
+        @test Tuple(C_indicies[L_indices[k,j,i]]) == (k,j,i)
     end
     for it in 1:100
-        id = rand(Int32(1):n^2*bs)
-        i, j, k = LowCohomologySOS.id_2_triple(id, bs, n)
-        @test LowCohomologySOS.triple_2_id(i, j, k, bs, n) == id
+        id = rand(UInt32(1):n^2*bs)
+        k,j,i = Tuple(C_indicies[id])
+        @test L_indices[k,j,i] == id
     end
 end

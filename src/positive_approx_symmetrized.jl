@@ -26,10 +26,11 @@ function invariant_constraint_matrix(
 )
     bs = length(A_gs_cart)
     n = isqrt(div(length(v_inv), bs))
+    C_ind = CartesianIndices((bs,n,n))
     result = spzeros(Int, m*n, m*n)
     dropzeros!(result)
     for it in SparseArrays.nonzeroinds(v_inv)
-        i, j, k = id_2_triple(it, bs, n)
+        k,j,i = Tuple(C_ind[it])
         out_left = (j-1)*m^2*n
         out_up = (i-1)*m
         for ci in A_gs_cart[k]

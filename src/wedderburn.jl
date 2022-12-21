@@ -62,7 +62,7 @@ struct WedderburnActions{AP,CEH1,CEH2} <: SymbolicWedderburn.ByPermutations
     basis_action::CEH2
 end
 
-SymbolicWedderburn._int_type(::Type{<:InducedActionHomomorphism{<:WedderburnActions}}) = UInt32
+SymbolicWedderburn._int_type(::Type{<:SymbolicWedderburn.InducedActionHomomorphism{<:WedderburnActions}}) = UInt32
 
 function WedderburnActions(A::Alphabet, G, op, S, basis)
     alphabet_perm = AlphabetPermutation(
@@ -118,17 +118,22 @@ function SymbolicWedderburn.action(
 end
 #################################################
 
+# Action on constraints basis ############################
+struct LinIdx{T}
+    id::T
+end
+
 function SymbolicWedderburn.action(
     act::WedderburnActions,
     g::Groups.GroupElement,
     idx::LinIdx{T}
 ) where {T}
-    N = length(basis(act.basis_action))
+    bs = length(basis(act.basis_action))
     n = length(basis(act.S_action))
 
-    C_indicies = CartesianIndices((N, n, n))
-    L_indices = LinearIndices(C_indicies)
-    k, j, i = Tuple(C_indicies[idx.id])
+    C_indices = CartesianIndices((bs, n, n))
+    L_indices = LinearIndices(C_indices)
+    k, j, i = Tuple(C_indices[idx.id])
 
     ig = i^SymbolicWedderburn.induce(act.S_action, g)
     jg = j^SymbolicWedderburn.induce(act.S_action, g)
@@ -138,10 +143,6 @@ function SymbolicWedderburn.action(
 end
 #########################################################
 
-struct LinIdx{T}
-    id::T
-end
-
 function matrix_bases(basis, half_basis, S)
     n = length(S)^2 * length(basis)
     constr_basis = [LinIdx{UInt32}(i) for i in 1:n]
@@ -149,25 +150,3 @@ function matrix_bases(basis, half_basis, S)
 
     return constr_basis, psd_basis
 end
-
-# struct TensorSupportElement{GEl}
-#     i::GEl
-#     j::GEl
-#     k::GEl
-# end
-
-# Base.:(==)(s::TensorSupportElement, t::TensorSupportElement) =
-#     s.i == t.i && s.j == t.j && s.k == t.k
-# Base.hash(se::TensorSupportElement, h::UInt = UInt(0)) = hash(se.i, hash(se.j, hash(se.k, h)))
-
-# function SymbolicWedderburn.action(
-#     act::AlphabetPermutation,
-#     g::Groups.GroupElement,
-#     tse::TensorSupportElement,
-# )
-#     s = SymbolicWedderburn.action(act, g, tse.i)
-#     t = SymbolicWedderburn.action(act, g, tse.j)
-#     g = SymbolicWedderburn.action(act, g, tse.k)
-
-#     return TensorSupportElement(s, t, g)
-# end
