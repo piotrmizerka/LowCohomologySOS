@@ -42,7 +42,7 @@ struct WedderburnActions{AP,CEH1,CEH2} <: SymbolicWedderburn.ByPermutations
     basis_action::CEH2
 end
 
-SymbolicWedderburn._int_type(::Type{<:InducedActionHomomorphism{<:WedderburnActions}}) = UInt32
+SymbolicWedderburn._int_type(::Type{<:SymbolicWedderburn.InducedActionHomomorphism{<:WedderburnActions}}) = UInt32
 
 function WedderburnActions(A::Alphabet, G, op, S, basis)
     alphabet_perm = AlphabetPermutation(
@@ -97,27 +97,28 @@ function SymbolicWedderburn.action(
     return TensorSupportElement(s, t, g)
 end
 
+# Action on constraints basis ############################
+struct LinIdx{T}
+    id::T
+end
+
 function SymbolicWedderburn.action(
     act::WedderburnActions,
     g::Groups.GroupElement,
     idx::LinIdx{T}
 ) where {T}
-    N = length(basis(act.basis_action))
+    bs = length(basis(act.basis_action))
     n = length(basis(act.S_action))
 
-    C_indicies = CartesianIndices((N, n, n))
-    L_indices = LinearIndices(C_indicies)
-    k, j, i = Tuple(C_indicies[idx.id])
+    C_indices = CartesianIndices((bs, n, n))
+    L_indices = LinearIndices(C_indices)
+    k, j, i = Tuple(C_indices[idx.id])
 
     ig = i^SymbolicWedderburn.induce(act.S_action, g)
     jg = j^SymbolicWedderburn.induce(act.S_action, g)
     kg = k^SymbolicWedderburn.induce(act.basis_action, g)
 
     return LinIdx{T}(L_indices[kg, jg, ig])
-end
-
-struct LinIdx{T}
-    id::T
 end
 
 function matrix_bases(basis, half_basis, S)

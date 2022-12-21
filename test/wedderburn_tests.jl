@@ -56,18 +56,16 @@ end
     @test length(psd_basis) == length(S)*length(half_basis)
 
     gl = length(S)
-    bl = length(basis)
-    for i in 1:3
-        row_gen, col_gen, k = rand(1:gl), rand(1:gl), rand(1:bl)
-        basis_element = LowCohomologySOS.TensorSupportElement(S[row_gen], S[col_gen], basis[k])
-        @test basis_element isa LowCohomologySOS.TensorSupportElement
-        @test basis_element.i isa Groups.GroupElement
-        @test basis_element.j isa Groups.GroupElement
-        @test basis_element.k isa Groups.GroupElement
-        @test basis_element.i == S[row_gen]
-        @test basis_element.j == S[col_gen]
-        @test basis_element.k == basis[k]
-        @test basis_element == LowCohomologySOS.TensorSupportElement(S[row_gen], S[col_gen], basis[k])
+    hbl = sizes[1]
+    for l in 1:3
+        i, k = rand(1:gl), rand(1:hbl)
+        psd_basis_element = LowCohomologySOS.PSDBasisElement(S[i], basis[k])
+        @test psd_basis_element isa LowCohomologySOS.PSDBasisElement
+        @test psd_basis_element.generator isa Groups.GroupElement
+        @test psd_basis_element.basis_elt isa Groups.GroupElement
+        @test psd_basis_element.generator == S[i]
+        @test psd_basis_element.basis_elt == basis[k]
+        @test psd_basis_element == LowCohomologySOS.PSDBasisElement(S[i], basis[k])
     end
 end
 
@@ -79,19 +77,32 @@ end
     S = unique!(S)
     gl = length(S)
     Σ = Groups.Constructions.WreathProduct(PermutationGroups.SymmetricGroup(2), PermutationGroups.SymmetricGroup(3))
-    _conj = LowCohomologySOS._conj
-    action = LowCohomologySOS.AlphabetPermutation(alphabet(parent(first(S))), Σ, _conj)
+    actions = LowCohomologySOS.WedderburnActions(alphabet(parent(first(S))), Σ, LowCohomologySOS._conj, S, basis)
 
-    for i in 1:3
-        row_gen, col_gen, k = rand(1:gl), rand(1:gl), rand(1:gl)
-        basis_element = LowCohomologySOS.TensorSupportElement(S[row_gen], S[col_gen], S[k])
+    for l in 1:3
+        i, k = rand(1:length(S)), rand(1:length(basis))
+        basis_element = LowCohomologySOS.PSDBasisElement(S[i], basis[k])
         for σ ∈ Σ
-            be_after_action = SymbolicWedderburn.action(action, σ, basis_element)
-            @test be_after_action == LowCohomologySOS.TensorSupportElement(
-                SAutF₃(word(basis_element.i)^action.perms[σ]),
-                SAutF₃(word(basis_element.j)^action.perms[σ]),
-                SAutF₃(word(basis_element.k)^action.perms[σ])
+            be_after_action = SymbolicWedderburn.action(actions, σ, basis_element)
+            @test be_after_action == LowCohomologySOS.PSDBasisElement(
+                SAutF₃(word(basis_element.generator)^actions.alphabet_perm.perms[σ]),
+                SAutF₃(word(basis_element.basis_elt)^actions.alphabet_perm.perms[σ])
             )
+        end
+    end
+
+    C_ind = CartesianIndices((length(basis),length(S),length(S)))
+    L_ind = LinearIndices(C_ind)
+    for l in 1:3
+        basis_element = LowCohomologySOS.LinIdx(rand(1:length(S)^2*length(basis)))
+        be_k, be_j, be_i = Tuple(C_ind[basis_element.id])
+        for σ ∈ Σ
+            be_after_action = SymbolicWedderburn.action(actions, σ, basis_element)
+            be_k_σ = be_k^SymbolicWedderburn.induce(actions.basis_action, σ)
+            be_j_σ = be_j^SymbolicWedderburn.induce(actions.S_action, σ)
+            be_i_σ = be_i^SymbolicWedderburn.induce(actions.S_action, σ)
+            rhs = LowCohomologySOS.LinIdx(L_ind[be_k_σ,be_j_σ,be_i_σ])
+            @test be_after_action == rhs
         end
     end
 end
@@ -110,7 +121,7 @@ end
     
     w_dec_matrix = SymbolicWedderburn.WedderburnDecomposition(Float64, Σ, action, constraints_basis, psd_basis)
 
-    @test eltype(w_dec_matrix.basis) <: LowCohomologySOS.TensorSupportElement
+    @test eltype(w_dec_matrix.basis) <: LowCohomologySOS.LinIdx
     @test length(w_dec_matrix.basis) == length(S)^2*length(basis)
     @test length(w_dec_matrix.invariants[rand(1:456)]) == length(S)^2*length(basis)
     for i in 1:length(w_dec_matrix.Uπs)
@@ -122,5 +133,22 @@ end
 
     for i in 1:length(mπs)
         @test size(w_dec_matrix.Uπs[i])[1] == mπs[i]
+    end
+end
+
+@testset "expressing bases: idies and triples agreement and proper order" begin
+    bs, n = Int32(rand(10:1_700_000)), Int32(rand(2:49))
+
+    C_indicies = CartesianIndices((bs, n, n))
+    L_indices = LinearIndices(C_indicies)
+
+    for it in 1:100
+        k, j, i = rand(UInt32(1):bs), rand(UInt32(1):n), rand(UInt32(1):n)
+        @test Tuple(C_indicies[L_indices[k,j,i]]) == (k,j,i)
+    end
+    for it in 1:100
+        id = rand(UInt32(1):n^2*bs)
+        k,j,i = Tuple(C_indicies[id])
+        @test L_indices[k,j,i] == id
     end
 end
