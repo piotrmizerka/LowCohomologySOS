@@ -41,7 +41,7 @@ end
     end
 end
 
-@testset "constructions of basis elements for the matrix SOS problem" begin
+@testset "constructions of psd basis elements for the matrix SOS problem" begin
     SAutF₂ = Groups.SpecialAutomorphismGroup(FreeGroup(2))
     S = let s = Groups.gens(SAutF₂)
         [s; inv.(s)]
@@ -75,7 +75,7 @@ end
         [s; inv.(s)]
     end
     S = unique!(S)
-    gl = length(S)
+    basis, sizes = Groups.wlmetric_ball(S, radius = 2)
     Σ = Groups.Constructions.WreathProduct(PermutationGroups.SymmetricGroup(2), PermutationGroups.SymmetricGroup(3))
     actions = LowCohomologySOS.WedderburnActions(alphabet(parent(first(S))), Σ, LowCohomologySOS._conj, S, basis)
 
@@ -116,10 +116,10 @@ end
     half_basis = S
     basis, sizes = Groups.wlmetric_ball(S, radius = 2)
     Σ = Groups.Constructions.WreathProduct(PermutationGroups.SymmetricGroup(2), PermutationGroups.SymmetricGroup(2))
-    action = LowCohomologySOS.AlphabetPermutation(alphabet(parent(first(S))), Σ, LowCohomologySOS._conj)
+    actions = LowCohomologySOS.WedderburnActions(alphabet(parent(first(S))), Σ, LowCohomologySOS._conj, S, basis)
     constraints_basis, psd_basis = LowCohomologySOS.matrix_bases(basis, half_basis, S)
     
-    w_dec_matrix = SymbolicWedderburn.WedderburnDecomposition(Float64, Σ, action, constraints_basis, psd_basis)
+    w_dec_matrix = SymbolicWedderburn.WedderburnDecomposition(Float64, Σ, actions, constraints_basis, psd_basis)
 
     @test eltype(w_dec_matrix.basis) <: LowCohomologySOS.LinIdx
     @test length(w_dec_matrix.basis) == length(S)^2*length(basis)

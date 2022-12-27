@@ -1,3 +1,23 @@
+function _conj(
+    t::Groups.Transvection,
+    σ::PermutationGroups.AbstractPerm,
+)
+    return Groups.Transvection(t.id, t.i^σ, t.j^σ, t.inv)
+end
+
+function _conj(
+    t::Groups.Transvection,
+    x::Groups.Constructions.WreathProductElement,
+)
+    tσ = _conj(t, inv(x.p))
+    dual_id = ifelse(t.id == :ϱ, :λ, :ϱ)
+    dual_inv = ifelse(t.inv, false, true)
+    new_id = isone(x.n.elts[t.i]) ? t.id : dual_id
+    new_inv = isone(x.n.elts[t.i]*x.n.elts[t.j]) ? t.inv : dual_inv
+
+    return Groups.Transvection(new_id, tσ.i, tσ.j, new_inv)
+end
+
 struct AlphabetPermutation{GEl,I} <: SymbolicWedderburn.ByPermutations
     perms::Dict{GEl,PermutationGroups.Perm{I}}
 end
@@ -79,9 +99,9 @@ Base.hash(pbe::PSDBasisElement, h::UInt) =
     hash(pbe.generator, hash(pbe.basis_elt, h))
 
 function SymbolicWedderburn.action(
-    act::AlphabetPermutation,
+    act::WedderburnActions,
     g::Groups.GroupElement,
-    gel,
+    pbe::PSDBasisElement,
 )
     return SymbolicWedderburn.action(act.alphabet_perm, g, pbe)
 end
@@ -89,13 +109,14 @@ end
 function SymbolicWedderburn.action(
     act::AlphabetPermutation,
     g::Groups.GroupElement,
-    tse::TensorSupportElement,
+    pbe::PSDBasisElement,
 )
     s = SymbolicWedderburn.action(act, g, pbe.generator)
     g = SymbolicWedderburn.action(act, g, pbe.basis_elt)
 
-    return TensorSupportElement(s, t, g)
+    return PSDBasisElement(s, g)
 end
+#################################################
 
 # Action on constraints basis ############################
 struct LinIdx{T}
@@ -120,6 +141,7 @@ function SymbolicWedderburn.action(
 
     return LinIdx{T}(L_indices[kg, jg, ig])
 end
+#########################################################
 
 function matrix_bases(basis, half_basis, S)
     n = length(S)^2 * length(basis)

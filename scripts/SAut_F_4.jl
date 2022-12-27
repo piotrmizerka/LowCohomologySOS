@@ -153,13 +153,11 @@ SAut_F_N, basis, half_basis, S = group_data(half_radius, N, wreath_action)
     LowCohomologySOS.spectral_gap_elements(quotient_hom, relations, half_basis)
 end
 
-@info "before Wedderburn yet"
+constraints_basis, psd_basis, Σ, action = wedderburn_data(basis, half_basis, S, N, wreath_action);
 
-constraints_basis, psd_basis, Σ, actions = wedderburn_data(basis, half_basis, S, N, wreath_action);
-
-@time begin
+@time "\tWedderburn total" begin
     @info "Wedderburn:"
-    w_dec_matrix = SymbolicWedderburn.WedderburnDecomposition(Float64, Σ, actions, constraints_basis, psd_basis)
+    w_dec_matrix = SymbolicWedderburn.WedderburnDecomposition(Float64, Σ, action, constraints_basis, psd_basis)
 end
 
 @time begin
