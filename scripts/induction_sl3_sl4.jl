@@ -230,7 +230,7 @@ relations = [
     e32 * e21 * e32^(-1) * e21^(-1) * e31^(-1),
 ]
 
-Δ₁, Iₙ = LowCohomologySOS.spectral_gap_elements(quotient_hom, relations, half_basis)
+    Δ₁, Iₙ, Δ₁⁺, Δ₁⁻ = LowCohomologySOS.spectral_gap_elements(quotient_hom, relations, half_basis)
 
 Δ₁_emb = embed_matrix(Δ₁, i, half_radius = 2)
 #############################################################################################

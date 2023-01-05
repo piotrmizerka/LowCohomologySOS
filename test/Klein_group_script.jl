@@ -33,7 +33,7 @@ C₂²_spectral_gaps2 = let half_radius = 1
     end
     half_basis, sizes = Groups.wlmetric_ball(S, radius = half_radius)
 
-    Δ₁, Iₙ = LowCohomologySOS.spectral_gap_elements(
+    Δ₁, Iₙ, Δ₁⁺, Δ₁⁻ = LowCohomologySOS.spectral_gap_elements(
         quotient_hom,
         relations,
         half_basis

@@ -68,7 +68,7 @@ const wreath_action = false;
 
 SAut_F_N, basis, half_basis, S = group_data(half_radius, N, wreath_action)
 
-Δ₁, Iₙ = let
+Δ₁, Iₙ, Δ₁⁺, Δ₁⁻ = let
     if !wreath_action
         F_G = FreeGroup(alphabet(SAut_F_N))
         quotient_hom = let source = F_G, target = SAut_F_N

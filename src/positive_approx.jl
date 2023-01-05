@@ -85,12 +85,14 @@ function spectral_gap_elements(
     RG = group_ring(G, half_basis, star_multiplication = true)
 
     Δ₁x = embed.(identity, Δ₁, Ref(RG))
+    Δ₁⁺x = embed.(identity, Δ₁⁺, Ref(RG))
+    Δ₁⁻x = embed.(identity, Δ₁⁻, Ref(RG))
 
     n = length(S)
     @assert size(Δ₁x, 1) === size(Δ₁x, 2) === n
     Iₙ = [i ≠ j ? zero(RG) : one(RG) for i in 1:n, j in 1:n]
 
-    return Δ₁x, Iₙ
+    return Δ₁x, Iₙ, Δ₁⁺x, Δ₁⁻x
 end
 
 function get_solution(m::JuMP.Model)
@@ -113,7 +115,7 @@ function spectral_gaps_approximated(
     S = gens(parent(first(relations)));
     optimizer,
 )
-    Δ₁x, Iₙ = spectral_gap_elements(h, relations, half_basis, S)
+    Δ₁x, Iₙ, Δ₁⁺x, Δ₁⁻x = spectral_gap_elements(h, relations, half_basis, S)
 
     Δ₁_sos_problem = sos_problem(Δ₁x, Iₙ)
 
