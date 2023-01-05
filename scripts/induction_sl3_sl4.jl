@@ -132,19 +132,19 @@ SL(n, R) = MatrixGroups.SpecialLinearGroup{n}(R)
 function sln_slm_embedding(n::Integer, m::Integer)
     @assert n <= m
 
-    SLₙℤ = SL(n, UInt8)
-    SLₘℤ = SL(m, UInt8)
+    SLₙℤ = SL(n, Int8)
+    SLₘℤ = SL(m, Int8)
 
     _idx(k) = ((i,j) for i in 1:k for j in 1:k if i≠j)
 
     inds_S_SLₙℤ = Dict( 
-        let eij = MatrixGroups.ElementaryMatrix{n}(i,j, UInt8(1))
+        let eij = MatrixGroups.ElementaryMatrix{n}(i,j, Int8(1))
             SLₙℤ([alphabet(SLₙℤ)[eij]])
         end => (i,j)
         for (i,j) in _idx(n)
     )
     S_SLₘℤ = Dict((i,j) =>
-        let eij = MatrixGroups.ElementaryMatrix{m}(i,j, UInt8(1))
+        let eij = MatrixGroups.ElementaryMatrix{m}(i,j, Int8(1))
             SLₘℤ([alphabet(SLₘℤ)[eij]])
         end
         for (i,j) in _idx(n)
@@ -201,36 +201,200 @@ function laplacian_embedding(n::Integer, m::Integer)
 end
 
 # Laplacian embedding from SL(3,Z) to SL(4,Z) ###############################################
-const half_radius = 2
+Δ₁_emb = let half_radius = 2, i = sln_slm_embedding(3,4)
+    sl3 = i.source
+    S = let s = gens(sl3)
+        [s; inv.(s)]
+    end
+    half_basis, sizes = Groups.wlmetric_ball(S, radius = half_radius)
 
-S = let s = gens(sl3)
-    [s; inv.(s)]
-end
-half_basis, sizes = Groups.wlmetric_ball(S, radius = half_radius)
+    F_sl_3_z = FreeGroup(alphabet(sl3))
+    e12, e13, e21, e23, e31, e32 = Groups.gens(F_sl_3_z)
 
-F_sl_3_z = FreeGroup(alphabet(sl3))
-e12, e13, e21, e23, e31, e32 = Groups.gens(F_sl_3_z)
+    quotient_hom = let source = F_sl_3_z, target = sl3
+        Groups.Homomorphism((i, F, G) -> Groups.word_type(G)([i]), source, target)
+    end
 
-quotient_hom = let source = F_sl_3_z, target = sl3
-    Groups.Homomorphism((i, F, G) -> Groups.word_type(G)([i]), source, target)
-end
-
-relations = [
-    e12 * e13 * e12^(-1) * e13^(-1),
-    e12 * e32 * e12^(-1) * e32^(-1),
-    e13 * e23 * e13^(-1) * e23^(-1),
-    e23 * e21 * e23^(-1) * e21^(-1),
-    e21 * e31 * e21^(-1) * e31^(-1),
-    e31 * e32 * e31^(-1) * e32^(-1),
-    e12 * e23 * e12^(-1) * e23^(-1) * e13^(-1),
-    e13 * e32 * e13^(-1) * e32^(-1) * e12^(-1),
-    e21 * e13 * e21^(-1) * e13^(-1) * e23^(-1),
-    e23 * e31 * e23^(-1) * e31^(-1) * e21^(-1),
-    e31 * e12 * e31^(-1) * e12^(-1) * e32^(-1),
-    e32 * e21 * e32^(-1) * e21^(-1) * e31^(-1),
-]
+    relations = [
+        e12 * e13 * e12^(-1) * e13^(-1),
+        e12 * e32 * e12^(-1) * e32^(-1),
+        e13 * e23 * e13^(-1) * e23^(-1),
+        e23 * e21 * e23^(-1) * e21^(-1),
+        e21 * e31 * e21^(-1) * e31^(-1),
+        e31 * e32 * e31^(-1) * e32^(-1),
+        e12 * e23 * e12^(-1) * e23^(-1) * e13^(-1),
+        e13 * e32 * e13^(-1) * e32^(-1) * e12^(-1),
+        e21 * e13 * e21^(-1) * e13^(-1) * e23^(-1),
+        e23 * e31 * e23^(-1) * e31^(-1) * e21^(-1),
+        e31 * e12 * e31^(-1) * e12^(-1) * e32^(-1),
+        e32 * e21 * e32^(-1) * e21^(-1) * e31^(-1),
+    ]
 
     Δ₁, Iₙ, Δ₁⁺, Δ₁⁻ = LowCohomologySOS.spectral_gap_elements(quotient_hom, relations, half_basis)
 
-Δ₁_emb = embed_matrix(Δ₁, i, half_radius = 2)
+    Δ₁_emb = embed_matrix(Δ₁, i, half_radius = 2)
+    Δ₁_emb
+end
 #############################################################################################
+
+using SymbolicWedderburn
+using SparseArrays
+
+function act_on_matrix(
+    M::AbstractMatrix{<:AlgebraElement}, # M has to be square and indexed by the generators
+    σ::Groups.GroupElement,
+    act::LowCohomologySOS.AlphabetPermutation
+)
+    RG = parent(first(M))
+    G = parent(first(basis(RG)))
+    S = gens(G)
+    gen_idies = Dict(S[i] => i for i in eachindex(S))
+    basis_ = basis(RG)
+
+    result = [zero(RG) for i in eachindex(S), j in eachindex(S)]
+
+    for i in eachindex(S)
+        for j in eachindex(S)
+            s, t = S[i], S[j]
+            s_σ_inv, t_σ_inv = SymbolicWedderburn.action(act, σ^(-1), s), SymbolicWedderburn.action(act, σ^(-1), t)
+            # s_σ_inv, t_σ_inv = SymbolicWedderburn.action(act, σ, s), SymbolicWedderburn.action(act, σ, t) # for left action
+            coeffs_ = coeffs(M[gen_idies[s_σ_inv],gen_idies[t_σ_inv]])
+            for ind in SparseArrays.nonzeroinds(coeffs_)
+                result[i,j] += coeffs_[ind]*RG(SymbolicWedderburn.action(act, σ, basis_[ind]))
+                # result[i,j] += coeffs_[ind]*RG(SymbolicWedderburn.action(act, σ^(-1), basis_[ind])) # for left action
+            end
+        end
+    end
+
+    return result
+end
+
+function alphabet_permutation(
+    A::Alphabet, 
+    G, 
+    op,
+    n::Integer
+)
+    return LowCohomologySOS.AlphabetPermutation(
+        Dict(
+            g => PermutationGroups.Perm([A[op(l, g, n)] for l in A.letters]) for
+            g in G
+        ),
+    )
+end
+
+function sln_alphabet_op(
+    l,
+    σ::PermutationGroups.AbstractPerm,
+    n::Integer
+)
+    return Groups.MatrixGroups.ElementaryMatrix{n}(l.i^σ, l.j^σ, l.val)
+end
+
+# Code below intended for tests (change @assert to @test) ###############################################################
+using PermutationGroups
+
+const N = 2
+
+sln = SL(N,Int8)
+Σ = PermutationGroups.SymmetricGroup(N)
+alphabet_permutation_ = alphabet_permutation(alphabet(sln), Σ, sln_alphabet_op, N)
+
+RG =  LowCohomologySOS.group_ring(sln, 1)
+e12, e21 = gens(sln)
+M = [RG(e12) zero(RG); RG(e21) one(RG)]
+
+σ = collect(Σ)[2]
+
+m_σ = act_on_matrix(M, σ, alphabet_permutation_)
+
+# action definition agreement:
+const n = 3
+
+sln = SL(n,Int8)
+Σ = PermutationGroups.SymmetricGroup(n)
+alphabet_permutation_ = alphabet_permutation(alphabet(sln), Σ, sln_alphabet_op, n)
+
+RG =  LowCohomologySOS.group_ring(sln, 1)
+e12, e13, e21, e23, e31, e32 = gens(sln)
+M = [
+    RG(e12) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG);
+    zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG); 
+    zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG);
+    zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG);
+    zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG); 
+    zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG)
+]
+
+@assert act_on_matrix(M, one(Σ), alphabet_permutation_) == M
+for σ in Σ
+    for τ in Σ
+        @assert act_on_matrix(M, σ*τ, alphabet_permutation_) == act_on_matrix(act_on_matrix(M, σ, alphabet_permutation_), τ, alphabet_permutation_)
+        # @assert act_on_matrix(M, σ*τ, alphabet_permutation_) == act_on_matrix(act_on_matrix(M, τ, alphabet_permutation_), σ, alphabet_permutation_) # for left action
+    end
+end
+#############################################################################################
+
+function weyl_symmetrize_matrix(
+    M::AbstractMatrix{<:AlgebraElement},
+    Σ, # the symmetry group (either symmetric group or wreath product)
+    op,
+    n::Integer
+)
+    RG = parent(first(M))
+    G = parent(first(basis(RG)))
+    S = gens(G)
+
+    alphabet_permutation_ = alphabet_permutation(alphabet(G), Σ, op, n)
+
+    result = [zero(RG) for i in eachindex(S), j in eachindex(S)]
+    for σ in Σ
+        result += act_on_matrix(M, σ, alphabet_permutation_)
+    end
+
+    return result
+end
+
+Δ₁_emb_symmetrized = let n = 4
+    Σ = PermutationGroups.SymmetricGroup(4)
+    weyl_symmetrize_matrix(Δ₁_emb, Σ, sln_alphabet_op, n)
+end
+
+# TODO: figure out relations in SL(4,Z) to get upper and lower Laplacian:
+Δ₁⁺, Δ₁⁻ = let half_radius = 2
+    sl4 = parent(eltype(basis(parent(first(Δ₁_emb_symmetrized)))))
+    S = let s = gens(sl4)
+        [s; inv.(s)]
+    end
+    half_basis, sizes = Groups.wlmetric_ball(S, radius = half_radius)
+
+    F_sl_4_z = FreeGroup(alphabet(sl4))
+    e12, e13, e14, e21, e23, e24, e31, e32, e34, e41, e42, e43 = Groups.gens(F_sl_4_z)
+
+    quotient_hom = let source = F_sl_4_z, target = sl4
+        Groups.Homomorphism((i, F, G) -> Groups.word_type(G)([i]), source, target)
+    end
+
+    relations = [
+        # e12 * e13 * e12^(-1) * e13^(-1),
+        # e12 * e32 * e12^(-1) * e32^(-1),
+        # e13 * e23 * e13^(-1) * e23^(-1),
+        # e23 * e21 * e23^(-1) * e21^(-1),
+        # e21 * e31 * e21^(-1) * e31^(-1),
+        # e31 * e32 * e31^(-1) * e32^(-1),
+        # e12 * e23 * e12^(-1) * e23^(-1) * e13^(-1),
+        # e13 * e32 * e13^(-1) * e32^(-1) * e12^(-1),
+        # e21 * e13 * e21^(-1) * e13^(-1) * e23^(-1),
+        # e23 * e31 * e23^(-1) * e31^(-1) * e21^(-1),
+        # e31 * e12 * e31^(-1) * e12^(-1) * e32^(-1),
+        # e32 * e21 * e32^(-1) * e21^(-1) * e31^(-1),
+        ????????????????????????????????????
+    ]
+
+    Δ₁, Iₙ, Δ₁⁺, Δ₁⁻ = LowCohomologySOS.spectral_gap_elements(quotient_hom, relations, half_basis)
+
+    Δ₁⁺, Δ₁⁻
+end
+
+# The last function to call:
+alpha_beta_adjust(Δ₁⁺, Δ₁⁻, Δ₁_emb_symmetrized)
