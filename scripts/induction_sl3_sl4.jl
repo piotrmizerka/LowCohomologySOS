@@ -1,5 +1,6 @@
 # We want to find alpha and beta such that
 # αd₁^*d₁+βd₀d₀^* = symmetrized induced Laplacians from SL(3,Z) to SL(4,Z)
+using Revise 
 
 using StarAlgebras
 using JuMP
@@ -98,8 +99,8 @@ using LowCohomologySOS
 # Then the embedding below takes M to M', indexed by S', as follows: M'ₛₜ = Mₛₜ for s,t∈S, and M'ₛₜ = 0 otherwise.
 function embed_matrix(
     M::AbstractMatrix{<:AlgebraElement},
-    i::Groups.Homomorphism;
-    half_radius::Integer # stands for the half radius for the group ring of G' being the support of the Laplacian for G' (to be computed separately)
+    i::Groups.Homomorphism,
+    RG_prime::StarAlgebra # we must provide the same underlying group rin
 )
     G = i.source
     G_prime = i.target
@@ -115,7 +116,7 @@ function embed_matrix(
     @assert all(x -> parent(x) === RG, M)
     @assert G == parent(first(basis(RG)))
 
-    RG_prime = LowCohomologySOS.group_ring(G_prime, half_radius)
+    # RG_prime = LowCohomologySOS.group_ring(G_prime, half_radius)
     result = [i ≠ j ? zero(RG_prime) : one(RG_prime) for i in eachindex(S_prime), j in eachindex(S_prime)]
 
     for s in S
@@ -193,15 +194,88 @@ M = [
     one(RG) one(RG) zero(RG) zero(RG) RG(gens(sl3,1)) zero(RG);
     one(RG) one(RG) zero(RG) zero(RG) RG(gens(sl3,1)) zero(RG)
 ]
-M_emb = embed_matrix(M, i, half_radius = 2)
+RG_prime = LowCohomologySOS.group_ring(sl4,2)
+M_emb = embed_matrix(M, i, RG_prime)
 #############################################################################################
+
+i = sln_slm_embedding(3,4)
+sl4 = i.target
+
+function determine_letter(g)
+    @assert length(word(g)) == 1
+    
+    A = alphabet(parent(g))
+
+    return A[first(word(g))]
+end
+
+Δ₁⁺, Δ₁⁻ = let half_radius = 2
+    S = gens(sl4)
+    S_inv = let s = S
+        [s; inv.(s)]
+    end
+    half_basis, sizes = Groups.wlmetric_ball(S_inv, radius = half_radius)
+
+    F_sl_4_z = FreeGroup(alphabet(sl4))
+
+    quotient_hom = let source = F_sl_4_z, target = sl4
+        Groups.Homomorphism((i, F, G) -> Groups.word_type(G)([i]), source, target)
+    end
+
+    N = 4
+
+    elmatrix_gen_dict = Dict(determine_letter(S[i]) => gens(F_sl_4_z, i) for i in eachindex(S))
+    e(i,j) = elmatrix_gen_dict[MatrixGroups.ElementaryMatrix{N}(i,j,Int8(1))]
+
+    # Interesting - I didn't know that "==" can return "true" for two elts of different type in Julia:  #######
+    # @info typeof(determine_letter(S[1]))
+    # @info typeof(MatrixGroups.ElementaryMatrix{N}(1,2))
+    # @info typeof(determine_letter(S[1])) == typeof(MatrixGroups.ElementaryMatrix{N}(1,2))
+    # @info determine_letter(S[1]) == MatrixGroups.ElementaryMatrix{N}(1,2)
+    # @info elmatrix_gen_dict[determine_letter(S[1])]
+    #########################################################################################################
+    range_as_list = [i for i in 1:N]
+    quadruples_total = [(i,j,k,m) for k ∈ 1:N
+                            for m ∈ deleteat!(copy(range_as_list), findall(m->m==k,copy(range_as_list)))
+                            for i ∈ deleteat!(copy(range_as_list), findall(i->i==m,copy(range_as_list))) 
+                            for j ∈ deleteat!(copy(range_as_list), findall(j->j∈[i,k],copy(range_as_list)))]
+    quadruples_wrong_1 = [(i,j,i,j) for i ∈ 1:N
+                            for j ∈ deleteat!(copy(range_as_list), findall(j->j==i,copy(range_as_list)))]
+    quadruples_wrong_2_inds = []
+    for ind in eachindex(quadruples_total)
+        (i,j,k,m) = quadruples_total[ind]
+        if (i,j) > (k,m)
+            append!(quadruples_wrong_2_inds, ind)
+        end
+    end
+    quadruples_wrong_2 = [quadruples_total[ind] for ind in quadruples_wrong_2_inds]
+    quadruples = setdiff(setdiff(quadruples_total, quadruples_wrong_1), quadruples_wrong_2)
+    triples = [(i,j,k) for i ∈ 1:N
+                    for j ∈ deleteat!(copy(range_as_list), findall(j->j==i,copy(range_as_list))) 
+                    for k ∈ deleteat!(copy(range_as_list), findall(k->k∈[i,j],copy(range_as_list)))]
+    
+    # The presentation taken from the article of Conder et. al.: https://www.jstor.org/stable/2159559#metadata_info_tab_contents 
+    relations = vcat(
+        [e(i,j)*e(k,m)*e(i,j)^(-1)*e(k,m)^(-1) for (i,j,k,m) ∈ quadruples],
+        [e(i,j)*e(j,k)*e(i,j)^(-1)*e(j,k)^(-1)*e(i,k)^(-1) for (i,j,k) ∈ triples]
+    )
+
+    Δ₁, Iₙ, Δ₁⁺, Δ₁⁻ = LowCohomologySOS.spectral_gap_elements(quotient_hom, relations, half_basis)
+
+    Δ₁⁺, Δ₁⁻
+end
+
 
 function laplacian_embedding(n::Integer, m::Integer)
     # TODO ??
 end
 
 # Laplacian embedding from SL(3,Z) to SL(4,Z) ###############################################
-Δ₁_emb = let half_radius = 2, i = sln_slm_embedding(3,4)
+@assert parent(first(Δ₁⁺)) == parent(first(Δ₁⁻))
+
+RG_prime = parent(first(Δ₁⁺))
+
+Δ₁_emb = let half_radius = 2
     sl3 = i.source
     S = let s = gens(sl3)
         [s; inv.(s)]
@@ -232,9 +306,11 @@ end
 
     Δ₁, Iₙ, Δ₁⁺, Δ₁⁻ = LowCohomologySOS.spectral_gap_elements(quotient_hom, relations, half_basis)
 
-    Δ₁_emb = embed_matrix(Δ₁, i, half_radius = 2)
+    Δ₁_emb = embed_matrix(Δ₁, i, RG_prime)
     Δ₁_emb
 end
+
+@assert parent(first(Δ₁_emb)) == parent(first(Δ₁⁻))
 #############################################################################################
 
 using SymbolicWedderburn
@@ -283,6 +359,8 @@ function alphabet_permutation(
     )
 end
 
+using PermutationGroups
+
 function sln_alphabet_op(
     l,
     σ::PermutationGroups.AbstractPerm,
@@ -292,8 +370,6 @@ function sln_alphabet_op(
 end
 
 # Code below intended for tests (change @assert to @test) ###############################################################
-using PermutationGroups
-
 const N = 2
 
 sln = SL(N,Int8)
@@ -360,41 +436,6 @@ end
     weyl_symmetrize_matrix(Δ₁_emb, Σ, sln_alphabet_op, n)
 end
 
-# TODO: figure out relations in SL(4,Z) to get upper and lower Laplacian:
-Δ₁⁺, Δ₁⁻ = let half_radius = 2
-    sl4 = parent(eltype(basis(parent(first(Δ₁_emb_symmetrized)))))
-    S = let s = gens(sl4)
-        [s; inv.(s)]
-    end
-    half_basis, sizes = Groups.wlmetric_ball(S, radius = half_radius)
-
-    F_sl_4_z = FreeGroup(alphabet(sl4))
-    e12, e13, e14, e21, e23, e24, e31, e32, e34, e41, e42, e43 = Groups.gens(F_sl_4_z)
-
-    quotient_hom = let source = F_sl_4_z, target = sl4
-        Groups.Homomorphism((i, F, G) -> Groups.word_type(G)([i]), source, target)
-    end
-
-    relations = [
-        # e12 * e13 * e12^(-1) * e13^(-1),
-        # e12 * e32 * e12^(-1) * e32^(-1),
-        # e13 * e23 * e13^(-1) * e23^(-1),
-        # e23 * e21 * e23^(-1) * e21^(-1),
-        # e21 * e31 * e21^(-1) * e31^(-1),
-        # e31 * e32 * e31^(-1) * e32^(-1),
-        # e12 * e23 * e12^(-1) * e23^(-1) * e13^(-1),
-        # e13 * e32 * e13^(-1) * e32^(-1) * e12^(-1),
-        # e21 * e13 * e21^(-1) * e13^(-1) * e23^(-1),
-        # e23 * e31 * e23^(-1) * e31^(-1) * e21^(-1),
-        # e31 * e12 * e31^(-1) * e12^(-1) * e32^(-1),
-        # e32 * e21 * e32^(-1) * e21^(-1) * e31^(-1),
-        ????????????????????????????????????
-    ]
-
-    Δ₁, Iₙ, Δ₁⁺, Δ₁⁻ = LowCohomologySOS.spectral_gap_elements(quotient_hom, relations, half_basis)
-
-    Δ₁⁺, Δ₁⁻
-end
-
-# The last function to call:
+# The last functions to call:
 alpha_beta_adjust(Δ₁⁺, Δ₁⁻, Δ₁_emb_symmetrized)
+alpha_beta_adjust(Δ₁⁺, Δ₁⁻, Δ₁_emb_symmetrized, false)
