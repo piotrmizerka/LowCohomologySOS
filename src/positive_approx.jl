@@ -73,13 +73,13 @@ function spectral_gap_elements(
 
     d₁ = jacobian_matrix(relations, S)
 
-    Δ₁ = let RG = group_ring(G, half_basis, star_multiplication = false)
+    Δ₁, Δ₁⁺, Δ₁⁻ = let RG = group_ring(G, half_basis, star_multiplication = false)
         d₁x = embed.(Ref(h), d₁, Ref(RG))
         d₀x = embed.(Ref(h), d₀(parent(first(d₁)), S), Ref(RG))
 
         Δ₁⁺ = d₁x' * d₁x
         Δ₁⁻ = d₀x * d₀x'
-        Δ₁⁺ + Δ₁⁻
+        Δ₁⁺ + Δ₁⁻, Δ₁⁺, Δ₁⁻
     end
 
     RG = group_ring(G, half_basis, star_multiplication = true)
