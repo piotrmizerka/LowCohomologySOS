@@ -437,3 +437,31 @@ end
 # The last functions to call:
 alpha_beta_adjust(Δ₁⁺, Δ₁⁻, Δ₁_emb_symmetrized)
 alpha_beta_adjust(Δ₁⁺, Δ₁⁻, Δ₁_emb_symmetrized, false)
+
+Δ₁⁺[1,1]
+Δ₁⁻[1,1]
+Δ₁_emb_symmetrized[1,1]
+
+M = 6*Δ₁⁺+6*Δ₁⁻-Δ₁_emb_symmetrized
+length(basis(RG_prime))*144
+
+M[1,2]
+M[2,2]
+M[3,3]
+
+using LinearAlgebra
+
+diff = let M = 12*Δ₁⁺+36*Δ₁⁻-Δ₁_emb_symmetrized
+    M_max_I = let
+        M_max_I = [0.0*one(RG_prime) for i in 1:20, j in 1:20]
+        for i in 1:12
+            M_max_I[i,i] = Float64(M[i,i](one(sl4)))*one(RG_prime)
+        end
+        M_max_I
+    end
+
+    M_diff = M-M_max_I
+
+    l1_norm = sum(x -> norm(x, 1), M_diff)
+    M_diff[1,1](one(sl4))-l1_norm
+end
