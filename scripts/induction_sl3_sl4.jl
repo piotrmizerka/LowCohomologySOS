@@ -209,7 +209,7 @@ function determine_letter(g)
     return A[first(word(g))]
 end
 
-Δ₁⁺, Δ₁⁻ = let half_radius = 2
+Δ₁⁺, Δ₁⁻ = let half_radius = 2, N = 4
     S = gens(sl4)
     S_inv = let s = S
         [s; inv.(s)]
@@ -221,8 +221,6 @@ end
     quotient_hom = let source = F_sl_4_z, target = sl4
         Groups.Homomorphism((i, F, G) -> Groups.word_type(G)([i]), source, target)
     end
-
-    N = 4
 
     elmatrix_gen_dict = Dict(determine_letter(S[i]) => gens(F_sl_4_z, i) for i in eachindex(S))
     e(i,j) = elmatrix_gen_dict[MatrixGroups.ElementaryMatrix{N}(i,j,Int8(1))]
@@ -301,7 +299,7 @@ RG_prime = parent(first(Δ₁⁺))
         e21 * e13 * e21^(-1) * e13^(-1) * e23^(-1),
         e23 * e31 * e23^(-1) * e31^(-1) * e21^(-1),
         e31 * e12 * e31^(-1) * e12^(-1) * e32^(-1),
-        e32 * e21 * e32^(-1) * e21^(-1) * e31^(-1),
+        e32 * e21 * e32^(-1) * e21^(-1) * e31^(-1)
     ]
 
     Δ₁, Iₙ, Δ₁⁺, Δ₁⁻ = LowCohomologySOS.spectral_gap_elements(quotient_hom, relations, half_basis)
@@ -432,7 +430,7 @@ function weyl_symmetrize_matrix(
 end
 
 Δ₁_emb_symmetrized = let n = 4
-    Σ = PermutationGroups.SymmetricGroup(4)
+    Σ = PermutationGroups.SymmetricGroup(n)
     weyl_symmetrize_matrix(Δ₁_emb, Σ, sln_alphabet_op, n)
 end
 
