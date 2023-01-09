@@ -94,175 +94,15 @@ alpha_beta_adjustx = alpha_beta_adjust(A, B, M, false)
 
 using LowCohomologySOS
 
-# Suppose we have a matrix M indexed by the generators S of a group G which is embedded in G' such that S
-# is a subset of S', the generating set of G' (the embedding is i:G-->G', i(S)⊆S'). 
-# Then the embedding below takes M to M', indexed by S', as follows: M'ₛₜ = Mₛₜ for s,t∈S, and M'ₛₜ = 0 otherwise.
-function embed_matrix(
-    M::AbstractMatrix{<:AlgebraElement},
-    i::Groups.Homomorphism,
-    RG_prime::StarAlgebra # we must provide the same underlying group rin
-)
-    G = i.source
-    G_prime = i.target
-    S = gens(G)
-    S_prime = gens(G_prime)
+const N = 4
 
-    @assert size(M) == (length(S), length(S))
+i = LowCohomologySOS.sln_slm_embedding(3, N)
 
-    S_idies = Dict(S[i] => i for i in eachindex(S))
-    S_prime_idies = Dict(S_prime[i] => i for i in eachindex(S_prime))
+slN = i.target
 
-    RG = parent(first(M))
-    @assert all(x -> parent(x) === RG, M)
-    @assert G == parent(first(basis(RG)))
+const half_radius = 2
 
-    # RG_prime = LowCohomologySOS.group_ring(G_prime, half_radius)
-    result = [i ≠ j ? zero(RG_prime) : one(RG_prime) for i in eachindex(S_prime), j in eachindex(S_prime)]
-
-    for s in S
-        for t in S
-            result[S_prime_idies[i(s)],S_prime_idies[i(t)]] = LowCohomologySOS.embed(i, M[S_idies[s],S_idies[t]], RG_prime)
-        end
-    end
-
-    return result
-end
-
-SL(n, R) = MatrixGroups.SpecialLinearGroup{n}(R)
-
-function sln_slm_embedding(n::Integer, m::Integer)
-    @assert n <= m
-
-    SLₙℤ = SL(n, Int8)
-    SLₘℤ = SL(m, Int8)
-
-    _idx(k) = ((i,j) for i in 1:k for j in 1:k if i≠j)
-
-    inds_S_SLₙℤ = Dict( 
-        let eij = MatrixGroups.ElementaryMatrix{n}(i,j, Int8(1))
-            SLₙℤ([alphabet(SLₙℤ)[eij]])
-        end => (i,j)
-        for (i,j) in _idx(n)
-    )
-    S_SLₘℤ = Dict((i,j) =>
-        let eij = MatrixGroups.ElementaryMatrix{m}(i,j, Int8(1))
-            SLₘℤ([alphabet(SLₘℤ)[eij]])
-        end
-        for (i,j) in _idx(n)
-    )
-    
-    function f(letter_id, SLₙℤ, G)
-        if letter_id <= length(gens(SLₙℤ))
-            return word(S_SLₘℤ[inds_S_SLₙℤ[SLₙℤ([letter_id])]])
-        else
-            return word(inv(S_SLₘℤ[inds_S_SLₙℤ[inv(SLₙℤ([letter_id]))]]))
-        end
-    end
-
-    result = let source = SLₙℤ, target = SLₘℤ
-        Groups.Homomorphism(f, source, target, check = false)
-    end
-
-    return result
-end
-
-# Code below intended for tests ###############################################################
-i = sln_slm_embedding(3,4)
-sl3 = i.source
-sl4 = i.target
-
-e12, e13, e21, e23, e31, e32 = gens(sl3)
-i(e12)
-i(e13)
-i(e21)
-i(e23)
-i(e31)
-i(e32)
-i(e12^(-1))
-i(e13^(-1))
-i(e21^(-1))
-i(e23^(-1))
-i(e31^(-1))
-i(e32^(-1))
-
-RG  = LowCohomologySOS.group_ring(sl3, 2)
-M = [
-    one(RG) one(RG) zero(RG) zero(RG) RG(gens(sl3,1)) zero(RG);
-    RG(gens(sl3,2)) one(RG) one(RG) zero(RG) zero(RG) zero(RG);
-    one(RG) one(RG) RG(gens(sl3,3)) zero(RG) zero(RG) zero(RG);
-    one(RG) one(RG) zero(RG) zero(RG) RG(gens(sl3,1)) zero(RG);
-    one(RG) one(RG) zero(RG) zero(RG) RG(gens(sl3,1)) zero(RG);
-    one(RG) one(RG) zero(RG) zero(RG) RG(gens(sl3,1)) zero(RG)
-]
-RG_prime = LowCohomologySOS.group_ring(sl4,2)
-M_emb = embed_matrix(M, i, RG_prime)
-#############################################################################################
-
-i = sln_slm_embedding(3,4)
-sl4 = i.target
-
-function determine_letter(g)
-    @assert length(word(g)) == 1
-    
-    A = alphabet(parent(g))
-
-    return A[first(word(g))]
-end
-
-Δ₁⁺, Δ₁⁻ = let half_radius = 2, N = 4
-    S = gens(sl4)
-    S_inv = let s = S
-        [s; inv.(s)]
-    end
-    half_basis, sizes = Groups.wlmetric_ball(S_inv, radius = half_radius)
-
-    F_sl_4_z = FreeGroup(alphabet(sl4))
-
-    quotient_hom = let source = F_sl_4_z, target = sl4
-        Groups.Homomorphism((i, F, G) -> Groups.word_type(G)([i]), source, target)
-    end
-
-    elmatrix_gen_dict = Dict(determine_letter(S[i]) => gens(F_sl_4_z, i) for i in eachindex(S))
-    e(i,j) = elmatrix_gen_dict[MatrixGroups.ElementaryMatrix{N}(i,j,Int8(1))]
-
-    # Interesting - I didn't know that "==" can return "true" for two elts of different type in Julia:  #######
-    # @info typeof(determine_letter(S[1]))
-    # @info typeof(MatrixGroups.ElementaryMatrix{N}(1,2))
-    # @info typeof(determine_letter(S[1])) == typeof(MatrixGroups.ElementaryMatrix{N}(1,2))
-    # @info determine_letter(S[1]) == MatrixGroups.ElementaryMatrix{N}(1,2)
-    # @info elmatrix_gen_dict[determine_letter(S[1])]
-    #########################################################################################################
-    range_as_list = [i for i in 1:N]
-    quadruples_total = [(i,j,k,m) for k ∈ 1:N
-                            for m ∈ deleteat!(copy(range_as_list), findall(m->m==k,copy(range_as_list)))
-                            for i ∈ deleteat!(copy(range_as_list), findall(i->i==m,copy(range_as_list))) 
-                            for j ∈ deleteat!(copy(range_as_list), findall(j->j∈[i,k],copy(range_as_list)))]
-    quadruples_wrong_1 = [(i,j,i,j) for i ∈ 1:N
-                            for j ∈ deleteat!(copy(range_as_list), findall(j->j==i,copy(range_as_list)))]
-    quadruples_wrong_2_inds = []
-    for ind in eachindex(quadruples_total)
-        (i,j,k,m) = quadruples_total[ind]
-        if (i,j) > (k,m)
-            append!(quadruples_wrong_2_inds, ind)
-        end
-    end
-    quadruples_wrong_2 = [quadruples_total[ind] for ind in quadruples_wrong_2_inds]
-    quadruples = setdiff(setdiff(quadruples_total, quadruples_wrong_1), quadruples_wrong_2)
-    triples = [(i,j,k) for i ∈ 1:N
-                    for j ∈ deleteat!(copy(range_as_list), findall(j->j==i,copy(range_as_list))) 
-                    for k ∈ deleteat!(copy(range_as_list), findall(k->k∈[i,j],copy(range_as_list)))]
-    
-    # The presentation taken from the article of Conder et. al.: https://www.jstor.org/stable/2159559#metadata_info_tab_contents 
-    relations = vcat(
-        [e(i,j)*e(k,m)*e(i,j)^(-1)*e(k,m)^(-1) for (i,j,k,m) ∈ quadruples],
-        [e(i,j)*e(j,k)*e(i,j)^(-1)*e(j,k)^(-1)*e(i,k)^(-1) for (i,j,k) ∈ triples]
-    )
-
-    Δ₁, Iₙ, Δ₁⁺, Δ₁⁻ = LowCohomologySOS.spectral_gap_elements(quotient_hom, relations, half_basis)
-
-    Δ₁⁺, Δ₁⁻
-end
-
+Δ₁, Iₙ, Δ₁⁺, Δ₁⁻ = LowCohomologySOS.sln_laplacians(slN, half_radius)
 
 function laplacian_embedding(n::Integer, m::Integer)
     # TODO ??
@@ -304,7 +144,7 @@ RG_prime = parent(first(Δ₁⁺))
 
     Δ₁, Iₙ, Δ₁⁺, Δ₁⁻ = LowCohomologySOS.spectral_gap_elements(quotient_hom, relations, half_basis)
 
-    Δ₁_emb = embed_matrix(Δ₁, i, RG_prime)
+    Δ₁_emb = LowCohomologySOS.embed_matrix(Δ₁, i, RG_prime)
     Δ₁_emb
 end
 

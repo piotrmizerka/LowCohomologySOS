@@ -29,5 +29,6 @@ include("positive_approx.jl")
 include("certification.jl")
 include("wedderburn.jl")
 include("positive_approx_symmetrized.jl")
+include("embeddings.jl")
 
 end
