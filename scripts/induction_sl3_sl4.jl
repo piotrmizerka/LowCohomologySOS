@@ -291,11 +291,11 @@ M[3,3]
 
 using LinearAlgebra
 
-diff = let M = 12*Δ₁⁺+36*Δ₁⁻-Δ₁_emb_symmetrized
+diff = let M = 6*Δ₁⁺+6*Δ₁⁻-Δ₁_emb_symmetrized
     M_max_I = let
-        M_max_I = [0.0*one(RG_prime) for i in 1:20, j in 1:20]
+        M_max_I = [0.0*one(RG_prime) for i in 1:12, j in 1:12]
         for i in 1:12
-            M_max_I[i,i] = Float64(M[i,i](one(sl4)))*one(RG_prime)
+            M_max_I[i,i] = Float64(M[i,i](one(slN)))*one(RG_prime)
         end
         M_max_I
     end
@@ -303,5 +303,5 @@ diff = let M = 12*Δ₁⁺+36*Δ₁⁻-Δ₁_emb_symmetrized
     M_diff = M-M_max_I
 
     l1_norm = sum(x -> norm(x, 1), M_diff)
-    M_diff[1,1](one(sl4))-l1_norm
+    M_max_I[1,1](one(slN))-l1_norm
 end

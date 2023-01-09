@@ -41,29 +41,8 @@ function wedderburn_data(basis, half_basis, S, N, wreath_action)
     return constraints_basis, psd_basis, Σ, actions
 end
 
-function determine_transvection(g)
-    @assert length(word(g)) == 1
-    
-    A = alphabet(parent(g))
-
-    return A[first(word(g))]
-end
-
-function free_group_saut_index(i::Integer, F_G, S)
-    gen_id = (-1, false)
-    for j in eachindex(gens(F_G))
-        if gens(F_G, j) == F_G([i])
-            gen_id = (j, false)
-        elseif gens(F_G, j) == inv(F_G([i]))
-            gen_id = (j, true)
-        end
-    end
-    
-    return gen_id[2] ? word(inv(S[gen_id[1]]))[1] : word(S[gen_id[1]])[1]
-end
-
 const half_radius = 2;
-const N = 4;
+const N = 2;
 const wreath_action = false;
 
 SAut_F_N, basis, half_basis, S = group_data(half_radius, N, wreath_action)
