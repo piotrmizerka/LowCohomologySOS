@@ -31,13 +31,6 @@ function AlphabetPermutation(A::Alphabet, G, op)
     )
 end
 
-function Base.:^(
-    w::Groups.AbstractWord,
-    p::PermutationGroups.AbstractPerm,
-)
-    return typeof(w)([l^p for l in w])
-end
-
 function SymbolicWedderburn.action(
     act::AlphabetPermutation,
     g::Groups.GroupElement,
