@@ -38,6 +38,8 @@ end
     include("positive_approx_symmetrized_tests.jl")
     include("certification_tests.jl")
     include("integration_tests.jl")
+    include("laplacians_tests.jl")
+    include("embeddings_tests.jl")
 
     include("Δ1_SL3Z.jl")
     include("Klein_group_script.jl")
