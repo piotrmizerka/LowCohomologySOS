@@ -98,10 +98,12 @@ const N = 4
 
 i = LowCohomologySOS.sln_slm_embedding(3, N)
 
+sl3 = i.source
 slN = i.target
 
 const half_radius = 2
 
+sl3_Δ₁, sl3_Iₙ, sl3_Δ₁⁺, sl3_Δ₁⁻ = LowCohomologySOS.sln_laplacians(sl3, half_radius)
 Δ₁, Iₙ, Δ₁⁺, Δ₁⁻ = LowCohomologySOS.sln_laplacians(slN, half_radius)
 
 function laplacian_embedding(n::Integer, m::Integer)
@@ -113,40 +115,7 @@ end
 
 RG_prime = parent(first(Δ₁⁺))
 
-Δ₁_emb = let half_radius = 2
-    sl3 = i.source
-    S = let s = gens(sl3)
-        [s; inv.(s)]
-    end
-    half_basis, sizes = Groups.wlmetric_ball(S, radius = half_radius)
-
-    F_sl_3_z = FreeGroup(alphabet(sl3))
-    e12, e13, e21, e23, e31, e32 = Groups.gens(F_sl_3_z)
-
-    quotient_hom = let source = F_sl_3_z, target = sl3
-        Groups.Homomorphism((i, F, G) -> Groups.word_type(G)([i]), source, target)
-    end
-
-    relations = [
-        e12 * e13 * e12^(-1) * e13^(-1),
-        e12 * e32 * e12^(-1) * e32^(-1),
-        e13 * e23 * e13^(-1) * e23^(-1),
-        e23 * e21 * e23^(-1) * e21^(-1),
-        e21 * e31 * e21^(-1) * e31^(-1),
-        e31 * e32 * e31^(-1) * e32^(-1),
-        e12 * e23 * e12^(-1) * e23^(-1) * e13^(-1),
-        e13 * e32 * e13^(-1) * e32^(-1) * e12^(-1),
-        e21 * e13 * e21^(-1) * e13^(-1) * e23^(-1),
-        e23 * e31 * e23^(-1) * e31^(-1) * e21^(-1),
-        e31 * e12 * e31^(-1) * e12^(-1) * e32^(-1),
-        e32 * e21 * e32^(-1) * e21^(-1) * e31^(-1)
-    ]
-
-    Δ₁, Iₙ, Δ₁⁺, Δ₁⁻ = LowCohomologySOS.spectral_gap_elements(quotient_hom, relations, half_basis)
-
-    Δ₁_emb = LowCohomologySOS.embed_matrix(Δ₁, i, RG_prime)
-    Δ₁_emb
-end
+Δ₁_emb = LowCohomologySOS.embed_matrix(sl3_Δ₁, i, RG_prime)
 
 @assert parent(first(Δ₁_emb)) == parent(first(Δ₁⁻))
 #############################################################################################
@@ -183,6 +152,8 @@ function act_on_matrix(
     return result
 end
 
+using PermutationGroups
+
 function alphabet_permutation(
     A::Alphabet, 
     G, 
@@ -196,8 +167,6 @@ function alphabet_permutation(
         ),
     )
 end
-
-using PermutationGroups
 
 function sln_alphabet_op(
     l,
@@ -270,7 +239,8 @@ function weyl_symmetrize_matrix(
 end
 
 Δ₁_emb_symmetrized = let n = 4
-    Σ = PermutationGroups.SymmetricGroup(n)
+    # Σ = PermutationGroups.SymmetricGroup(n)
+    Σ = PermGroup(Perm{Int8}[perm"(1,2,3)", perm"(1,2)(3,4)"]) # alternating group A₄
     weyl_symmetrize_matrix(Δ₁_emb, Σ, sln_alphabet_op, n)
 end
 
@@ -282,26 +252,4 @@ alpha_beta_adjust(Δ₁⁺, Δ₁⁻, Δ₁_emb_symmetrized, false)
 Δ₁⁻[1,1]
 Δ₁_emb_symmetrized[1,1]
 
-M = 6*Δ₁⁺+6*Δ₁⁻-Δ₁_emb_symmetrized
-length(basis(RG_prime))*144
-
-M[1,2]
-M[2,2]
-M[3,3]
-
-using LinearAlgebra
-
-diff = let M = 6*Δ₁⁺+6*Δ₁⁻-Δ₁_emb_symmetrized
-    M_max_I = let
-        M_max_I = [0.0*one(RG_prime) for i in 1:12, j in 1:12]
-        for i in 1:12
-            M_max_I[i,i] = Float64(M[i,i](one(slN)))*one(RG_prime)
-        end
-        M_max_I
-    end
-
-    M_diff = M-M_max_I
-
-    l1_norm = sum(x -> norm(x, 1), M_diff)
-    M_max_I[1,1](one(slN))-l1_norm
-end
+M = 3*Δ₁⁺+3*Δ₁⁻-Δ₁_emb_symmetrized
