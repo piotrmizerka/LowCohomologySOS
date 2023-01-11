@@ -4,7 +4,7 @@
 function embed_matrix(
     M::AbstractMatrix{<:AlgebraElement},
     i::Groups.Homomorphism, # i is intended to be an embedding
-    RG_prime::StarAlgebra # we must provide the same underlying group ring (it has to be the group ring of i.target)
+    RG_prime::StarAlgebra # we must provide a suitable underlying group ring (it has to be the group ring of i.target)
 )
     G = i.source
     G_prime = i.target
