@@ -42,14 +42,16 @@ function wedderburn_data(basis, half_basis, S, N, wreath_action)
 end
 
 const half_radius = 2;
-const N = 2;
-const wreath_action = false;
+const N = 4;
+const wreath_action = true;
 
 SAut_F_N, basis, half_basis, S = group_data(half_radius, N, wreath_action)
 
 Δ₁, Iₙ, Δ₁⁺, Δ₁⁻ = LowCohomologySOS.sautfn_laplacians(SAut_F_N, half_basis, S, wreath_action)
 
 constraints_basis, psd_basis, Σ, action = wedderburn_data(basis, half_basis, S, N, wreath_action);
+
+SymbolicWedderburn._int_type(::Type{<:SymbolicWedderburn.InducedActionHomomorphism}) = UInt32
 
 @time begin
     @info "Wedderburn:"
