@@ -40,6 +40,37 @@ slM_Δ₁⁻[1,1]
 
 M_ = 3*slM_Δ₁⁺+3*slM_Δ₁⁻-Δ₁_emb_symmetrized
 
+S = gens(slM)
+S_inv = let s = S
+    [s; inv.(s)]
+end
+half_basis, sizes = Groups.wlmetric_ball(S_inv, radius = 1)
+RG_prime_reduced = LowCohomologySOS.group_ring(slM, half_basis, star_multiplication = true)
+function id__(letter_id, SLₙℤ, G)
+    return word(SLₙℤ([letter_id]))
+end
+id_ = let source = slM, target = slM
+    Groups.Homomorphism(id__, source, target, check = false)
+end
+
+M__ = LowCohomologySOS.embed_matrix(M_, id_, RG_prime_reduced)
+slM_Iₙ__ = LowCohomologySOS.embed_matrix(slM_Iₙ, id_, RG_prime_reduced)
+
+_data = (
+    M = M__,
+    order_unit = slM_Iₙ__,
+    half_basis = half_basis,
+    RG = parent(first(M__)),
+)
+
+M_sos_problem = LowCohomologySOS.sos_problem(M__, slM_Iₙ__)
+
+solve_in_loop(
+    M_sos_problem,
+    logdir = "./logs",
+    optimizer = scs_opt(eps = 1e-9, max_iters = 20_000),
+    data = _data
+)
 
 # the code below may be not that helpful in fact ... ###################################################
 using JuMP
