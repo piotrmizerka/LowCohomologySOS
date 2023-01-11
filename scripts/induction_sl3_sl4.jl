@@ -56,6 +56,25 @@ slM_Δ₁⁻[1,1]
 
 M_ = 3*slM_Δ₁⁺+3*slM_Δ₁⁻-Δ₁_emb_symmetrized
 
+slM_data = (
+    M = M,
+    order_unit = slM_Iₙ,
+    half_basis = slM_half_basis,
+    RG = parent(first(M)),
+)
+
+M_sos_problem = LowCohomologySOS.sos_problem(M_, slM_Iₙ)
+
+include(joinpath(@__DIR__, "optimizers.jl"))
+include(joinpath(@__DIR__, "utils.jl"))
+
+solve_in_loop(
+    M_sos_problem,
+    logdir = "./logs",
+    optimizer = scs_opt(eps = 1e-9, max_iters = 20_000),
+    data = slM_data
+)
+
 S = gens(slM)
 S_inv = let s = S
     [s; inv.(s)]
