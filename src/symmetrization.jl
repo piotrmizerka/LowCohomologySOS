@@ -29,6 +29,16 @@ function _conj(
     return Groups.MatrixGroups.ElementaryMatrix{N}(l.i^σ, l.j^σ, l.val)
 end
 
+# wreath action on SL(n,ℤ)
+function _conj(
+    l::MatrixGroups.ElementaryMatrix,
+    x::Groups.Constructions.WreathProductElement
+)
+    N = size(MatrixGroups.matrix_repr(l))[1]
+    lσ = _conj(l, inv(x.p))
+    return Groups.MatrixGroups.ElementaryMatrix{N}(lσ.i, lσ.j, -l.val)
+end
+
 struct AlphabetPermutation{GEl,I} <: SymbolicWedderburn.ByPermutations
     perms::Dict{GEl,PermutationGroups.Perm{I}}
 end
