@@ -1,6 +1,7 @@
 using SparseArrays
 using Kronecker
 
+# act on real valued matrix defined by a matrix over a group ring
 function act_on_matrix(
     P, 
     σ::Groups.GroupElement,
