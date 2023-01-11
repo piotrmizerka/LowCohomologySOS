@@ -152,3 +152,36 @@ end
         @test L_indices[k,j,i] == id
     end
 end
+
+@testset "action on matrices over group rings" begin n = 3
+    sln = SL(n,Int8)
+    Σ = PermutationGroups.SymmetricGroup(n)
+    alphabet_permutation_ = LowCohomologySOS.AlphabetPermutation(alphabet(sln), Σ, LowCohomologySOS._conj)
+
+    RG =  LowCohomologySOS.group_ring(sln, 1)
+    e12, e13, e21, e23, e31, e32 = gens(sln)
+    M = [
+        RG(e12) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG);
+        zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG); 
+        zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG);
+        zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG);
+        zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG); 
+        zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG)
+    ]
+
+    @test LowCohomologySOS.act_on_matrix(M, one(Σ), alphabet_permutation_) == M
+    for σ in Σ
+        for τ in Σ
+            @test LowCohomologySOS.act_on_matrix(M, σ*τ, alphabet_permutation_) == LowCohomologySOS.act_on_matrix(
+                    LowCohomologySOS.act_on_matrix(M, σ, alphabet_permutation_), τ, alphabet_permutation_
+            )
+            # @assert act_on_matrix(M, σ*τ, alphabet_permutation_) == act_on_matrix(act_on_matrix(M, τ, alphabet_permutation_), σ, alphabet_permutation_) # for left action
+        end
+    end
+
+    M_symm = LowCohomologySOS.weyl_symmetrize_matrix(M, Σ, LowCohomologySOS._conj)
+
+    for σ in Σ
+        @test LowCohomologySOS.act_on_matrix(M_symm, σ, alphabet_permutation_) == M_symm
+    end
+end

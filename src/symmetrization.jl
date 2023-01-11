@@ -1,3 +1,4 @@
+# permutation action on SAut(Fₙ)
 function _conj(
     t::Groups.Transvection,
     σ::PermutationGroups.AbstractPerm,
@@ -5,6 +6,7 @@ function _conj(
     return Groups.Transvection(t.id, t.i^σ, t.j^σ, t.inv)
 end
 
+# wreath action on SAut(Fₙ)
 function _conj(
     t::Groups.Transvection,
     x::Groups.Constructions.WreathProductElement,
@@ -16,6 +18,15 @@ function _conj(
     new_inv = isone(x.n.elts[t.i]*x.n.elts[t.j]) ? t.inv : dual_inv
 
     return Groups.Transvection(new_id, tσ.i, tσ.j, new_inv)
+end
+
+# permutation action on SL(n,ℤ)
+function _conj(
+    l::MatrixGroups.ElementaryMatrix,
+    σ::PermutationGroups.AbstractPerm
+)
+    N = size(MatrixGroups.matrix_repr(l))[1]
+    return Groups.MatrixGroups.ElementaryMatrix{N}(l.i^σ, l.j^σ, l.val)
 end
 
 struct AlphabetPermutation{GEl,I} <: SymbolicWedderburn.ByPermutations
@@ -142,4 +153,54 @@ function matrix_bases(basis, half_basis, S)
     psd_basis = [PSDBasisElement(s, g) for s in S for g in half_basis]
 
     return constr_basis, psd_basis
+end
+
+# code below intended for assistance with the induction of the spectral gap from SL(n,ℤ) to SL(m,ℤ) ##############
+# act on a matrix over a group ring (compare with 'act_on_matrix' in 'positive_approx_symmetrized_tests.jl')
+function act_on_matrix(
+    M::AbstractMatrix{<:AlgebraElement}, # M has to be square and indexed by the generators
+    σ::Groups.GroupElement,
+    act::LowCohomologySOS.AlphabetPermutation
+)
+    RG = parent(first(M))
+    G = parent(first(basis(RG)))
+    S = gens(G)
+    gen_idies = Dict(S[i] => i for i in eachindex(S))
+    basis_ = basis(RG)
+
+    result = [zero(RG) for i in eachindex(S), j in eachindex(S)]
+
+    for i in eachindex(S)
+        for j in eachindex(S)
+            s, t = S[i], S[j]
+            s_σ_inv, t_σ_inv = SymbolicWedderburn.action(act, σ^(-1), s), SymbolicWedderburn.action(act, σ^(-1), t)
+            # s_σ_inv, t_σ_inv = SymbolicWedderburn.action(act, σ, s), SymbolicWedderburn.action(act, σ, t) # for left action
+            coeffs_ = StarAlgebras.coeffs(M[gen_idies[s_σ_inv],gen_idies[t_σ_inv]])
+            for ind in SparseArrays.nonzeroinds(coeffs_)
+                result[i,j] += coeffs_[ind]*RG(SymbolicWedderburn.action(act, σ, basis_[ind]))
+                # result[i,j] += coeffs_[ind]*RG(SymbolicWedderburn.action(act, σ^(-1), basis_[ind])) # for left action
+            end
+        end
+    end
+
+    return result
+end
+
+function weyl_symmetrize_matrix(
+    M::AbstractMatrix{<:AlgebraElement},
+    Σ, # the symmetry group (either symmetric group or wreath product)
+    op
+)
+    RG = parent(first(M))
+    G = parent(first(basis(RG)))
+    S = gens(G)
+
+    alphabet_permutation_ = AlphabetPermutation(alphabet(G), Σ, op)
+
+    result = [zero(RG) for i in eachindex(S), j in eachindex(S)]
+    for σ in Σ
+        result += act_on_matrix(M, σ, alphabet_permutation_)
+    end
+
+    return result
 end
