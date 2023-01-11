@@ -2,6 +2,10 @@
 # αd₁^*d₁+βd₀d₀^* = symmetrized induced Laplacians from SL(3,Z) to SL(4,Z)
 using Revise 
 
+using LinearAlgebra
+ENV["JULIA_NUM_THREADS"] = Sys.CPU_THREADS÷2
+LinearAlgebra.BLAS.set_num_threads(Sys.CPU_THREADS÷2)
+
 using StarAlgebras
 using Groups
 using LowCohomologySOS
