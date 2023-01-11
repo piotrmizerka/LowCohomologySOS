@@ -1,14 +1,9 @@
 function sln_laplacians(
     slN,
-    half_radius::Integer
+    half_basis,
+    S # the generating set for SL(n,ℤ)
 )
     @assert typeof(slN) <: MatrixGroups.SpecialLinearGroup
-
-    S = gens(slN)
-    S_inv = let s = S
-        [s; inv.(s)]
-    end
-    half_basis, sizes = Groups.wlmetric_ball(S_inv, radius = half_radius)
 
     F_sl_4_z = FreeGroup(alphabet(slN))
 
@@ -16,9 +11,8 @@ function sln_laplacians(
         Groups.Homomorphism((i, F, G) -> Groups.word_type(G)([i]), source, target)
     end
 
-    N = size(first(gens(slN)))[1]
-
     elmatrix_gen_dict = Dict(determine_letter(S[i]) => gens(F_sl_4_z, i) for i in eachindex(S))
+    N = size(first(gens(slN)))[1]
     e(i,j) = elmatrix_gen_dict[MatrixGroups.ElementaryMatrix{N}(i,j,Int8(1))]
 
     range_as_list = [i for i in 1:N]

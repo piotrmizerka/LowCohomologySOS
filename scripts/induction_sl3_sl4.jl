@@ -16,8 +16,20 @@ slM = i.target
 
 const half_radius = 2
 
-slN_Δ₁, slN_Iₙ, slN_Δ₁⁺, slN_Δ₁⁻ = LowCohomologySOS.sln_laplacians(slN, half_radius)
-slM_Δ₁, slM_Iₙ, slM_Δ₁⁺, slM_Δ₁⁻ = LowCohomologySOS.sln_laplacians(slM, half_radius)
+slN_S = gens(slN)
+slN_S_inv = let s = slN_S
+    [s; inv.(s)]
+end
+slM_S = gens(slM)
+slM_S_inv = let s = slM_S
+    [s; inv.(s)]
+end
+
+slN_half_basis, slN_sizes = Groups.wlmetric_ball(slN_S_inv, radius = half_radius)
+slM_half_basis, slM_sizes = Groups.wlmetric_ball(slM_S_inv, radius = half_radius)
+
+slN_Δ₁, slN_Iₙ, slN_Δ₁⁺, slN_Δ₁⁻ = LowCohomologySOS.sln_laplacians(slN, slN_half_basis, slN_S)
+slM_Δ₁, slM_Iₙ, slM_Δ₁⁺, slM_Δ₁⁻ = LowCohomologySOS.sln_laplacians(slM, slM_half_basis, slM_S)
 
 @assert parent(first(slM_Δ₁⁺)) == parent(first(slM_Δ₁⁻))
 
