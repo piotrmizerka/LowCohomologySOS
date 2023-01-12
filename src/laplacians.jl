@@ -23,7 +23,7 @@ function sln_laplacians(
     quadruples_wrong_inds = []
     for ind in eachindex(quadruples_total)
         (i,j,k,m) = quadruples_total[ind]
-        if (i,j) >= (k,m)
+        if (i,j) == (k,m)
             append!(quadruples_wrong_inds, ind)
         end
     end
