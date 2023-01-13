@@ -13,7 +13,11 @@ using LowCohomologySOS
 const N = 3
 const M = 4
 
-i = LowCohomologySOS.sln_slm_embedding(N, M)
+SL(n, R) = MatrixGroups.SpecialLinearGroup{n}(R)
+
+slN, slM = SL(N,Int8), SL(M,Int8)
+
+i = LowCohomologySOS.sln_slm_embedding(slN, slM)
 
 slN = i.source
 slM = i.target
@@ -27,10 +31,10 @@ end;
 slM_S = gens(slM);
 slM_S_inv = let s = slM_S
     [s; inv.(s)]
-end;
+end
 
-slN_half_basis, slN_sizes = Groups.wlmetric_ball(slN_S_inv, radius = half_radius);
-slM_half_basis, slM_sizes = Groups.wlmetric_ball(slM_S_inv, radius = half_radius);
+slN_half_basis, slN_sizes = Groups.wlmetric_ball(slN_S_inv, radius = half_radius)
+slM_half_basis, slM_sizes = Groups.wlmetric_ball(slM_S_inv, radius = half_radius)
 
 slN_Δ₁, slN_Iₙ, slN_Δ₁⁺, slN_Δ₁⁻ = LowCohomologySOS.sln_laplacians(slN, slN_half_basis, slN_S);
 slM_Δ₁, slM_Iₙ, slM_Δ₁⁺, slM_Δ₁⁻ = LowCohomologySOS.sln_laplacians(slM, slM_half_basis, slM_S);
@@ -45,19 +49,19 @@ RG_prime = parent(first(slM_Δ₁⁺))
 using PermutationGroups
 
 Δ₁⁺_emb_symmetrized = let
-    # Σ = PermutationGroups.SymmetricGroup(4)
+    # Σ = PermutationGroups.SymmetricGroup(5)
+    # Σ = PermGroup(Perm{Int8}[perm"(1,3,5)", perm"(1,2)(3,4)"]) # alternating group A₅
     Σ = PermGroup(Perm{Int8}[perm"(1,2,3)", perm"(1,2)(3,4)"]) # alternating group A₄
     LowCohomologySOS.weyl_symmetrize_matrix(Δ₁⁺_emb, Σ, LowCohomologySOS._conj)
 end
 
-Δ₁⁻_emb_symmetrized = let # n = 4
-    # Σ = PermutationGroups.SymmetricGroup(n)
+Δ₁⁻_emb_symmetrized = let
+    # Σ = PermutationGroups.SymmetricGroup(5)
+    # Σ = PermGroup(Perm{Int8}[perm"(1,3,5)", perm"(1,2)(3,4)"]) # alternating group A₅
     Σ = PermGroup(Perm{Int8}[perm"(1,2,3)", perm"(1,2)(3,4)"]) # alternating group A₄
     LowCohomologySOS.weyl_symmetrize_matrix(Δ₁⁻_emb, Σ, LowCohomologySOS._conj)
 end
 
-3*slM_Δ₁⁺-Δ₁⁺_emb_symmetrized
-7*slM_Δ₁⁻-Δ₁⁻_emb_symmetrized
 3*slM_Δ₁⁺+9*slM_Δ₁⁻-Δ₁⁺_emb_symmetrized-Δ₁⁻_emb_symmetrized
 
 using JuMP
