@@ -34,7 +34,7 @@ function sln_laplacians(
                     for k ∈ deleteat!(copy(range_as_list), findall(k->k∈[i,j],copy(range_as_list)))]
     
     # @info "quadruples", length(quadruples)
-    @info "triples", length(triples)
+    # @info "triples", length(triples)
     
     # The presentation taken from the article of Conder et. al.: https://www.jstor.org/stable/2159559#metadata_info_tab_contents 
     relations = vcat(
