@@ -47,17 +47,19 @@ using PermutationGroups
 Δ₁⁺_emb_symmetrized = let
     # Σ = PermutationGroups.SymmetricGroup(4)
     Σ = PermGroup(Perm{Int8}[perm"(1,2,3)", perm"(1,2)(3,4)"]) # alternating group A₄
+    # Σ = PermGroup(Perm{Int8}[perm"(1,2,3)", perm"(1,2,3,4,5)"]) # alternating group A₅
     LowCohomologySOS.weyl_symmetrize_matrix(Δ₁⁺_emb, Σ, LowCohomologySOS._conj)
 end
 
 Δ₁⁻_emb_symmetrized = let # n = 4
     # Σ = PermutationGroups.SymmetricGroup(n)
     Σ = PermGroup(Perm{Int8}[perm"(1,2,3)", perm"(1,2)(3,4)"]) # alternating group A₄
+    # Σ = PermGroup(Perm{Int8}[perm"(1,2,3)", perm"(1,2,3,4,5)"]) # alternating group A₅
     LowCohomologySOS.weyl_symmetrize_matrix(Δ₁⁻_emb, Σ, LowCohomologySOS._conj)
 end
-
-3*slM_Δ₁⁺-Δ₁⁺_emb_symmetrized
-7*slM_Δ₁⁻-Δ₁⁻_emb_symmetrized
+# zero_ = [zero(RG_prime) for i in eachindex(slM_S), j in eachindex(slM_S)]
+# 6*slM_Δ₁⁺-Δ₁⁺_emb_symmetrized == zero_ # it lookf like symmetrization works for upper Laplacians!
+300*slM_Δ₁⁻-Δ₁⁻_emb_symmetrized
 3*slM_Δ₁⁺+9*slM_Δ₁⁻-Δ₁⁺_emb_symmetrized-Δ₁⁻_emb_symmetrized
 
 using JuMP
