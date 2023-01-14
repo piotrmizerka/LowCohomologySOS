@@ -17,11 +17,6 @@ SL(n, R) = MatrixGroups.SpecialLinearGroup{n}(R)
 
 slN, slM = SL(N,Int8), SL(M,Int8)
 
-i = LowCohomologySOS.sln_slm_embedding(slN, slM)
-
-slN = i.source
-slM = i.target
-
 const half_radius = 2
 
 slN_S = gens(slN);
@@ -39,30 +34,80 @@ slM_half_basis, slM_sizes = Groups.wlmetric_ball(slM_S_inv, radius = half_radius
 slN_Δ₁, slN_Iₙ, slN_Δ₁⁺, slN_Δ₁⁻ = LowCohomologySOS.sln_laplacians(slN, slN_half_basis, slN_S);
 slM_Δ₁, slM_Iₙ, slM_Δ₁⁺, slM_Δ₁⁻ = LowCohomologySOS.sln_laplacians(slM, slM_half_basis, slM_S);
 
-RG_prime = parent(first(slM_Δ₁⁺))
-
-Δ₁⁺_emb = LowCohomologySOS.embed_matrix(slN_Δ₁⁺, i, RG_prime);
-Δ₁⁻_emb = LowCohomologySOS.embed_matrix(slN_Δ₁⁻, i, RG_prime);
-
-@assert parent(first(Δ₁⁺_emb)) == parent(first(Δ₁⁻_emb)) == parent(first(slM_Δ₁⁺)) == parent(first(slM_Δ₁⁻))
-
 using PermutationGroups
 
-Δ₁⁺_emb_symmetrized = let
-    # Σ = PermutationGroups.SymmetricGroup(5)
-    # Σ = PermGroup(Perm{Int8}[perm"(1,3,5)", perm"(1,2)(3,4)"]) # alternating group A₅
-    Σ = PermGroup(Perm{Int8}[perm"(1,2,3)", perm"(1,2)(3,4)"]) # alternating group A₄
-    LowCohomologySOS.weyl_symmetrize_matrix(Δ₁⁺_emb, Σ, LowCohomologySOS._conj)
+# Σ = PermutationGroups.SymmetricGroup(M)
+# Σ = PermGroup(Perm{Int8}[perm"(1,3,5)", perm"(1,2)(3,4)"]) # alternating group A₅
+Σ = PermGroup(Perm{Int8}[perm"(1,2,3)", perm"(1,2)(3,4)"]) # alternating group A₄
+
+RG = parent(first(slN_Δ₁⁺))
+RG_prime = parent(first(slM_Δ₁⁺))
+
+I = [i ≠ j ? zero(RG) : one(RG) for i in eachindex(gens(slN)), j in eachindex(gens(slN))]
+I_emb_symmetrized = LowCohomologySOS.embedded_symmetrized_matrix(I, Σ, RG_prime)
+ones = [one(RG) for i in eachindex(gens(slN)), j in eachindex(gens(slN))]
+ones_emb_symmetrized = LowCohomologySOS.embedded_symmetrized_matrix(ones, Σ, RG_prime)
+
+elts = collect(Σ)
+elts[1]
+elts[2]
+elts[3]
+elts[4]
+elts[5]
+elts[6]
+elts[7]
+elts[8]
+elts[9]
+elts[10]
+elts[11]
+elts[12]
+
+using Combinatorics
+
+subsets = collect(powerset(elts))
+length(subsets)
+
+good_subset = [-1]
+it = 1
+for subset in subsets
+    if it % 1000 == 0
+        println(it)
+    end
+    it += 1
+    if length(subset) > 3
+        result = [zero(RG_prime) for i in eachindex(gens(slM)), j in eachindex(gens(slM))]
+        for σ in subset
+            iσ = LowCohomologySOS.sln_slm_embedding(slN, slM, σ)
+            result += LowCohomologySOS.embed_matrix(ones, iσ, RG_prime);
+        end
+        coeffs = []
+        for i in 1:12
+            for j in 1:12
+                append!(coeffs,result[i,j](one(slM)))
+            end
+        end
+        if length(Set(coeffs)) == 2
+            good_subset = subset
+            break
+        end
+    end
 end
 
-Δ₁⁻_emb_symmetrized = let
-    # Σ = PermutationGroups.SymmetricGroup(5)
-    # Σ = PermGroup(Perm{Int8}[perm"(1,3,5)", perm"(1,2)(3,4)"]) # alternating group A₅
-    Σ = PermGroup(Perm{Int8}[perm"(1,2,3)", perm"(1,2)(3,4)"]) # alternating group A₄
-    LowCohomologySOS.weyl_symmetrize_matrix(Δ₁⁻_emb, Σ, LowCohomologySOS._conj)
-end
+good_subset
 
-3*slM_Δ₁⁺+9*slM_Δ₁⁻-Δ₁⁺_emb_symmetrized-Δ₁⁻_emb_symmetrized
+
+
+
+show(IOContext(stdout, :limit => true, :displaysize => (120, 120)), "text/plain", result)
+
+Δ₁⁺_emb_symmetrized = LowCohomologySOS.embedded_symmetrized_matrix(slN_Δ₁⁺, Σ, RG_prime)
+Δ₁⁻_emb_symmetrized = LowCohomologySOS.embedded_symmetrized_matrix(slN_Δ₁⁻, Σ, RG_prime)
+
+@assert parent(first(Δ₁⁺_emb_symmetrized)) == parent(first(Δ₁⁻_emb_symmetrized)) == parent(first(slM_Δ₁⁺)) == parent(first(slM_Δ₁⁻))
+
+slM_Δ₁⁻
+Δ₁⁻_emb_symmetrized
+72*slM_Δ₁⁻-Δ₁⁻_emb_symmetrized
 
 using JuMP
 
@@ -88,9 +133,9 @@ function alpha_beta_gamma_problem(
     JuMP.@variable(result, β)
     JuMP.@variable(result, γ)
 
-    JuMP.@constraint(result, α >= 0.01)
-    JuMP.@constraint(result, β >= 0.01)
-    JuMP.@constraint(result, γ >= 0.01)
+    # JuMP.@constraint(result, α >= 0.01)
+    # JuMP.@constraint(result, β >= 0.01)
+    # JuMP.@constraint(result, γ >= 0.01)
 
     for idx in CartesianIndices(A)
         aij = A[idx]
@@ -151,68 +196,3 @@ alpha_beta_adjustx = alpha_beta_adjust(A, B, C, D)
 
 # The last functions to call:
 alpha_beta_adjust(slM_Δ₁⁺, slM_Δ₁⁻, Δ₁⁺_emb_symmetrized, Δ₁⁻_emb_symmetrized)
-
-# M_ = 3*slM_Δ₁⁺+3*slM_Δ₁⁻-Δ₁_emb_symmetrized
-
-# # slM_data = (
-# #     M = M,
-# #     order_unit = slM_Iₙ,
-# #     half_basis = slM_half_basis,
-# #     RG = parent(first(M)),
-# # )
-
-# # M_sos_problem = LowCohomologySOS.sos_problem(M_, slM_Iₙ)
-
-# include(joinpath(@__DIR__, "optimizers.jl"))
-# include(joinpath(@__DIR__, "utils.jl"))
-
-# # solve_in_loop(
-# #     M_sos_problem,
-# #     logdir = "./logs",
-# #     optimizer = scs_opt(eps = 1e-9, max_iters = 20_000),
-# #     data = slM_data
-# # )
-
-# S = gens(slM)
-# S_inv = let s = S
-#     [s; inv.(s)]
-# end
-# half_basis, sizes = Groups.wlmetric_ball(S_inv, radius = 1)
-# RG_prime_reduced = LowCohomologySOS.group_ring(slM, half_basis, star_multiplication = true)
-# function id__(letter_id, SLₙℤ, G)
-#     return word(SLₙℤ([letter_id]))
-# end
-# id_ = let source = slM, target = slM
-#     Groups.Homomorphism(id__, source, target, check = false)
-# end
-
-# # M__ = LowCohomologySOS.embed_matrix(M_, id_, RG_prime_reduced)
-# slM_Δ₁⁺_ = LowCohomologySOS.embed_matrix(slM_Δ₁⁺, id_, RG_prime_reduced)
-# slM_Δ₁⁻_ = LowCohomologySOS.embed_matrix(slM_Δ₁⁻, id_, RG_prime_reduced)
-# Δ₁_emb_symmetrized_ = LowCohomologySOS.embed_matrix(Δ₁_emb_symmetrized, id_, RG_prime_reduced)
-# slM_Iₙ_ = LowCohomologySOS.embed_matrix(slM_Iₙ, id_, RG_prime_reduced)
-
-# # _data = (
-# #     M = M__,
-# #     order_unit = slM_Iₙ_,
-# #     half_basis = half_basis,
-# #     RG = parent(first(M__)),
-# # )
-
-# # M_sos_problem = LowCohomologySOS.sos_problem(M__, slM_Iₙ__)
-# laplacians_sos_problem = LowCohomologySOS.sos_problem(slM_Δ₁⁺_, slM_Δ₁⁻_, Δ₁_emb_symmetrized_, slM_Iₙ_)
-
-# using Dates
-# date_string(date) = Sys.iswindows() ? replace(string(date), ':' => '_') : string(date)
-# @time solve(joinpath("./logs", "solver_$(date_string(now())).log"), laplacians_sos_problem, scs_opt(eps = 1e-9, max_iters = 20_000))
-
-# JuMP.value.(laplacians_sos_problem[:α])
-# JuMP.value.(laplacians_sos_problem[:β])
-# JuMP.value.(laplacians_sos_problem[:λ])
-
-# solve_in_loop(
-#     laplacians_sos_problem,
-#     logdir = "./logs",
-#     optimizer = scs_opt(eps = 1e-9, max_iters = 20_000),
-#     data = _data
-# )

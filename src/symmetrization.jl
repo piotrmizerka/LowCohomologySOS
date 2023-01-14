@@ -214,3 +214,22 @@ function weyl_symmetrize_matrix(
 
     return result
 end
+
+function embedded_symmetrized_matrix(
+    M::AbstractMatrix{<:AlgebraElement},
+    Σ, # the symmetry group
+    RG_prime::StarAlgebra
+)
+    slN = parent(first(parent(first(M)).basis))
+    slM = parent(first(RG_prime.basis))
+
+    @assert typeof(slN) <: MatrixGroups.SpecialLinearGroup
+    @assert typeof(slM) <: MatrixGroups.SpecialLinearGroup
+
+    result = [zero(RG_prime) for i in eachindex(gens(slM)), j in eachindex(gens(slM))]
+    for σ in Σ
+        iσ = sln_slm_embedding(slN, slM, σ)
+        result += embed_matrix(M, iσ, RG_prime)
+    end
+    return result
+end
