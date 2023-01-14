@@ -16,31 +16,31 @@ function sln_laplacians(
     e(i,j) = elmatrix_gen_dict[MatrixGroups.ElementaryMatrix{N}(i,j,Int8(1))]
 
     range_as_list = [i for i in 1:N]
-    # quadruples_total = [(i,j,k,m) for k ∈ 1:N
-    #                         for m ∈ deleteat!(copy(range_as_list), findall(m->m==k,copy(range_as_list)))
-    #                         for i ∈ deleteat!(copy(range_as_list), findall(i->i==m,copy(range_as_list))) 
-    #                         for j ∈ deleteat!(copy(range_as_list), findall(j->j∈[i,k],copy(range_as_list)))]
-    # quadruples_wrong_inds = []
-    # for ind in eachindex(quadruples_total)
-    #     (i,j,k,m) = quadruples_total[ind]
-    #     if (i,j) == (k,m)
-    #         append!(quadruples_wrong_inds, ind)
-    #     end
-    # end
-    # quadruples_wrong = [quadruples_total[ind] for ind in quadruples_wrong_inds]
-    # quadruples = setdiff(quadruples_total, quadruples_wrong)
+    quadruples_total = [(i,j,k,m) for k ∈ 1:N
+                            for m ∈ deleteat!(copy(range_as_list), findall(m->m==k,copy(range_as_list)))
+                            for i ∈ deleteat!(copy(range_as_list), findall(i->i==m,copy(range_as_list))) 
+                            for j ∈ deleteat!(copy(range_as_list), findall(j->j∈[i,k],copy(range_as_list)))]
+    quadruples_wrong_inds = []
+    for ind in eachindex(quadruples_total)
+        (i,j,k,m) = quadruples_total[ind]
+        if (i,j) == (k,m)
+            append!(quadruples_wrong_inds, ind)
+        end
+    end
+    quadruples_wrong = [quadruples_total[ind] for ind in quadruples_wrong_inds]
+    quadruples = setdiff(quadruples_total, quadruples_wrong)
     triples = [(i,j,k) for i ∈ 1:N
                     for j ∈ deleteat!(copy(range_as_list), findall(j->j==i,copy(range_as_list))) 
                     for k ∈ deleteat!(copy(range_as_list), findall(k->k∈[i,j],copy(range_as_list)))]
     
     # @info "quadruples", length(quadruples)
-    @info "triples", length(triples)
+    # @info "triples", length(triples)
     
     # The presentation taken from the article of Conder et. al.: https://www.jstor.org/stable/2159559#metadata_info_tab_contents 
     relations = vcat(
-        # [e(i,j)*e(k,m)*e(i,j)^(-1)*e(k,m)^(-1) for (i,j,k,m) ∈ quadruples],
-        [e(i,j)*e(k,j)*e(i,j)^(-1)*e(k,j)^(-1) for (i,j,k) ∈ triples],
-        [e(i,j)*e(i,k)*e(i,j)^(-1)*e(i,k)^(-1) for (i,j,k) ∈ triples],
+        [e(i,j)*e(k,m)*e(i,j)^(-1)*e(k,m)^(-1) for (i,j,k,m) ∈ quadruples],
+        # [e(i,j)*e(k,j)*e(i,j)^(-1)*e(k,j)^(-1) for (i,j,k) ∈ triples],
+        # [e(i,j)*e(i,k)*e(i,j)^(-1)*e(i,k)^(-1) for (i,j,k) ∈ triples],
         [e(i,j)*e(j,k)*e(i,j)^(-1)*e(j,k)^(-1)*e(i,k)^(-1) for (i,j,k) ∈ triples]
     )
 

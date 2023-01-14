@@ -31,39 +31,41 @@ function embed_matrix(
     return result
 end
 
-SL(n, R) = MatrixGroups.SpecialLinearGroup{n}(R)
+function sln_slm_embedding(
+    slN,
+    slM,
+    σ::PermutationGroups.AbstractPerm
+)
+    n, m = size(first(gens(slN)))[1], size(first(gens(slM)))[1]
 
-function sln_slm_embedding(n::Integer, m::Integer)
     @assert n <= m
-
-    SLₙℤ = SL(n, Int8)
-    SLₘℤ = SL(m, Int8)
 
     _idx(k) = ((i,j) for i in 1:k for j in 1:k if i≠j)
 
-    inds_S_SLₙℤ = Dict( 
+    inds_S_slN = Dict( 
         let eij = MatrixGroups.ElementaryMatrix{n}(i,j, Int8(1))
-            SLₙℤ([alphabet(SLₙℤ)[eij]])
-        end => (i,j)
+            slN([alphabet(slN)[eij]])
+        end => (i^σ,j^σ)
         for (i,j) in _idx(n)
     )
-    S_SLₘℤ = Dict((i,j) =>
+    S_slM = Dict((i,j) =>
         let eij = MatrixGroups.ElementaryMatrix{m}(i,j, Int8(1))
-            SLₘℤ([alphabet(SLₘℤ)[eij]])
+            slM([alphabet(slM)[eij]])
         end
-        for (i,j) in _idx(n)
+        for (i,j) in _idx(m)
     )
     
-    function f(letter_id, SLₙℤ, G)
-        if letter_id <= length(gens(SLₙℤ))
-            return word(S_SLₘℤ[inds_S_SLₙℤ[SLₙℤ([letter_id])]])
+    function f(letter_id, slN, G)
+        if letter_id <= length(gens(slN))
+            return word(S_slM[inds_S_slN[slN([letter_id])]])
         else
-            return word(inv(S_SLₘℤ[inds_S_SLₙℤ[inv(SLₙℤ([letter_id]))]]))
+            return word(inv(S_slM[inds_S_slN[inv(slN([letter_id]))]]))
         end
     end
 
-    result = let source = SLₙℤ, target = SLₘℤ
+    result = let source = slN, target = slM
         Groups.Homomorphism(f, source, target, check = false)
+        # Groups.Homomorphism(f, source, target)
     end
 
     return result
