@@ -26,9 +26,10 @@ function group_data(half_radius, N, wreath_action)
     return SAut_F_N, ℝSAutF_N_star.basis, half_basis, S
 end
 
-function wedderburn_data(basis, half_basis, S, N, wreath_action)
+function wedderburn_data(basis, half_basis, S)
     @time begin
-        if wreath_action
+        N = length((parent(first(S))).domain)
+        if length(S) == 4*N*(N-1)
             Z_2_wr_S(n) = Groups.Constructions.WreathProduct(PermutationGroups.SymmetricGroup(2), PermutationGroups.SymmetricGroup(n))
             Σ = Z_2_wr_S(N)
         else
