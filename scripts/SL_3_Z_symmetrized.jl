@@ -44,7 +44,7 @@ end
 
 const half_radius = 2;
 const N = 3;
-const wreath_action = false;
+const wreath_action = true;
 
 slN, basis, half_basis, S = group_data(half_radius, N, wreath_action)
 
@@ -78,6 +78,7 @@ solve_in_loop(
     Δ₁_sos_problem,
     w_dec_matrix,
     logdir = "./LowCohomologySOS/logs",
-    optimizer = scs_opt(eps = 1e-9, max_iters = 10_000),
+    optimizer = scs_opt(eps = 1e-9, max_iters = 20_000),
     data = slN_data
 )
+

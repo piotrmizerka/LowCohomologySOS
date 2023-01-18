@@ -36,7 +36,9 @@ function _conj(
 )
     N = size(MatrixGroups.matrix_repr(l))[1]
     lσ = _conj(l, inv(x.p))
-    return Groups.MatrixGroups.ElementaryMatrix{N}(lσ.i, lσ.j, -l.val)
+    dual_val = ifelse(l.val == Int8(-1), Int8(1), Int8(-1))
+    new_val = isone(x.n.elts[l.i]*x.n.elts[l.j]) ? l.val : dual_val
+    return Groups.MatrixGroups.ElementaryMatrix{N}(lσ.i, lσ.j, new_val)
 end
 
 struct AlphabetPermutation{GEl,I} <: SymbolicWedderburn.ByPermutations
