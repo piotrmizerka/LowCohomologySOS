@@ -82,9 +82,9 @@ function relations(
             relations = vcat(
                 [e(i,j,ε)*e(i,j,-ε) for (i,j) ∈ pairs for ε ∈ [1,-1]],
                 # [e(i,j,ε₁)*e(k,l,ε₂)*e(i,j,-ε₁)*e(k,l,-ε₂) for (i,j,k,l) ∈ quadruples for ε₁ ∈ [1,-1] for ε₂ ∈ [1,-1]],
-                [e(i,j,ε)*e(i,k,ε)*e(i,j,-ε)*e(i,k,-ε) for (i,j,k) ∈ triples for ε ∈ [1,-1]],
-                [e(i,j,ε)*e(k,j,ε)*e(i,j,-ε)*e(k,j,-ε) for (i,j,k) ∈ triples for ε ∈ [1,-1]],
-                [e(i,j,ε)*e(j,k,ε)*e(i,j,-ε)*e(j,k,-ε)*e(i,k,-ε) for (i,j,k) ∈ triples for ε ∈ [1,-1]]
+                [e(i,j,ε₁)*e(i,k,ε₂)*e(i,j,-ε₁)*e(i,k,-ε₂) for (i,j,k) ∈ triples for ε₁ ∈ [1,-1] for ε₂ ∈ [1,-1]],
+                [e(i,j,ε₁)*e(k,j,ε₂)*e(i,j,-ε₁)*e(k,j,-ε₂) for (i,j,k) ∈ triples for ε₁ ∈ [1,-1] for ε₂ ∈ [1,-1]],
+                [e(i,j,ε₁)*e(j,k,ε₂)*e(i,j,-ε₁)*e(j,k,-ε₂)*e(i,k,-ε₁*ε₂) for (i,j,k) ∈ triples for ε₁ ∈ [1,-1] for ε₂ ∈ [1,-1]]
             )
         end
     else
