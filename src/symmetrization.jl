@@ -35,7 +35,8 @@ function _conj(
     x::Groups.Constructions.WreathProductElement
 )
     N = size(MatrixGroups.matrix_repr(l))[1]
-    lσ = _conj(l, inv(x.p))
+    # lσ = _conj(l, inv(x.p))
+    lσ = _conj(l, x.p) # I don't completely understand why this line works and not the above (compare with autfns!!)
     dual_val = ifelse(l.val == Int8(-1), Int8(1), Int8(-1))
     new_val = isone(x.n.elts[l.i]*x.n.elts[l.j]) ? l.val : dual_val
     return Groups.MatrixGroups.ElementaryMatrix{N}(lσ.i, lσ.j, new_val)
@@ -172,11 +173,10 @@ end
 function act_on_matrix(
     M::AbstractMatrix{<:AlgebraElement}, # M has to be square and indexed by the generators
     σ::Groups.GroupElement,
-    act::LowCohomologySOS.AlphabetPermutation
+    act::LowCohomologySOS.AlphabetPermutation,
+    S
 )
     RG = parent(first(M))
-    G = parent(first(basis(RG)))
-    S = gens(G)
     gen_idies = Dict(S[i] => i for i in eachindex(S))
     basis_ = basis(RG)
 
@@ -201,17 +201,17 @@ end
 function weyl_symmetrize_matrix(
     M::AbstractMatrix{<:AlgebraElement},
     Σ, # the symmetry group (either symmetric group or wreath product)
-    op
+    op,
+    S
 )
     RG = parent(first(M))
     G = parent(first(basis(RG)))
-    S = gens(G)
 
     alphabet_permutation_ = AlphabetPermutation(alphabet(G), Σ, op)
 
     result = [zero(RG) for i in eachindex(S), j in eachindex(S)]
     for σ in Σ
-        result += act_on_matrix(M, σ, alphabet_permutation_)
+        result += act_on_matrix(M, σ, alphabet_permutation_, S)
     end
 
     return result

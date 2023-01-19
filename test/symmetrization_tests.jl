@@ -154,34 +154,73 @@ end
 end
 
 @testset "action on matrices over group rings" begin n = 3
-    sln = SL(n,Int8)
-    Σ = PermutationGroups.SymmetricGroup(n)
-    alphabet_permutation_ = LowCohomologySOS.AlphabetPermutation(alphabet(sln), Σ, LowCohomologySOS._conj)
-
+    sln = MatrixGroups.SpecialLinearGroup{n}(Int8)
     RG =  LowCohomologySOS.group_ring(sln, 1)
     e12, e13, e21, e23, e31, e32 = gens(sln)
-    M = [
-        RG(e12) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG);
-        zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG); 
-        zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG);
-        zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG);
-        zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG); 
-        zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG)
-    ]
+    
+    S = gens(sln)
+    S_inv = let s = S
+        [s; inv.(s)]
+    end
 
-    @test LowCohomologySOS.act_on_matrix(M, one(Σ), alphabet_permutation_) == M
-    for σ in Σ
-        for τ in Σ
-            @test LowCohomologySOS.act_on_matrix(M, σ*τ, alphabet_permutation_) == LowCohomologySOS.act_on_matrix(
-                    LowCohomologySOS.act_on_matrix(M, σ, alphabet_permutation_), τ, alphabet_permutation_
-            )
-            # @assert act_on_matrix(M, σ*τ, alphabet_permutation_) == act_on_matrix(act_on_matrix(M, τ, alphabet_permutation_), σ, alphabet_permutation_) # for left action
+    @testset "symmetric group action" begin
+        M = [
+            RG(e12) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG);
+            zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG); 
+            zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG);
+            zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG);
+            zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG); 
+            zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG)
+        ]
+        Σ = PermutationGroups.SymmetricGroup(n)
+        alphabet_permutation_ = LowCohomologySOS.AlphabetPermutation(alphabet(sln), Σ, LowCohomologySOS._conj)
+        @test LowCohomologySOS.act_on_matrix(M, one(Σ), alphabet_permutation_, S) == M
+        for σ in Σ
+            for τ in Σ
+                @test LowCohomologySOS.act_on_matrix(M, σ*τ, alphabet_permutation_, S) == LowCohomologySOS.act_on_matrix(
+                        LowCohomologySOS.act_on_matrix(M, σ, alphabet_permutation_, S), τ, alphabet_permutation_, S
+                )
+                # @assert act_on_matrix(M, σ*τ, alphabet_permutation_, S) == act_on_matrix(act_on_matrix(M, τ, alphabet_permutation_, S), σ, alphabet_permutation_, S) # for left action
+            end
+        end
+
+        M_symm = LowCohomologySOS.weyl_symmetrize_matrix(M, Σ, LowCohomologySOS._conj, S)
+
+        for σ in Σ
+            @test LowCohomologySOS.act_on_matrix(M_symm, σ, alphabet_permutation_, S) == M_symm
         end
     end
 
-    M_symm = LowCohomologySOS.weyl_symmetrize_matrix(M, Σ, LowCohomologySOS._conj)
+    @testset "wreath action" begin
+        M = [
+            RG(e12) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG);
+            zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG);
+            zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG);
+            zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG);
+            zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG); 
+            zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG);
+            zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG);
+            zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG);
+            zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG);
+            zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG); 
+            zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG);
+            zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG) zero(RG)
+        ]
+        Σ = Groups.Constructions.WreathProduct(PermutationGroups.SymmetricGroup(2), PermutationGroups.SymmetricGroup(n))
+        alphabet_permutation_ = LowCohomologySOS.AlphabetPermutation(alphabet(sln), Σ, LowCohomologySOS._conj)
+        @test LowCohomologySOS.act_on_matrix(M, one(Σ), alphabet_permutation_, S_inv) == M
+        for σ in Σ
+            for τ in Σ
+                @test LowCohomologySOS.act_on_matrix(M, σ*τ, alphabet_permutation_, S_inv) == LowCohomologySOS.act_on_matrix(
+                        LowCohomologySOS.act_on_matrix(M, σ, alphabet_permutation_, S_inv), τ, alphabet_permutation_, S_inv
+                )
+            end
+        end
 
-    for σ in Σ
-        @test LowCohomologySOS.act_on_matrix(M_symm, σ, alphabet_permutation_) == M_symm
+        M_symm = LowCohomologySOS.weyl_symmetrize_matrix(M, Σ, LowCohomologySOS._conj, S_inv)
+
+        for σ in Σ
+            @test LowCohomologySOS.act_on_matrix(M_symm, σ, alphabet_permutation_, S_inv) == M_symm
+        end
     end
 end
