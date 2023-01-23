@@ -180,7 +180,7 @@ function act_on_matrix(
     gen_idies = Dict(S[i] => i for i in eachindex(S))
     basis_ = basis(RG)
 
-    result = [zero(RG) for i in eachindex(S), j in eachindex(S)]
+    result = [zero(typeof(first(StarAlgebras.coeffs(first(M)))))*zero(RG) for i in eachindex(S), j in eachindex(S)]
 
     for i in eachindex(S)
         for j in eachindex(S)
