@@ -12,6 +12,7 @@ function _conj(
     x::Groups.Constructions.WreathProductElement,
 )
     tσ = _conj(t, inv(x.p))
+    # tσ = _conj(t, x.p) why not that one??
     dual_id = ifelse(t.id == :ϱ, :λ, :ϱ)
     dual_inv = ifelse(t.inv, false, true)
     new_id = isone(x.n.elts[t.i]) ? t.id : dual_id
@@ -35,10 +36,11 @@ function _conj(
     x::Groups.Constructions.WreathProductElement
 )
     N = size(MatrixGroups.matrix_repr(l))[1]
-    # lσ = _conj(l, inv(x.p))
+    # lσ_inv = _conj(l, inv(x.p))
     lσ = _conj(l, x.p) # I don't completely understand why this line works and not the above (compare with autfns!!)
     dual_val = ifelse(l.val == Int8(-1), Int8(1), Int8(-1))
     new_val = isone(x.n.elts[l.i]*x.n.elts[l.j]) ? l.val : dual_val
+
     return Groups.MatrixGroups.ElementaryMatrix{N}(lσ.i, lσ.j, new_val)
 end
 
