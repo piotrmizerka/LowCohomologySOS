@@ -64,7 +64,6 @@ end
         Δ₁, 
         Iₙ,
         w_dec_matrix,
-        length(collect(Σ)),
         1.0
     )
 end
