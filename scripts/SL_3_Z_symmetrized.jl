@@ -52,6 +52,12 @@ slN, basis, half_basis, S = group_data(half_radius, N, wreath_action)
 
 constraints_basis, psd_basis, Σ, action = wedderburn_data(basis, half_basis, S);
 
+# there is no point of finding a solution if we don't provide invariant matrix
+for σ in Σ
+    @assert LowCohomologySOS.act_on_matrix(Δ₁, σ, action.alphabet_perm, S) == Δ₁
+    @assert LowCohomologySOS.act_on_matrix(Iₙ, σ, action.alphabet_perm, S) == Iₙ
+end
+
 @time begin
     @info "Wedderburn:"
     w_dec_matrix = SymbolicWedderburn.WedderburnDecomposition(Float64, Σ, action, constraints_basis, psd_basis)
@@ -62,7 +68,7 @@ end
         Δ₁, 
         Iₙ,
         w_dec_matrix,
-        1.0
+        0.55
     )
 end
 
@@ -77,7 +83,7 @@ solve_in_loop(
     Δ₁_sos_problem,
     w_dec_matrix,
     logdir = "./LowCohomologySOS/logs",
-    optimizer = scs_opt(eps = 1e-9, max_iters = 20_000),
+    optimizer = _opt(eps = 1e-9, max_iters = 20_000),
     data = slN_data
 )
 

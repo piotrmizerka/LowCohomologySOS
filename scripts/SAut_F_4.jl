@@ -52,6 +52,12 @@ SAut_F_N, basis, half_basis, S = group_data(half_radius, N, wreath_action)
 
 constraints_basis, psd_basis, Σ, action = wedderburn_data(basis, half_basis, S);
 
+# there is no point of finding a solution if we don't provide invariant matrix
+for σ in Σ
+    @assert LowCohomologySOS.act_on_matrix(Δ₁, σ, action.alphabet_perm, S) == Δ₁
+    @assert LowCohomologySOS.act_on_matrix(Iₙ, σ, action.alphabet_perm, S) == Iₙ
+end
+
 SymbolicWedderburn._int_type(::Type{<:SymbolicWedderburn.InducedActionHomomorphism}) = UInt32
 
 @time begin
