@@ -204,7 +204,7 @@ function weyl_symmetrize_matrix(
     M::AbstractMatrix{<:AlgebraElement},
     Σ, # the symmetry group (either symmetric group or wreath product)
     op,
-    S
+    S # a chosen generatng set for G (see below)
 )
     RG = parent(first(M))
     G = parent(first(basis(RG)))

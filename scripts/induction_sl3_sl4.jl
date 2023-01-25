@@ -10,8 +10,8 @@ using StarAlgebras
 using Groups
 using LowCohomologySOS
 
-const N = 4
-const M = 5
+const N = 3
+const M = 4
 
 i = LowCohomologySOS.sln_slm_embedding(N, M)
 
@@ -32,35 +32,48 @@ end;
 slN_half_basis, slN_sizes = Groups.wlmetric_ball(slN_S_inv, radius = half_radius);
 slM_half_basis, slM_sizes = Groups.wlmetric_ball(slM_S_inv, radius = half_radius);
 
-slN_Δ₁, slN_Iₙ, slN_Δ₁⁺, slN_Δ₁⁻ = LowCohomologySOS.sln_laplacians(slN, slN_half_basis, slN_S);
-slM_Δ₁, slM_Iₙ, slM_Δ₁⁺, slM_Δ₁⁻ = LowCohomologySOS.sln_laplacians(slM, slM_half_basis, slM_S);
+slN_Δ₁, slN_Iₙ, slN_Δ₁⁺, slN_Δ₁⁻ = LowCohomologySOS.laplacians(slN, slN_half_basis, slN_S);
+slM_Δ₁, slM_Iₙ, slM_Δ₁⁺, slM_Δ₁⁻ = LowCohomologySOS.laplacians(slM, slM_half_basis, slM_S);
+slN_sq, slN_adj, slN_op = LowCohomologySOS.sq_adj_op(slN_Δ₁⁻, slN_S)
+slM_sq, slM_adj, slM_op = LowCohomologySOS.sq_adj_op(slM_Δ₁⁻, slM_S)
 
 RG_prime = parent(first(slM_Δ₁⁺))
 
 Δ₁⁺_emb = LowCohomologySOS.embed_matrix(slN_Δ₁⁺, i, RG_prime);
-Δ₁⁻_emb = LowCohomologySOS.embed_matrix(slN_Δ₁⁻, i, RG_prime);
+# Δ₁⁻_emb = LowCohomologySOS.embed_matrix(slN_Δ₁⁻, i, RG_prime);
+adj_emb = LowCohomologySOS.embed_matrix(slN_adj, i, RG_prime);
 
-@assert parent(first(Δ₁⁺_emb)) == parent(first(Δ₁⁻_emb)) == parent(first(slM_Δ₁⁺)) == parent(first(slM_Δ₁⁻))
+# @assert parent(first(Δ₁⁺_emb)) == parent(first(Δ₁⁻_emb)) == parent(first(slM_Δ₁⁺)) == parent(first(slM_Δ₁⁻))
+@assert parent(first(Δ₁⁺_emb)) == parent(first(adj_emb)) == parent(first(slM_Δ₁⁺)) == parent(first(slM_adj))
 
 using PermutationGroups
 
 Δ₁⁺_emb_symmetrized = let
     # Σ = PermutationGroups.SymmetricGroup(4)
-    # Σ = PermGroup(Perm{Int8}[perm"(1,2,3)", perm"(1,2)(3,4)"]) # alternating group A₄
-    Σ = PermGroup(Perm{Int8}[perm"(1,2,3)", perm"(1,2,3,4,5)"]) # alternating group A₅
-    LowCohomologySOS.weyl_symmetrize_matrix(Δ₁⁺_emb, Σ, LowCohomologySOS._conj)
+    Σ = PermGroup(Perm{Int8}[perm"(1,2,3)", perm"(1,2)(3,4)"]) # alternating group A₄
+    # Σ = PermGroup(Perm{Int8}[perm"(1,2,3)", perm"(1,2,3,4,5)"]) # alternating group A₅
+    LowCohomologySOS.weyl_symmetrize_matrix(Δ₁⁺_emb, Σ, LowCohomologySOS._conj, slM_S)
 end
 
-Δ₁⁻_emb_symmetrized = let # n = 4
+# Δ₁⁻_emb_symmetrized = let # n = 4
+#     # Σ = PermutationGroups.SymmetricGroup(n)
+#     Σ = PermGroup(Perm{Int8}[perm"(1,2,3)", perm"(1,2)(3,4)"]) # alternating group A₄
+#     # Σ = PermGroup(Perm{Int8}[perm"(1,2,3)", perm"(1,2,3,4,5)"]) # alternating group A₅
+#     LowCohomologySOS.weyl_symmetrize_matrix(Δ₁⁻_emb, Σ, LowCohomologySOS._conj, slM_S)
+# end
+
+adj_emb_symmetrized = let # n = 4
     # Σ = PermutationGroups.SymmetricGroup(n)
-    # Σ = PermGroup(Perm{Int8}[perm"(1,2,3)", perm"(1,2)(3,4)"]) # alternating group A₄
-    Σ = PermGroup(Perm{Int8}[perm"(1,2,3)", perm"(1,2,3,4,5)"]) # alternating group A₅
-    LowCohomologySOS.weyl_symmetrize_matrix(Δ₁⁻_emb, Σ, LowCohomologySOS._conj)
+    Σ = PermGroup(Perm{Int8}[perm"(1,2,3)", perm"(1,2)(3,4)"]) # alternating group A₄
+    # Σ = PermGroup(Perm{Int8}[perm"(1,2,3)", perm"(1,2,3,4,5)"]) # alternating group A₅
+    LowCohomologySOS.weyl_symmetrize_matrix(adj_emb, Σ, LowCohomologySOS._conj, slM_S)
 end
+
 zero_ = [zero(RG_prime) for i in eachindex(slM_S), j in eachindex(slM_S)]
-24*slM_Δ₁⁺-Δ₁⁺_emb_symmetrized # it looks like symmetrization works for upper Laplacians!
-300*slM_Δ₁⁻-Δ₁⁻_emb_symmetrized
-3*slM_Δ₁⁺+9*slM_Δ₁⁻-Δ₁⁺_emb_symmetrized-Δ₁⁻_emb_symmetrized
+3*slM_Δ₁⁺-Δ₁⁺_emb_symmetrized # it looks like symmetrization works for upper Laplacians!
+# 300*slM_Δ₁⁻-Δ₁⁻_emb_symmetrized
+# 3*slM_Δ₁⁺+9*slM_Δ₁⁻-Δ₁⁺_emb_symmetrized-Δ₁⁻_emb_symmetrized
+3*slM_adj-adj_emb_symmetrized # Adj symmetrizes as well!!
 
 using JuMP
 
@@ -149,68 +162,3 @@ alpha_beta_adjustx = alpha_beta_adjust(A, B, C, D)
 
 # The last functions to call:
 alpha_beta_adjust(slM_Δ₁⁺, slM_Δ₁⁻, Δ₁⁺_emb_symmetrized, Δ₁⁻_emb_symmetrized)
-
-# M_ = 3*slM_Δ₁⁺+3*slM_Δ₁⁻-Δ₁_emb_symmetrized
-
-# # slM_data = (
-# #     M = M,
-# #     order_unit = slM_Iₙ,
-# #     half_basis = slM_half_basis,
-# #     RG = parent(first(M)),
-# # )
-
-# # M_sos_problem = LowCohomologySOS.sos_problem(M_, slM_Iₙ)
-
-# include(joinpath(@__DIR__, "optimizers.jl"))
-# include(joinpath(@__DIR__, "utils.jl"))
-
-# # solve_in_loop(
-# #     M_sos_problem,
-# #     logdir = "./logs",
-# #     optimizer = scs_opt(eps = 1e-9, max_iters = 20_000),
-# #     data = slM_data
-# # )
-
-# S = gens(slM)
-# S_inv = let s = S
-#     [s; inv.(s)]
-# end
-# half_basis, sizes = Groups.wlmetric_ball(S_inv, radius = 1)
-# RG_prime_reduced = LowCohomologySOS.group_ring(slM, half_basis, star_multiplication = true)
-# function id__(letter_id, SLₙℤ, G)
-#     return word(SLₙℤ([letter_id]))
-# end
-# id_ = let source = slM, target = slM
-#     Groups.Homomorphism(id__, source, target, check = false)
-# end
-
-# # M__ = LowCohomologySOS.embed_matrix(M_, id_, RG_prime_reduced)
-# slM_Δ₁⁺_ = LowCohomologySOS.embed_matrix(slM_Δ₁⁺, id_, RG_prime_reduced)
-# slM_Δ₁⁻_ = LowCohomologySOS.embed_matrix(slM_Δ₁⁻, id_, RG_prime_reduced)
-# Δ₁_emb_symmetrized_ = LowCohomologySOS.embed_matrix(Δ₁_emb_symmetrized, id_, RG_prime_reduced)
-# slM_Iₙ_ = LowCohomologySOS.embed_matrix(slM_Iₙ, id_, RG_prime_reduced)
-
-# # _data = (
-# #     M = M__,
-# #     order_unit = slM_Iₙ_,
-# #     half_basis = half_basis,
-# #     RG = parent(first(M__)),
-# # )
-
-# # M_sos_problem = LowCohomologySOS.sos_problem(M__, slM_Iₙ__)
-# laplacians_sos_problem = LowCohomologySOS.sos_problem(slM_Δ₁⁺_, slM_Δ₁⁻_, Δ₁_emb_symmetrized_, slM_Iₙ_)
-
-# using Dates
-# date_string(date) = Sys.iswindows() ? replace(string(date), ':' => '_') : string(date)
-# @time solve(joinpath("./logs", "solver_$(date_string(now())).log"), laplacians_sos_problem, scs_opt(eps = 1e-9, max_iters = 20_000))
-
-# JuMP.value.(laplacians_sos_problem[:α])
-# JuMP.value.(laplacians_sos_problem[:β])
-# JuMP.value.(laplacians_sos_problem[:λ])
-
-# solve_in_loop(
-#     laplacians_sos_problem,
-#     logdir = "./logs",
-#     optimizer = scs_opt(eps = 1e-9, max_iters = 20_000),
-#     data = _data
-# )
