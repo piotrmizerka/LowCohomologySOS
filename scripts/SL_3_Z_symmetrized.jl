@@ -68,7 +68,7 @@ end
         Δ₁, 
         Iₙ,
         w_dec_matrix,
-        0.55
+        0.7
     )
 end
 
@@ -82,7 +82,7 @@ slN_data = (
 solve_in_loop(
     Δ₁_sos_problem,
     w_dec_matrix,
-    logdir = "./LowCohomologySOS/logs",
+    logdir = "./logs",
     optimizer = scs_opt(eps = 1e-9, max_iters = 20_000),
     data = slN_data
 )
