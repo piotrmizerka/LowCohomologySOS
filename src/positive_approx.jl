@@ -177,7 +177,7 @@ function spectral_gaps_approximated(
     S = gens(parent(first(relations)));
     optimizer,
 )
-    Δ₁x, Iₙ, Δ₁⁺x, Δ₁⁻x = spectral_gap_elements(h, relations, half_basis, S)
+    Δ₁x, Iₙ, Δ₁⁺x, Δ₁⁻x = spectral_gap_elements(h, relations, half_basis, S = S)
 
     Δ₁_sos_problem = sos_problem(Δ₁x, Iₙ)
 
