@@ -83,7 +83,7 @@ solve_in_loop(
     Δ₁_sos_problem,
     w_dec_matrix,
     logdir = "./LowCohomologySOS/logs",
-    optimizer = _opt(eps = 1e-9, max_iters = 20_000),
+    optimizer = scs_opt(eps = 1e-9, max_iters = 20_000),
     data = slN_data
 )
 
