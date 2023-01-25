@@ -1,7 +1,8 @@
 function laplacians(
     G, # either SL(n,ℤ) or SAut(Fₙ)
     half_basis,
-    S # the generating set for G: either elementary matrices for SL(n,ℤ) or Nielsen transvections for SAut(Fₙ)
+    S; # the generating set for G: either elementary matrices for SL(n,ℤ) or Nielsen transvections for SAut(Fₙ)
+    twist_coeffs = true
 )
     N = typeof(G) <: MatrixGroups.SpecialLinearGroup ? size(first(gens(G)))[1] : length(G.domain)
     
@@ -33,7 +34,7 @@ function laplacians(
 
     relationsx = relations(G, F_G, S, symmetric_action, N)
 
-    return LowCohomologySOS.spectral_gap_elements(quotient_hom, relationsx, half_basis)
+    return LowCohomologySOS.spectral_gap_elements(quotient_hom, relationsx, half_basis, twist_coeffs = twist_coeffs)
 end
 
 # relations for G = SL(n,ℤ), SAut(Fₙ) for symmetric and wreath actions

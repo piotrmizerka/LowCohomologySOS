@@ -121,8 +121,9 @@ end
 function spectral_gap_elements(
     h,
     relations,
-    half_basis,
-    S = gens(parent(first(relations)))
+    half_basis;
+    S = gens(parent(first(relations))),
+    twist_coeffs = true
 )
     @assert !isempty(relations)
     
@@ -130,26 +131,30 @@ function spectral_gap_elements(
 
     d₁ = jacobian_matrix(relations, S)
 
-    Δ₁, Δ₁⁺, Δ₁⁻ = let RG = group_ring(G, half_basis, star_multiplication = false)
+    Δ₁, Δ₁⁺, Δ₁⁻, d₀_ = let RG = group_ring(G, half_basis, star_multiplication = false)
         d₁x = embed.(Ref(h), d₁, Ref(RG))
         d₀x = embed.(Ref(h), d₀(parent(first(d₁)), S), Ref(RG))
 
         Δ₁⁺ = d₁x' * d₁x
         Δ₁⁻ = d₀x * d₀x'
-        Δ₁⁺ + Δ₁⁻, Δ₁⁺, Δ₁⁻
+        Δ₁⁺ + Δ₁⁻, Δ₁⁺, Δ₁⁻, d₀x
     end
 
     RG = group_ring(G, half_basis, star_multiplication = true)
 
-    Δ₁x = embed.(identity, Δ₁, Ref(RG))
-    Δ₁⁺x = embed.(identity, Δ₁⁺, Ref(RG))
-    Δ₁⁻x = embed.(identity, Δ₁⁻, Ref(RG))
+    Δ₁x = twist_coeffs ? embed.(identity, Δ₁, Ref(RG)) : Δ₁
+    Δ₁⁺x = twist_coeffs ? embed.(identity, Δ₁⁺, Ref(RG)) : Δ₁⁺
+    Δ₁⁻x = twist_coeffs ? embed.(identity, Δ₁⁻, Ref(RG)) : Δ₁⁻
 
     n = length(S)
     @assert size(Δ₁x, 1) === size(Δ₁x, 2) === n
-    Iₙ = [i ≠ j ? zero(RG) : one(RG) for i in 1:n, j in 1:n]
+    Iₙ = [i ≠ j ? zero(parent(first(Δ₁x))) : one(parent(first(Δ₁x))) for i in 1:n, j in 1:n]
 
-    return Δ₁x, Iₙ, Δ₁⁺x, Δ₁⁻x
+    if twist_coeffs
+        return Δ₁x, Iₙ, Δ₁⁺x, Δ₁⁻x
+    else
+        return Δ₁x, Iₙ, Δ₁⁺x, Δ₁⁻x, d₀_
+    end
 end
 
 function get_solution(m::JuMP.Model)

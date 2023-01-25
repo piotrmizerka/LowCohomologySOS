@@ -113,3 +113,43 @@ SAut_F(n) = Groups.SpecialAutomorphismGroup(FreeGroup(n))
         end
     end
 end
+
+@testset "star conjugation kills the first upper Laplacian" begin
+
+    function star_conj_test(G, wreath)
+        S = gens(G)
+        S_inv = [S; inv.(S)]
+        half_basis, sizes = Groups.wlmetric_ball(S_inv, radius = 2)
+        proper_S = wreath ? S_inv : S
+
+        Δ₁, Iₙ, Δ₁⁺, Δ₁⁻, d₀_ = LowCohomologySOS.laplacians(G, half_basis, proper_S, twist_coeffs = false)
+
+        zero_ = [zero(parent(first(Δ₁)));;]
+
+        @test d₀_'*Δ₁⁺*d₀_ == zero_
+    end
+
+    @testset "symmetric group actions" begin
+
+        @testset "SL(n,ℤ)" begin
+            star_conj_test(SL(3,Int8), false)
+        end
+
+        @testset "SAut(Fₙ)" begin
+            star_conj_test(SAut_F(3), false)
+        end
+
+    end
+
+    @testset "wreath product actions" begin
+
+        @testset "SL(n,ℤ)" begin
+            star_conj_test(SL(3,Int8), true)
+        end
+
+        @testset "SAut(Fₙ)" begin
+            star_conj_test(SAut_F(3), true)
+        end
+
+    end
+end
