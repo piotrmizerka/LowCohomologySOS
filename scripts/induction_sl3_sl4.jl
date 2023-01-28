@@ -10,8 +10,8 @@ using StarAlgebras
 using Groups
 using LowCohomologySOS
 
-const N = 3
-const M = 4
+const N = 4
+const M = 5
 
 i = LowCohomologySOS.sln_slm_embedding(N, M)
 
@@ -34,14 +34,17 @@ slM_half_basis, slM_sizes = Groups.wlmetric_ball(slM_S_inv, radius = half_radius
 
 slN_Δ₁, slN_Iₙ, slN_Δ₁⁺, slN_Δ₁⁻ = LowCohomologySOS.laplacians(slN, slN_half_basis, slN_S);
 slM_Δ₁, slM_Iₙ, slM_Δ₁⁺, slM_Δ₁⁻ = LowCohomologySOS.laplacians(slM, slM_half_basis, slM_S);
-slN_sq, slN_adj, slN_op = LowCohomologySOS.sq_adj_op(slN_Δ₁⁻, slN_S)
-slM_sq, slM_adj, slM_op = LowCohomologySOS.sq_adj_op(slM_Δ₁⁻, slM_S)
+slN_sq_diag, slN_sq_rev, slN_adj, slN_op = LowCohomologySOS.sq_adj_op(slN_Δ₁⁻, slN_S)
+slM_sq_diag, slM_sq_rev, slM_adj, slM_op = LowCohomologySOS.sq_adj_op(slM_Δ₁⁻, slM_S)
 
 RG_prime = parent(first(slM_Δ₁⁺))
 
 Δ₁⁺_emb = LowCohomologySOS.embed_matrix(slN_Δ₁⁺, i, RG_prime);
 # Δ₁⁻_emb = LowCohomologySOS.embed_matrix(slN_Δ₁⁻, i, RG_prime);
 adj_emb = LowCohomologySOS.embed_matrix(slN_adj, i, RG_prime);
+sq_diag_emb = LowCohomologySOS.embed_matrix(slN_sq_diag, i, RG_prime);
+sq_rev_emb = LowCohomologySOS.embed_matrix(slN_sq_rev, i, RG_prime);
+op_emb = LowCohomologySOS.embed_matrix(slN_op, i, RG_prime);
 
 # @assert parent(first(Δ₁⁺_emb)) == parent(first(Δ₁⁻_emb)) == parent(first(slM_Δ₁⁺)) == parent(first(slM_Δ₁⁻))
 @assert parent(first(Δ₁⁺_emb)) == parent(first(adj_emb)) == parent(first(slM_Δ₁⁺)) == parent(first(slM_adj))
@@ -50,8 +53,8 @@ using PermutationGroups
 
 Δ₁⁺_emb_symmetrized = let
     # Σ = PermutationGroups.SymmetricGroup(4)
-    Σ = PermGroup(Perm{Int8}[perm"(1,2,3)", perm"(1,2)(3,4)"]) # alternating group A₄
-    # Σ = PermGroup(Perm{Int8}[perm"(1,2,3)", perm"(1,2,3,4,5)"]) # alternating group A₅
+    # Σ = PermGroup(Perm{Int8}[perm"(1,2,3)", perm"(1,2)(3,4)"]) # alternating group A₄
+    Σ = PermGroup(Perm{Int8}[perm"(1,2,3)", perm"(1,2,3,4,5)"]) # alternating group A₅
     LowCohomologySOS.weyl_symmetrize_matrix(Δ₁⁺_emb, Σ, LowCohomologySOS._conj, slM_S)
 end
 
@@ -64,16 +67,38 @@ end
 
 adj_emb_symmetrized = let # n = 4
     # Σ = PermutationGroups.SymmetricGroup(n)
-    Σ = PermGroup(Perm{Int8}[perm"(1,2,3)", perm"(1,2)(3,4)"]) # alternating group A₄
-    # Σ = PermGroup(Perm{Int8}[perm"(1,2,3)", perm"(1,2,3,4,5)"]) # alternating group A₅
+    # Σ = PermGroup(Perm{Int8}[perm"(1,2,3)", perm"(1,2)(3,4)"]) # alternating group A₄
+    Σ = PermGroup(Perm{Int8}[perm"(1,2,3)", perm"(1,2,3,4,5)"]) # alternating group A₅
     LowCohomologySOS.weyl_symmetrize_matrix(adj_emb, Σ, LowCohomologySOS._conj, slM_S)
 end
 
-zero_ = [zero(RG_prime) for i in eachindex(slM_S), j in eachindex(slM_S)]
-3*slM_Δ₁⁺-Δ₁⁺_emb_symmetrized # it looks like symmetrization works for upper Laplacians!
-# 300*slM_Δ₁⁻-Δ₁⁻_emb_symmetrized
-# 3*slM_Δ₁⁺+9*slM_Δ₁⁻-Δ₁⁺_emb_symmetrized-Δ₁⁻_emb_symmetrized
-3*slM_adj-adj_emb_symmetrized # Adj symmetrizes as well!!
+sq_diag_symmetrized = let # n = 4
+    # Σ = PermutationGroups.SymmetricGroup(n)
+    # Σ = PermGroup(Perm{Int8}[perm"(1,2,3)", perm"(1,2)(3,4)"]) # alternating group A₄
+    Σ = PermGroup(Perm{Int8}[perm"(1,2,3)", perm"(1,2,3,4,5)"]) # alternating group A₅
+    LowCohomologySOS.weyl_symmetrize_matrix(sq_diag_emb, Σ, LowCohomologySOS._conj, slM_S)
+end
+
+sq_rev_symmetrized = let # n = 4
+    # Σ = PermutationGroups.SymmetricGroup(n)
+    # Σ = PermGroup(Perm{Int8}[perm"(1,2,3)", perm"(1,2)(3,4)"]) # alternating group A₄
+    Σ = PermGroup(Perm{Int8}[perm"(1,2,3)", perm"(1,2,3,4,5)"]) # alternating group A₅
+    LowCohomologySOS.weyl_symmetrize_matrix(sq_rev_emb, Σ, LowCohomologySOS._conj, slM_S)
+end
+
+op_emb_symmetrized = let # n = 4
+    # Σ = PermutationGroups.SymmetricGroup(n)
+    # Σ = PermGroup(Perm{Int8}[perm"(1,2,3)", perm"(1,2)(3,4)"]) # alternating group A₄
+    Σ = PermGroup(Perm{Int8}[perm"(1,2,3)", perm"(1,2,3,4,5)"]) # alternating group A₅
+    LowCohomologySOS.weyl_symmetrize_matrix(op_emb, Σ, LowCohomologySOS._conj, slM_S)
+end
+
+# zero_ = [zero(RG_prime) for i in eachindex(slM_S), j in eachindex(slM_S)]
+24*slM_Δ₁⁺-Δ₁⁺_emb_symmetrized # it looks like symmetrization works for upper Laplacians!
+24*slM_adj-adj_emb_symmetrized # Adj symmetrizes as well!!
+36*slM_sq_diag-sq_diag_symmetrized # Sq_diag symmetrizes
+36*slM_sq_rev-sq_rev_symmetrized # Sq_rev symmetrizes
+12*slM_op-op_emb_symmetrized # Op symmetrizes
 
 using JuMP
 
