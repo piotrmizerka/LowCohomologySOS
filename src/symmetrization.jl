@@ -64,16 +64,6 @@ function SymbolicWedderburn.action(
     return parent(gel)(word(gel)^(act.perms[g]))
 end
 
-function subset_permutation(
-    subset,
-    g::Groups.GroupElement,
-    act::AlphabetPermutation
-)
-    subset_idies = Dict(subset[i] => i for i in UInt32.(eachindex(subset)))
-
-    return PermutationGroups.Perm([subset_idies[SymbolicWedderburn.action(act, g, subset[i])] for i in UInt32.(eachindex(subset))])
-end
-
 struct WedderburnActions{AP,CEH1,CEH2} <: SymbolicWedderburn.ByPermutations
     alphabet_perm::AP
     S_action::CEH1
