@@ -44,7 +44,7 @@ end
 
 const half_radius = 2;
 const N = 3;
-const wreath_action = true;
+const wreath_action = false;
 
 slN, basis, half_basis, S = group_data(half_radius, N, wreath_action)
 
