@@ -175,8 +175,7 @@ function sq_adj_op(
 )
     RG = parent(first(Δ₁⁻))
     sln = parent(first(RG.basis))
-    sq_diag_pairs = []
-    sq_rev_pairs = []
+    sq_pairs = []
     adj_pairs = []
     op_pairs = []
     A = alphabet(sln)
@@ -185,11 +184,7 @@ function sq_adj_op(
             s_i, s_j = A[word(S[s])[1]].i, A[word(S[s])[1]].j
             t_i, t_j = A[word(S[t])[1]].i, A[word(S[t])[1]].j
             if length(intersect!([s_i,s_j],[t_i,t_j])) == 2
-                if [s_i,s_j] == [t_i,t_j]
-                    push!(sq_diag_pairs,(s,t))
-                else
-                    push!(sq_rev_pairs,(s,t))
-                end
+                push!(sq_pairs,(s,t))
             elseif length(intersect!([s_i,s_j],[t_i,t_j])) == 1
                 push!(adj_pairs,(s,t))
             else
@@ -198,12 +193,11 @@ function sq_adj_op(
         end
     end
 
-    sq_diag = [(i,j) in sq_diag_pairs ? Δ₁⁻[i,j] : zero(RG) for i in eachindex(S), j in eachindex(S)]
-    sq_rev = [(i,j) in sq_rev_pairs ? Δ₁⁻[i,j] : zero(RG) for i in eachindex(S), j in eachindex(S)]
+    sq = [(i,j) in sq_pairs ? Δ₁⁻[i,j] : zero(RG) for i in eachindex(S), j in eachindex(S)]
     adj = [(i,j) in adj_pairs ? Δ₁⁻[i,j] : zero(RG) for i in eachindex(S), j in eachindex(S)]
     op = [(i,j) in op_pairs ? Δ₁⁻[i,j] : zero(RG) for i in eachindex(S), j in eachindex(S)]
 
-    @assert sq_diag+sq_rev+adj+op == Δ₁⁻
+    @assert sq+adj+op == Δ₁⁻
 
-    return sq_diag, sq_rev, adj, op
+    return sq, adj, op
 end
