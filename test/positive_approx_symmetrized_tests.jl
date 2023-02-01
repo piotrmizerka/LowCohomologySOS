@@ -128,7 +128,51 @@ function wedderburn_tests(action_type, group_name, N, half_radius)
     end
 end
 
+function sq_test(action_type)
+    testset_name = action_type*" Sq cetification for SL₃(ℤ)"
+    @testset "$testset_name" begin 
+        N = 3
+        G = MatrixGroups.SpecialLinearGroup{N}(Int8)
+        S_inv = let S = gens(G)
+            [S; inv.(S)]
+        end
+        S = (action_type == "symmetric") ? gens(G) : S_inv
+        basis, sizes = Groups.wlmetric_ball(S_inv, radius = 4)
+        half_basis = basis[1:sizes[2]]
+        Δ₁, Iₙ, Δ₁⁺, Δ₁⁻ = LowCohomologySOS.laplacians(G, half_basis, S)
+        half_basis_wed = basis[1:sizes[1]]
+        RG_wed = LowCohomologySOS.group_ring(G, half_basis_wed, star_multiplication = true)
+
+        Δ₁⁻_wed = LowCohomologySOS.embed.(identity, Δ₁⁻, Ref(RG_wed))
+        sq, adj, op = LowCohomologySOS.sq_adj_op(Δ₁⁻_wed, S)
+        Iₙ = [i ≠ j ? zero(RG_wed) : one(RG_wed) for i in 1:length(S), j in 1:length(S)]
+
+        Σ = (action_type == "symmetric") ? PermutationGroups.SymmetricGroup(N) : Groups.Constructions.WreathProduct(PermutationGroups.SymmetricGroup(2), PermutationGroups.SymmetricGroup(N))
+        actions = LowCohomologySOS.WedderburnActions(alphabet(parent(first(S))), Σ, LowCohomologySOS._conj, S, RG_wed.basis)
+        constraints_basis, psd_basis = LowCohomologySOS.matrix_bases(RG_wed.basis, half_basis_wed, S)
+        w_dec_matrix = SymbolicWedderburn.WedderburnDecomposition(Float64, Σ, actions, constraints_basis, psd_basis)
+
+        sos_pr_sym = LowCohomologySOS.sos_problem(
+            sq,
+            Iₙ,
+            w_dec_matrix,
+            1.0
+        )
+        JuMP.set_optimizer(sos_pr_sym[1], scs_opt(eps = 1e-7, max_iters = 5_000))
+        JuMP.optimize!(sos_pr_sym[1])
+        λ, Q = LowCohomologySOS.get_solution(sos_pr_sym[1], sos_pr_sym[2], w_dec_matrix)
+        estimated_sos = LowCohomologySOS.sos_from_matrix(RG_wed, Q, half_basis_wed)
+        eoi = sq-λ*Iₙ
+        residual = eoi - estimated_sos
+        l1_norm = sum(x -> norm(x, 1), residual)
+    
+        @test l1_norm.hi < 0.001
+    end
+end
+
 wedderburn_tests("symmetric", "sln", 3, 1)
 wedderburn_tests("symmetric", "sautfn", 3, 1)
 wedderburn_tests("wreath", "sln", 3, 1)
 wedderburn_tests("wreath", "sautfn", 3, 1)
+sq_test("symmetric")
+sq_test("wreath")
