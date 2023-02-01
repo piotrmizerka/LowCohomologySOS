@@ -159,7 +159,7 @@ end
         quotient_hom,
         relations,
         half_basis,
-        optimizer = scs_opt(verbose = false),
+        optimizer = scs_opt(verbose = false)
     )
 
     RG = parent(first(solution.laplacian))

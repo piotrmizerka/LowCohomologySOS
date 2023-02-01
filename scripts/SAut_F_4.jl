@@ -26,9 +26,10 @@ function group_data(half_radius, N, wreath_action)
     return SAut_F_N, ℝSAutF_N_star.basis, half_basis, S
 end
 
-function wedderburn_data(basis, half_basis, S, N, wreath_action)
+function wedderburn_data(basis, half_basis, S)
     @time begin
-        if wreath_action
+        N = length((parent(first(S))).domain)
+        if length(S) == 4*N*(N-1)
             Z_2_wr_S(n) = Groups.Constructions.WreathProduct(PermutationGroups.SymmetricGroup(2), PermutationGroups.SymmetricGroup(n))
             Σ = Z_2_wr_S(N)
         else
@@ -47,9 +48,15 @@ const wreath_action = true;
 
 SAut_F_N, basis, half_basis, S = group_data(half_radius, N, wreath_action)
 
-Δ₁, Iₙ, Δ₁⁺, Δ₁⁻ = LowCohomologySOS.sautfn_laplacians(SAut_F_N, half_basis, S, wreath_action)
+Δ₁, Iₙ, Δ₁⁺, Δ₁⁻ = LowCohomologySOS.laplacians(SAut_F_N, half_basis, S)
 
-constraints_basis, psd_basis, Σ, action = wedderburn_data(basis, half_basis, S, N, wreath_action);
+constraints_basis, psd_basis, Σ, action = wedderburn_data(basis, half_basis, S);
+
+# there is no point of finding a solution if we don't provide invariant matrix
+for σ in Σ
+    @assert LowCohomologySOS.act_on_matrix(Δ₁, σ, action.alphabet_perm, S) == Δ₁
+    @assert LowCohomologySOS.act_on_matrix(Iₙ, σ, action.alphabet_perm, S) == Iₙ
+end
 
 SymbolicWedderburn._int_type(::Type{<:SymbolicWedderburn.InducedActionHomomorphism}) = UInt32
 
@@ -63,7 +70,6 @@ end
         Δ₁, 
         Iₙ,
         w_dec_matrix,
-        length(collect(Σ)),
         1.0
     )
 end

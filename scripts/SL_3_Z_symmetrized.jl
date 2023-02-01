@@ -26,9 +26,10 @@ function group_data(half_radius, N, wreath_action)
     return slN, RslN_star.basis, half_basis, S
 end
 
-function wedderburn_data(basis, half_basis, S, N, wreath_action)
+function wedderburn_data(basis, half_basis, S)
     @time begin
-        if wreath_action
+        N = size(first(S))[1]
+        if length(S) == 2*N*(N-1)
             Z_2_wr_S(n) = Groups.Constructions.WreathProduct(PermutationGroups.SymmetricGroup(2), PermutationGroups.SymmetricGroup(n))
             Σ = Z_2_wr_S(N)
         else
@@ -42,15 +43,20 @@ function wedderburn_data(basis, half_basis, S, N, wreath_action)
 end
 
 const half_radius = 2;
-const N = 2;
+const N = 3;
 const wreath_action = false;
 
 slN, basis, half_basis, S = group_data(half_radius, N, wreath_action)
 
-# TODO  starting from below
-Δ₁, Iₙ, Δ₁⁺, Δ₁⁻ = LowCohomologySOS.sln_laplacians(slN, half_basis, S, wreath_action)
+Δ₁, Iₙ, Δ₁⁺, Δ₁⁻ = LowCohomologySOS.laplacians(slN, half_basis, S)
 
-constraints_basis, psd_basis, Σ, action = wedderburn_data(basis, half_basis, S, N, wreath_action);
+constraints_basis, psd_basis, Σ, action = wedderburn_data(basis, half_basis, S);
+
+# there is no point of finding a solution if we don't provide invariant matrix
+for σ in Σ
+    @assert LowCohomologySOS.act_on_matrix(Δ₁, σ, action.alphabet_perm, S) == Δ₁
+    @assert LowCohomologySOS.act_on_matrix(Iₙ, σ, action.alphabet_perm, S) == Iₙ
+end
 
 @time begin
     @info "Wedderburn:"
@@ -62,8 +68,7 @@ end
         Δ₁, 
         Iₙ,
         w_dec_matrix,
-        length(collect(Σ)),
-        1.0
+        0.7
     )
 end
 
@@ -77,7 +82,8 @@ slN_data = (
 solve_in_loop(
     Δ₁_sos_problem,
     w_dec_matrix,
-    logdir = "./LowCohomologySOS/logs",
-    optimizer = scs_opt(eps = 1e-9, max_iters = 10_000),
+    logdir = "./logs",
+    optimizer = scs_opt(eps = 1e-9, max_iters = 20_000),
     data = slN_data
 )
+

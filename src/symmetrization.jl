@@ -12,6 +12,7 @@ function _conj(
     x::Groups.Constructions.WreathProductElement,
 )
     tσ = _conj(t, inv(x.p))
+    # tσ = _conj(t, x.p) why not that one??
     dual_id = ifelse(t.id == :ϱ, :λ, :ϱ)
     dual_inv = ifelse(t.inv, false, true)
     new_id = isone(x.n.elts[t.i]) ? t.id : dual_id
@@ -35,8 +36,11 @@ function _conj(
     x::Groups.Constructions.WreathProductElement
 )
     N = size(MatrixGroups.matrix_repr(l))[1]
-    lσ = _conj(l, inv(x.p))
-    return Groups.MatrixGroups.ElementaryMatrix{N}(lσ.i, lσ.j, -l.val)
+    lσ = _conj(l, x.p)
+    dual_val = ifelse(l.val == Int8(-1), Int8(1), Int8(-1))
+    new_val = isone(x.n.elts[l.i]*x.n.elts[l.j]) ? l.val : dual_val
+
+    return Groups.MatrixGroups.ElementaryMatrix{N}(lσ.i, lσ.j, new_val)
 end
 
 struct AlphabetPermutation{GEl,I} <: SymbolicWedderburn.ByPermutations
@@ -58,16 +62,6 @@ function SymbolicWedderburn.action(
     gel,
 )
     return parent(gel)(word(gel)^(act.perms[g]))
-end
-
-function subset_permutation(
-    subset,
-    g::Groups.GroupElement,
-    act::AlphabetPermutation
-)
-    subset_idies = Dict(subset[i] => i for i in UInt32.(eachindex(subset)))
-
-    return PermutationGroups.Perm([subset_idies[SymbolicWedderburn.action(act, g, subset[i])] for i in UInt32.(eachindex(subset))])
 end
 
 struct WedderburnActions{AP,CEH1,CEH2} <: SymbolicWedderburn.ByPermutations
@@ -170,15 +164,14 @@ end
 function act_on_matrix(
     M::AbstractMatrix{<:AlgebraElement}, # M has to be square and indexed by the generators
     σ::Groups.GroupElement,
-    act::LowCohomologySOS.AlphabetPermutation
+    act::LowCohomologySOS.AlphabetPermutation,
+    S
 )
     RG = parent(first(M))
-    G = parent(first(basis(RG)))
-    S = gens(G)
     gen_idies = Dict(S[i] => i for i in eachindex(S))
     basis_ = basis(RG)
 
-    result = [zero(RG) for i in eachindex(S), j in eachindex(S)]
+    result = [zero(typeof(first(StarAlgebras.coeffs(first(M)))))*zero(RG) for i in eachindex(S), j in eachindex(S)]
 
     for i in eachindex(S)
         for j in eachindex(S)
@@ -199,17 +192,17 @@ end
 function weyl_symmetrize_matrix(
     M::AbstractMatrix{<:AlgebraElement},
     Σ, # the symmetry group (either symmetric group or wreath product)
-    op
+    op,
+    S # a chosen generatng set for G (see below)
 )
     RG = parent(first(M))
     G = parent(first(basis(RG)))
-    S = gens(G)
 
     alphabet_permutation_ = AlphabetPermutation(alphabet(G), Σ, op)
 
     result = [zero(RG) for i in eachindex(S), j in eachindex(S)]
     for σ in Σ
-        result += act_on_matrix(M, σ, alphabet_permutation_)
+        result += act_on_matrix(M, σ, alphabet_permutation_, S)
     end
 
     return result
