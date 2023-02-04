@@ -2,7 +2,8 @@ function laplacians(
     G, # either SL(n,ℤ) or SAut(Fₙ)
     half_basis,
     S; # the generating set for G: either elementary matrices for SL(n,ℤ) or Nielsen transvections for SAut(Fₙ)
-    twist_coeffs = true
+    twist_coeffs = true,
+    sq_adj_op_ = "all"
 )
     N = typeof(G) <: MatrixGroups.SpecialLinearGroup ? size(first(gens(G)))[1] : length(G.domain)
     
@@ -32,7 +33,7 @@ function laplacians(
         @assert quotient_hom(gens(F_G,i)^(-1)) == S[i]^(-1)
     end
 
-    relationsx = relations(G, F_G, S, symmetric_action, N)
+    relationsx = relations(G, F_G, S, symmetric_action, N, sq_adj_op_)
 
     return LowCohomologySOS.spectral_gap_elements(quotient_hom, relationsx, half_basis, twist_coeffs = twist_coeffs)
 end
@@ -43,7 +44,8 @@ function relations(
     F_G::Groups.FreeGroup,
     S, # the generating set for G: either elementary matrices for SL(n,ℤ) or Nielsen transvections for SAut(Fₙ)
     symmetric_action::Bool, # true for the action of Sₙ, false assuming the action of ℤ₂≀Sₙ
-    N::Integer
+    N::Integer,
+    sq_adj_op_
 )
     gen_dict = Dict(determine_letter(S[i]) => gens(F_G, i) for i in eachindex(S))
 
@@ -57,38 +59,54 @@ function relations(
         # The presentation taken from the article of Conder et. al.: https://www.jstor.org/stable/2159559#metadata_info_tab_contents 
         e(i,j,ε) = gen_dict[MatrixGroups.ElementaryMatrix{N}(i,j,Int8(ε)*Int8(1))]
 
-        # quadruples_total = [(i,j,k,m) for k ∈ 1:N
-        #                         for m ∈ deleteat!(copy(range_as_list), findall(m->m==k,copy(range_as_list)))
-        #                         for i ∈ deleteat!(copy(range_as_list), findall(i->i==m,copy(range_as_list))) 
-        #                         for j ∈ deleteat!(copy(range_as_list), findall(j->j∈[i,k],copy(range_as_list)))]
-        # quadruples_wrong_inds = []
-        # for ind in eachindex(quadruples_total)
-        #     (i,j,k,m) = quadruples_total[ind]
-        #     if (i,j) == (k,m)
-        #         append!(quadruples_wrong_inds, ind)
-        #     end
-        # end
-        # quadruples_wrong = [quadruples_total[ind] for ind in quadruples_wrong_inds]
-        # quadruples = setdiff(quadruples_total, quadruples_wrong)
+        quadruples = [(i,j,k,m) for k ∈ 1:N
+                                for m ∈ deleteat!(copy(range_as_list), findall(m->m==k,copy(range_as_list)))
+                                for i ∈ deleteat!(copy(range_as_list), findall(i->i==m,copy(range_as_list))) 
+                                for j ∈ deleteat!(copy(range_as_list), findall(j->j∈[i,k],copy(range_as_list)))]
+        quadruples_sq = []
+        quadruples_adj = []
+        quadruples_op = []
+        for quad in quadruples
+            (i,j,k,m) = quad
+            if length(intersect!([i,j],[k,m])) == 2
+                push!(quadruples_sq,quad)
+            elseif length(intersect!([i,j],[k,m])) == 1
+                push!(quadruples_adj,quad)
+            else
+                push!(quadruples_op,quad)
+            end
+        end
         
         if symmetric_action
             e(i,j) = e(i,j,1)
-            relations = vcat(
-                # [e(i,j)*e(k,m)*e(i,j)^(-1)*e(k,m)^(-1) for (i,j,k,m) ∈ quadruples], # for now, let's try to remove these relations
+            relations_sq = vcat(
+                [e(i,j)*e(k,m)*e(i,j)^(-1)*e(k,m)^(-1) for (i,j,k,m) ∈ quadruples_sq]
+            )
+            relations_adj = vcat(
+                [e(i,j)*e(k,m)*e(i,j)^(-1)*e(k,m)^(-1) for (i,j,k,m) ∈ quadruples_adj],
                 [e(i,j)*e(i,k)*e(i,j)^(-1)*e(i,k)^(-1) for (i,j,k) ∈ triples],
                 [e(i,j)*e(k,j)*e(i,j)^(-1)*e(k,j)^(-1) for (i,j,k) ∈ triples],
                 [e(i,j)*e(j,k)*e(i,j)^(-1)*e(j,k)^(-1)*e(i,k)^(-1) for (i,j,k) ∈ triples]
             )
+            relations_op = vcat(
+                [e(i,j)*e(k,m)*e(i,j)^(-1)*e(k,m)^(-1) for (i,j,k,m) ∈ quadruples_op]
+            )
         else # wreath product action
-            relations = vcat(
+            relations_sq = vcat(
                 [e(i,j,ε)*e(i,j,-ε) for (i,j) ∈ pairs for ε ∈ [1,-1]],
-                # [e(i,j,ε₁)*e(k,l,ε₂)*e(i,j,-ε₁)*e(k,l,-ε₂) for (i,j,k,l) ∈ quadruples for ε₁ ∈ [1,-1] for ε₂ ∈ [1,-1]],
+                [e(i,j,ε₁)*e(k,l,ε₂)*e(i,j,-ε₁)*e(k,l,-ε₂) for (i,j,k,l) ∈ quadruples_sq for ε₁ ∈ [1,-1] for ε₂ ∈ [1,-1]]
+            )
+            relations_adj = vcat(
+                [e(i,j,ε₁)*e(k,l,ε₂)*e(i,j,-ε₁)*e(k,l,-ε₂) for (i,j,k,l) ∈ quadruples_adj for ε₁ ∈ [1,-1] for ε₂ ∈ [1,-1]],
                 [e(i,j,ε₁)*e(i,k,ε₂)*e(i,j,-ε₁)*e(i,k,-ε₂) for (i,j,k) ∈ triples for ε₁ ∈ [1,-1] for ε₂ ∈ [1,-1]],
                 [e(i,j,ε₁)*e(k,j,ε₂)*e(i,j,-ε₁)*e(k,j,-ε₂) for (i,j,k) ∈ triples for ε₁ ∈ [1,-1] for ε₂ ∈ [1,-1]],
                 [e(i,j,ε₁)*e(j,k,ε₂)*e(i,j,-ε₁)*e(j,k,-ε₂)*e(i,k,-ε₁*ε₂) for (i,j,k) ∈ triples for ε₁ ∈ [1,-1] for ε₂ ∈ [1,-1]]
             )
+            relations_op = vcat(
+                [e(i,j,ε₁)*e(k,l,ε₂)*e(i,j,-ε₁)*e(k,l,-ε₂) for (i,j,k,l) ∈ quadruples_op for ε₁ ∈ [1,-1] for ε₂ ∈ [1,-1]]
+            )
         end
-    else
+    else # TODO: sq, adj, and op rels for SAutfns
         # The relations are derived from the Gersten's article, https://www.sciencedirect.com/science/article/pii/0022404984900628,
         # Theorem 2.8. Note that our convention assumes the automorphism composition order reversed with respect to Gersten's.
         # Therefore, the order of letters in the relators had to be reversed as well (earlier, we had to change Gertsen's symbols E_a_b
@@ -145,7 +163,14 @@ function relations(
         end
     end
 
-    return relations
+    if sq_adj_op_ == "sq" 
+        return relations_sq
+    elseif sq_adj_op_ == "adj"
+        return relations_adj
+    elseif sq_adj_op_ == "op"
+        return relations_op
+    end
+    return vcat(relations_sq, relations_adj, relations_op)
 end
 
 function determine_letter(g)
