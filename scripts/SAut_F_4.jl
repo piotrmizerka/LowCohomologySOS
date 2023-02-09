@@ -48,13 +48,16 @@ const wreath_action = true;
 
 SAut_F_N, basis, half_basis, S = group_data(half_radius, N, wreath_action)
 
-Δ₁, Iₙ, Δ₁⁺, Δ₁⁻ = LowCohomologySOS.laplacians(SAut_F_N, half_basis, S)
+Δ₁, Iₙ, Δ₁⁺, Δ₁⁻ = LowCohomologySOS.laplacians(SAut_F_N, half_basis, S, sq_adj_op_ = "adj")
+sq, adj, op = LowCohomologySOS.sq_adj_op(Δ₁⁻, S)
+
+M = Δ₁⁺+adj
 
 constraints_basis, psd_basis, Σ, action = wedderburn_data(basis, half_basis, S);
 
 # there is no point of finding a solution if we don't provide invariant matrix
 for σ in Σ
-    @assert LowCohomologySOS.act_on_matrix(Δ₁, σ, action.alphabet_perm, S) == Δ₁
+    @assert LowCohomologySOS.act_on_matrix(M, σ, action.alphabet_perm, S) == M
     @assert LowCohomologySOS.act_on_matrix(Iₙ, σ, action.alphabet_perm, S) == Iₙ
 end
 
@@ -66,23 +69,22 @@ SymbolicWedderburn._int_type(::Type{<:SymbolicWedderburn.InducedActionHomomorphi
 end
 
 @time begin
-    Δ₁_sos_problem = LowCohomologySOS.sos_problem(
-        Δ₁, 
+    sos_problem = LowCohomologySOS.sos_problem(
+        M, 
         Iₙ,
         w_dec_matrix,
-        1.0
+        0.7
     )
 end
 
 SAut_F_N_data = (
-    M = Δ₁,
+    M = M,
     order_unit = Iₙ,
-    half_basis = half_basis,
-    RG = parent(first(Δ₁)),
+    half_basis = half_basis
 )
 
 solve_in_loop(
-    Δ₁_sos_problem,
+    sos_problem,
     w_dec_matrix,
     logdir = "./LowCohomologySOS/logs",
     optimizer = scs_opt(eps = 1e-9, max_iters = 10_000),
