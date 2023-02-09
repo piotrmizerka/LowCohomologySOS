@@ -46,7 +46,7 @@ SAut_F(n) = Groups.SpecialAutomorphismGroup(FreeGroup(n))
 
             r12, r13, r21, r23, r31, r32, l12, l13, l21, l23, l31, l32 = gens(F_G)
 
-            quadruple_relations = [
+            commutator_relations = [
                 r32^(-1) * r12^(-1) * r32 * r12,
                 r23^(-1) * r13^(-1) * r23 * r13,
                 r31^(-1) * r21^(-1) * r31 * r21,
@@ -73,7 +73,7 @@ SAut_F(n) = Groups.SpecialAutomorphismGroup(FreeGroup(n))
                 l31^(-1) * r31^(-1) * l31 * r31
             ]
 
-            @test issubset(quadruple_relations, relations)
+            @test issubset(commutator_relations, relations)
             @test length(relations) == 78
         end
     end
@@ -114,7 +114,7 @@ SAut_F(n) = Groups.SpecialAutomorphismGroup(FreeGroup(n))
     end
 end
 
-@testset "star conjugation kills yields the squared Laplacian" begin
+@testset "star conjugation yields the squared Laplacian" begin
 
     function star_conj_test(G, wreath)
         S = gens(G)
