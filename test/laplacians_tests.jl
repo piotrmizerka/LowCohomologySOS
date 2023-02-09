@@ -90,7 +90,7 @@ SAut_F(n) = Groups.SpecialAutomorphismGroup(FreeGroup(n))
 
             relations = LowCohomologySOS.relations(G, F_G, S, symmetric_action, 3)
 
-            @test_broken length(relations) == 48
+            @test length(relations) == 4*18+6*2+6*4
         end
 
         @testset "SAut(Fₙ)" begin
