@@ -40,7 +40,7 @@ function sos_problem(
     JuMP.@objective(result, Max, λ)
 
     if upper_bound < Inf
-        λ = JuMP.@constraint(result, λ <= upper_bound)
+        JuMP.@constraint(result, λ <= upper_bound)
     end
 
     cnstrs = constraints(A.mstructure)
