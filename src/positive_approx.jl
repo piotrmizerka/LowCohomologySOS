@@ -60,63 +60,6 @@ function sos_problem(
     return result
 end
 
-# We want to find α, β, and λ such that
-# α*A+β*B-M-λ*order_unit = SOS
-function sos_problem(
-    A::AbstractMatrix{<:AlgebraElement},
-    B::AbstractMatrix{<:AlgebraElement},
-    M::AbstractMatrix{<:AlgebraElement},
-    order_unit::AbstractMatrix{<:AlgebraElement},
-    upper_bound::Float64 = Inf,
-)
-    @assert size(A) == size(B) == size(M) == size(order_unit)
-    @assert !isempty(A) && !isempty(B) && !isempty(M) && !isempty(order_unit)
-
-    RG = parent(first(A))
-    @assert all(x -> parent(x) === RG, A)
-    @assert all(x -> parent(x) === RG, B)
-    @assert all(x -> parent(x) === RG, M)
-    @assert all(x -> parent(x) === RG, order_unit)
-
-    m = size(RG.mstructure, 1)
-    n = LinearAlgebra.checksquare(A)
-    mn = m * n
-    result = JuMP.Model()
-
-    JuMP.@variable(result, P[1:mn, 1:mn], Symmetric)
-    JuMP.@constraint(result, sdp, P in JuMP.PSDCone())
-
-    JuMP.@variable(result, λ)
-    JuMP.@objective(result, Max, λ)
-
-    if upper_bound < Inf
-        λ = JuMP.@constraint(result, λ <= upper_bound)
-    end
-
-    JuMP.@variable(result, α)
-    JuMP.@variable(result, β)
-    JuMP.@constraint(result, α >= 0.3)
-    JuMP.@constraint(result, β >= 0.05)
-
-    cnstrs = constraints(RG.mstructure)
-    @assert length(cnstrs) == length(basis(RG))
-
-    for idx in CartesianIndices(A)
-        i, j = Tuple(idx)
-        Pⁱʲ = @view P[KroneckerDelta{n}(i, j)]
-
-        aij = A[idx]
-        bij = B[idx]
-        mij = M[idx]
-        uij = order_unit[idx]
-
-        for (RG_g, g) in zip(cnstrs, basis(RG))
-            JuMP.@constraint(result, α*aij(g) + β*bij(g) - mij(g) - λ * uij(g) == dot(RG_g, Pⁱʲ))
-        end
-    end
-    return result
-end
-
 # h:Free group --> our group G
 function spectral_gap_elements(
     h,
