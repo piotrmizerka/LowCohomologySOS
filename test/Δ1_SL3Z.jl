@@ -34,7 +34,7 @@ include(joinpath(@__DIR__, "..", "scripts", "utils.jl"))
         e32 * e21 * e32^(-1) * e21^(-1) * e31^(-1),
     ]
 
-    Δ₁x, Iₙ = LowCohomologySOS.spectral_gap_elements(quotient_hom, relations, half_basis)
+    Δ₁x, Iₙ, Δ₁⁺x, Δ₁⁻x = LowCohomologySOS.spectral_gap_elements(quotient_hom, relations, half_basis)
     Δ₁x, Iₙ, half_basis
 end
 

@@ -1,6 +1,3 @@
-basis(A::StarAlgebras.StarAlgebra) = A.basis
-basis(w::WedderburnDecomposition) = w.basis
-
 function coeffs(
     M::AbstractMatrix{<:AlgebraElement},
     n::Integer # generators number
@@ -24,32 +21,31 @@ end
 function invariant_constraint_matrix(
     v_inv::AbstractVector,
     A_gs_cart,
-    m::Integer, # stands for half_basis size
-    Σ_order::Integer
+    m::Integer # stands for half_basis size
 )
     bs = length(A_gs_cart)
     n = isqrt(div(length(v_inv), bs))
-    result = spzeros(Int, m*n, m*n)
+    C_ind = CartesianIndices((bs,n,n))
+    result = spzeros(typeof(first(v_inv)), m*n, m*n)
     dropzeros!(result)
     for it in SparseArrays.nonzeroinds(v_inv)
-        i, j, k = div(it-1,bs*n)+1, div((it-1)%(bs*n),bs)+1, (it-1)%bs+1
+        k,j,i = Tuple(C_ind[it])
         out_left = (j-1)*m^2*n
         out_up = (i-1)*m
         for ci in A_gs_cart[k]
             e, f = ci[1], ci[2]
             in_left_f = (f-1)*m*n
-            result[out_left+in_left_f+out_up+e] += 1
+            result[out_left+in_left_f+out_up+e] += v_inv[it]
         end
     end
 
-    return result/Σ_order
+    return result
 end
 
 function sos_problem(
     M::AbstractMatrix{<:AlgebraElement},
     order_unit::AbstractMatrix{<:AlgebraElement},
     w_dec_matrix::SymbolicWedderburn.WedderburnDecomposition,
-    Σ_order::Integer,
     upper_bound::Float64 = Inf,
 )
     @assert size(M) == size(order_unit)
@@ -93,7 +89,7 @@ function sos_problem(
         u_c = dot(U_c, v_inv)
         lhs = m_c-λ*u_c
         rhs = zero(typeof(lhs))
-        matrix_inv = invariant_constraint_matrix(v_inv, A_gs_cart, m, Σ_order)
+        matrix_inv = invariant_constraint_matrix(v_inv, A_gs_cart, m)
         for (Uπ, Pπ, deg) in Uπs_Pπs_degrees
             JuMP.add_to_expression!(rhs, deg, dot_fast(Uπ*matrix_inv*Uπ', Pπ))
         end

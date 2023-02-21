@@ -1,9 +1,4 @@
-Base.:/(G::Groups.AbstractFPGroup, rels::AbstractVector{<:FPGroupElement}) =
-    FPGroup(G, [r => one(G) for r in rels])
 Base.adjoint(X::AlgebraElement) = StarAlgebras.star(X)
-Base.copy(X::AlgebraElement) =
-    AlgebraElement(copy(StarAlgebras.coeffs(X)), parent(X))
-
 StarAlgebras.star(g::Groups.AbstractFPGroupElement) = inv(g)
 
 # Group ring with the basis given by the prescribed support
