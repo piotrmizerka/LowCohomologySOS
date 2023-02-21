@@ -1,3 +1,5 @@
+using Pkg
+Pkg.activate(normpath(joinpath(@__DIR__, "../")))
 using LinearAlgebra
 ENV["JULIA_NUM_THREADS"] = Sys.CPU_THREADS÷2
 LinearAlgebra.BLAS.set_num_threads(Sys.CPU_THREADS÷2)
@@ -46,8 +48,7 @@ end
 SL₃ℤ_data = (
     M = Δ₁,
     order_unit = Iₙ,
-    half_basis = half_basis,
-    RG = parent(first(Δ₁)),
+    half_basis = half_basis
 )
 
 Δ₁_sos_problem = LowCohomologySOS.sos_problem(Δ₁, Iₙ)
