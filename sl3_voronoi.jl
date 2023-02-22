@@ -57,13 +57,18 @@ d3'*d3
 Δ₃ = d4*d4'+d3'*d3
 I₂ = [one(RG) zero(RG);zero(RG) one(RG)]
 
+half_basis_prime = basis[1:sizes[2]]
+RG_prime = LowCohomologySOS.group_ring(sl3, half_basis_prime, star_multiplication = true)
+Δ₃ = LowCohomologySOS.embed.(identity, Δ₃, Ref(RG_prime))
+I₂ = LowCohomologySOS.embed.(identity, I₂, Ref(RG_prime))
+
 sl3_voronoi_data = (
     M = Δ₃,
     order_unit = I₂,
-    half_basis = half_basis
+    half_basis = half_basis_prime
 )
 
-Δ₃_sos_problem = LowCohomologySOS.sos_problem(Δ₃, Iₙ)
+Δ₃_sos_problem = LowCohomologySOS.sos_problem(Δ₃, I₂)
 
 solve_in_loop(
     Δ₃_sos_problem,
