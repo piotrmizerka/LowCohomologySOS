@@ -2,6 +2,9 @@ using Pkg
 Pkg.activate(normpath(joinpath(@__DIR__, "./")))
 using Groups
 using LowCohomologySOS
+using JuMP
+include(joinpath(@__DIR__, "./scripts/optimizers.jl"))
+include(joinpath(@__DIR__, "./scripts/utils.jl"))
 
 sl3 = MatrixGroups.SpecialLinearGroup{3}(Int8)
 S = gens(sl3)
