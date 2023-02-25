@@ -14,15 +14,15 @@
     for g in Σ
         i, j = rand(1:3), rand(1:3)
         if isone(g.n.elts[i])
-            @test _conj(Groups.Transvection(:ϱ, i, j), g) == Groups.Transvection(:ϱ, inv(g.p)[i], inv(g.p)[j], isone(g.n.elts[j]) ? false : true)
-            @test _conj(Groups.Transvection(:λ, i, j), g) == Groups.Transvection(:λ, inv(g.p)[i], inv(g.p)[j], isone(g.n.elts[j]) ? false : true)
-            @test _conj(Groups.Transvection(:ϱ, i, j, true), g) == Groups.Transvection(:ϱ, inv(g.p)[i], inv(g.p)[j], isone(g.n.elts[j]) ? true : false)
-            @test _conj(Groups.Transvection(:λ, i, j, true), g) == Groups.Transvection(:λ, inv(g.p)[i], inv(g.p)[j], isone(g.n.elts[j]) ? true : false)
+            @test _conj(Groups.Transvection(:ϱ, i, j), g) == Groups.Transvection(:ϱ, g.p[i], g.p[j], isone(g.n.elts[j]) ? false : true)
+            @test _conj(Groups.Transvection(:λ, i, j), g) == Groups.Transvection(:λ, g.p[i], g.p[j], isone(g.n.elts[j]) ? false : true)
+            @test _conj(Groups.Transvection(:ϱ, i, j, true), g) == Groups.Transvection(:ϱ, g.p[i], g.p[j], isone(g.n.elts[j]) ? true : false)
+            @test _conj(Groups.Transvection(:λ, i, j, true), g) == Groups.Transvection(:λ, g.p[i], g.p[j], isone(g.n.elts[j]) ? true : false)
         else
-            @test _conj(Groups.Transvection(:ϱ, i, j), g) == Groups.Transvection(:λ, inv(g.p)[i], inv(g.p)[j], isone(g.n.elts[j]) ? true : false)
-            @test _conj(Groups.Transvection(:λ, i, j), g) == Groups.Transvection(:ϱ, inv(g.p)[i], inv(g.p)[j], isone(g.n.elts[j]) ? true : false)
-            @test _conj(Groups.Transvection(:ϱ, i, j, true), g) == Groups.Transvection(:λ, inv(g.p)[i], inv(g.p)[j], isone(g.n.elts[j]) ? false : true)
-            @test _conj(Groups.Transvection(:λ, i, j, true), g) == Groups.Transvection(:ϱ, inv(g.p)[i], inv(g.p)[j], isone(g.n.elts[j]) ? false : true)
+            @test _conj(Groups.Transvection(:ϱ, i, j), g) == Groups.Transvection(:λ, g.p[i], g.p[j], isone(g.n.elts[j]) ? true : false)
+            @test _conj(Groups.Transvection(:λ, i, j), g) == Groups.Transvection(:ϱ, g.p[i], g.p[j], isone(g.n.elts[j]) ? true : false)
+            @test _conj(Groups.Transvection(:ϱ, i, j, true), g) == Groups.Transvection(:λ, g.p[i], g.p[j], isone(g.n.elts[j]) ? false : true)
+            @test _conj(Groups.Transvection(:λ, i, j, true), g) == Groups.Transvection(:ϱ, g.p[i], g.p[j], isone(g.n.elts[j]) ? false : true)
         end
     end
 end
