@@ -53,13 +53,13 @@ SAut_F_N, basis, half_basis, S = group_data(half_radius, N, wreath_action)
 Δ₁, Iₙ, Δ₁⁺, Δ₁⁻ = LowCohomologySOS.laplacians(SAut_F_N, half_basis, S, sq_adj_op_ = "adj")
 sq, adj, op = LowCohomologySOS.sq_adj_op(Δ₁⁻, S)
 
-M = Δ₁⁺+adj
+Adj = Δ₁⁺+adj
 
 constraints_basis, psd_basis, Σ, action = wedderburn_data(basis, half_basis, S);
 
 # there is no point of finding a solution if we don't provide invariant matrix
 for σ in Σ
-    @assert LowCohomologySOS.act_on_matrix(M, σ, action.alphabet_perm, S) == M
+    @assert LowCohomologySOS.act_on_matrix(Adj, σ, action.alphabet_perm, S) == Adj
     @assert LowCohomologySOS.act_on_matrix(Iₙ, σ, action.alphabet_perm, S) == Iₙ
 end
 
@@ -80,7 +80,7 @@ end
 end
 
 SAut_F_N_data = (
-    M = M,
+    M = Adj,
     order_unit = Iₙ,
     half_basis = half_basis
 )
