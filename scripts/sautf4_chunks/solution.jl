@@ -19,7 +19,7 @@ SAut_F_N_data = (
 solve_in_loop(
     sos_problem,
     w_dec_matrix,
-    logdir = "./logs_sautf4_adj",
+    logdir = joinpath(@__DIR__, "logs_sautf4_adj"),
     optimizer = scs_opt(eps = 1e-9, max_iters = 20_000),
     data = SAut_F_N_data
 )
