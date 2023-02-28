@@ -159,11 +159,11 @@ sos_problem = LowCohomologySOS.sos_problem(Δ₃, I)
 sl3_voronoi_data = (
     M = Δ₃,
     order_unit = I,
-    half_basis = half_basis
+    half_basis = half_basis_sat
 )
 solve_in_loop(
     sos_problem,
-    logdir = joinpath(@__DIR__, "logs_voronoi"),
+    logdir = joinpath(@__DIR__, "logs_voronoi_delta_3"),
     optimizer = scs_opt(eps = 1e-9, max_iters = 20_000),
     data = sl3_voronoi_data
 )

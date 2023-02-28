@@ -108,7 +108,7 @@ sl3_voronoi_data = (
 )
 solve_in_loop(
     sos_problem,
-    logdir = joinpath(@__DIR__, "logs_voronoi"),
+    logdir = joinpath(@__DIR__, "logs_voronoi_delta_4"),
     optimizer = scs_opt(eps = 1e-9, max_iters = 20_000),
     data = sl3_voronoi_data
 )
