@@ -151,3 +151,69 @@ end
 
     end
 end
+
+@testset "Adj⁺ for SLₙ(ℤ)" begin
+    N = 3
+    G = SL(N,Int8)
+    A = alphabet(G)
+    eij_id = Dict(A[i] => i for i in eachindex(A))
+    e(i,j) = G([eij_id[MatrixGroups.ElementaryMatrix{N}(i,j,Int8(1))]])
+    S = gens(G)
+    S_inv = [S;inv.(S)]
+    half_basis, sizes = Groups.wlmetric_ball(S_inv, radius = 2)
+    Δ₁, Iₙ, Δ₁⁺, Δ₁⁻ = LowCohomologySOS.laplacians(
+        G, half_basis, S, sq_adj_op_ = "adj", twist_coeffs = false)
+    RG = parent(first(Δ₁⁺))
+
+    function ijij(i,j)
+        range_as_list = [i for i in 1:N]
+        range_no_ij = deleteat!(copy(range_as_list), findall(l->l∈[i,j],copy(range_as_list)))
+
+        result = 2*sum(
+            (one(RG)-RG(e(i,l)))'*(one(RG)-RG(e(i,l)))+
+            (one(RG)-RG(e(l,j)))'*(one(RG)-RG(e(l,j)))
+        for l in range_no_ij)+
+        sum(
+            (one(RG)-RG(e(i,l)*e(j,l)))'*(one(RG)-RG(e(i,l)*e(j,l)))+
+            (RG(e(l,i))-RG(e(l,j)))'*(RG(e(l,i))-RG(e(l,j)))
+        for l in range_no_ij)+
+        (N-2)*one(RG)
+
+        return result
+    end
+    function ijik(i,j,k)
+        return 2*(one(RG)-RG(e(i,k)))'*(RG(e(i,j))-one(RG))-(one(RG)-RG(e(i,k)*e(j,k)))'-(one(RG)-RG(e(i,j)*e(k,j)))
+    end
+    function ijki(i,j,k)
+        return (RG(e(k,i))-RG(e(k,j)))'*(one(RG)-RG(e(k,j)*e(i,j)))
+    end
+    function ijjk(i,j,k)
+        return (one(RG)-RG(e(i,k)*e(j,k)))'*(RG(e(i,j))-RG(e(i,k)))
+    end
+    function ijkj(i,j,k)
+        return 2*(one(RG)-RG(e(k,j)))'*(RG(e(i,j))-one(RG))-(RG(e(k,i))-RG(e(k,j)))'-(RG(e(i,k))-RG(e(i,j)))
+    end
+
+    gen_ij = Dict(s => (A[word(s)[1]].i,A[word(s)[1]].j) for s in S)
+    for s in eachindex(S)
+        i,j = gen_ij[S[s]]
+        for t in eachindex(S)
+            k,l = gen_ij[S[t]]
+            if i == k && j == l
+                @test Δ₁⁺[s,t] == ijij(i,j)
+            elseif length(collect(Set([i,j,k,l]))) == 3
+                if i == k
+                    @test Δ₁⁺[s,t] == ijik(i,j,l)
+                elseif i == l
+                    @test Δ₁⁺[s,t] == ijki(i,j,k)
+                elseif j == k
+                    @test Δ₁⁺[s,t] == ijjk(i,j,l)
+                elseif j == l
+                    @test Δ₁⁺[s,t] == ijkj(i,j,k)
+                end
+            else
+                @test Δ₁⁺[s,t] == zero(RG)
+            end
+        end
+    end
+end
