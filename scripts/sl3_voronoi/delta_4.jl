@@ -80,7 +80,8 @@ d54 = [gelt_from_matrix(M,temp_basis) for M in d54_array]
 d55 = [gelt_from_matrix(M,temp_basis) for M in d55_array]
 d56 = [gelt_from_matrix(M,temp_basis) for M in d56_array]
 
-half_basis_sat = unique(union(d411, d412, d413, d414, d42, d51, d52, d53, d54, d55, d56, m32_stab))
+half_basis_sat = unique(union(d411, d412, d413, d414, d42, d51, d52, d53, d54, d55, d56, m4_stab))
+half_basis_sat = unique([half_basis_sat;inv.(half_basis_sat)])
 RG = LowCohomologySOS.group_ring(sl3, half_basis_sat, star_multiplication = false)
 
 d4₁ = rg_elt([
@@ -101,20 +102,20 @@ d5 = rg_elt([
     (-1,averaged_rep(d56_array, half_basis_sat, RG))
 ])
 
-m31_stab_part = one(RG)-averaged_rep(m31_arrays, half_basis_sat, RG)
-m32_stab_part = one(RG)-averaged_rep(m32_arrays, half_basis_sat, RG)
-m4_stab_part = one(RG)-averaged_rep(m4_arrays, half_basis_sat, RG)
-d₄ = [d4₁+m31_stab_part d4₂+m32_stab_part]
-d₅ = reshape([d5+m4_stab_part], 1, 1)
-
-Δ₄x = d₅'*d₅+d₄*d₄'
+d₄ = [
+    d4₁;
+    d4₂
+]
+d₅ = reshape([d5], 1, 1)
+m4_stab_part = reshape([one(RG)-averaged_rep(m4_arrays, half_basis_sat, RG)], 1, 1)
+Δ₄x = reshape([d₄'*d₄],1,1)+d₅*d₅'+m4_stab_part
 RG_star = LowCohomologySOS.group_ring(sl3, half_basis_sat, star_multiplication = true)
 Δ₄ = LowCohomologySOS.embed.(identity, Δ₄x, Ref(RG_star))
 I = reshape([one(RG_star)], 1, 1)
 
-sos_problem = LowCohomologySOS.sos_problem(Δ₄, I, 1.53)
+sos_problem = LowCohomologySOS.sos_problem(Δ₄, I, 1.93)
 
-JuMP.set_optimizer(sos_problem, scs_opt(eps = 1e-9, max_iters = 100_000))
+JuMP.set_optimizer(sos_problem, scs_opt(eps = 1e-9, max_iters = 4_000))
 JuMP.optimize!(sos_problem)
 
 sl3_voronoi_data = (

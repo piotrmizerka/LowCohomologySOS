@@ -129,6 +129,7 @@ d414 = [gelt_from_matrix(M,temp_basis) for M in d414_array]
 d42 = [gelt_from_matrix(M,temp_basis) for M in d42_array]
 
 half_basis_sat = unique(union(d311, d312, d313, d321, d322, d323, d324, d411, d412, d413, d414, d42))
+half_basis_sat = unique([half_basis_sat;inv.(half_basis_sat)])
 RG = LowCohomologySOS.group_ring(sl3, half_basis_sat, star_multiplication = false)
 
 d3₁ = rg_elt([
@@ -152,16 +153,18 @@ d4₂ = rg_elt([
     (1,averaged_rep(d42_array, half_basis_sat, RG))
 ])
 
-m2_stab_part = one(RG)-averaged_rep(m2_arrays, half_basis_sat, RG)
+d₃ = [d3₁ d3₂]
+d₄ = [
+    d4₁;
+    d4₂
+]
 m31_stab_part = one(RG)-averaged_rep(m31_arrays, half_basis_sat, RG)
 m32_stab_part = one(RG)-averaged_rep(m32_arrays, half_basis_sat, RG)
-d₃ = [
-    d3₁+m2_stab_part;
-    d3₂+m2_stab_part
+stab_part = [
+    m31_stab_part zero(RG);
+    zero(RG) m32_stab_part
 ]
-d₄ = [d4₁+m31_stab_part d4₂+m32_stab_part]
-
-Δ₃x = d₄'*d₄+d₃*d₃'
+Δ₃x = d₃'*d₃+d₄*d₄'+stab_part
 RG_star = LowCohomologySOS.group_ring(sl3, half_basis_sat, star_multiplication = true)
 Δ₃ = LowCohomologySOS.embed.(identity, Δ₃x, Ref(RG_star))
 I = [
@@ -169,10 +172,12 @@ I = [
     zero(RG_star) one(RG_star)
 ]
 
-sos_problem = LowCohomologySOS.sos_problem(Δ₃, I, 0.1)
+sos_problem = LowCohomologySOS.sos_problem(Δ₃, I, 0.05)
 
-JuMP.set_optimizer(sos_problem, scs_opt(eps = 1e-9, max_iters = 100_000))
+JuMP.set_optimizer(sos_problem, scs_opt(eps = 1e-9, max_iters = 500))
 JuMP.optimize!(sos_problem)
+λ, Q = LowCohomologySOS.get_solution(sos_problem)
+LowCohomologySOS.certify_sos_decomposition(Δ₃, I, λ, Q, half_basis_sat)
 
 sl3_voronoi_data = (
     M = Δ₃,
