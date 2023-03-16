@@ -32,6 +32,12 @@ function laplacians(
     end
 
     relationsx = relations(G, F_G, S, symmetric_action, N, sq_adj_op_)
+
+    # check if relations are trivial in G
+    for r in relationsx
+        @assert quotient_hom(r) == one(G)
+    end
+
     return LowCohomologySOS.spectral_gap_elements(quotient_hom, relationsx, half_basis, twist_coeffs = twist_coeffs)
 end
 
@@ -106,14 +112,22 @@ function relations(
                 [λ(i,j)*ϱ(k,j)*λ(i,j)^(-1)*ϱ(k,j)^(-1) for (i,j,k) ∈ triples],
 
                 # TODO: check is one can reverse the order for Adj
-                [ϱ(i,k)^(-1)*ϱ(j,k)^(-1)*ϱ(i,j)^(-1)*ϱ(j,k)*ϱ(i,j) for (i,j,k) ∈ triples],
-                [ϱ(i,k)*ϱ(j,k)*ϱ(i,j)^(-1)*ϱ(j,k)^(-1)*ϱ(i,j) for (i,j,k) ∈ triples],
-                [λ(i,k)^(-1)*λ(j,k)^(-1)*λ(i,j)^(-1)*λ(j,k)*λ(i,j) for (i,j,k) ∈ triples],
-                [λ(i,k)*λ(j,k)*λ(i,j)^(-1)*λ(j,k)^(-1)*λ(i,j) for (i,j,k) ∈ triples],
-                [ϱ(i,k)*λ(j,k)^(-1)*ϱ(i,j)*λ(j,k)*ϱ(i,j)^(-1) for (i,j,k) ∈ triples],
-                [ϱ(i,k)^(-1)*λ(j,k)*ϱ(i,j)*λ(j,k)^(-1)*ϱ(i,j)^(-1) for (i,j,k) ∈ triples],
-                [λ(i,k)*ϱ(j,k)^(-1)*λ(i,j)*ϱ(j,k)*λ(i,j)^(-1) for (i,j,k) ∈ triples],
-                [λ(i,k)^(-1)*ϱ(j,k)*λ(i,j)*ϱ(j,k)^(-1)*λ(i,j)^(-1) for (i,j,k) ∈ triples]
+                # [ϱ(i,k)^(-1)*ϱ(j,k)^(-1)*ϱ(i,j)^(-1)*ϱ(j,k)*ϱ(i,j) for (i,j,k) ∈ triples],
+                # [ϱ(i,k)*ϱ(j,k)*ϱ(i,j)^(-1)*ϱ(j,k)^(-1)*ϱ(i,j) for (i,j,k) ∈ triples],
+                # [λ(i,k)^(-1)*λ(j,k)^(-1)*λ(i,j)^(-1)*λ(j,k)*λ(i,j) for (i,j,k) ∈ triples],
+                # [λ(i,k)*λ(j,k)*λ(i,j)^(-1)*λ(j,k)^(-1)*λ(i,j) for (i,j,k) ∈ triples],
+                # [ϱ(i,k)*λ(j,k)^(-1)*ϱ(i,j)*λ(j,k)*ϱ(i,j)^(-1) for (i,j,k) ∈ triples],
+                # [ϱ(i,k)^(-1)*λ(j,k)*ϱ(i,j)*λ(j,k)^(-1)*ϱ(i,j)^(-1) for (i,j,k) ∈ triples],
+                # [λ(i,k)*ϱ(j,k)^(-1)*λ(i,j)*ϱ(j,k)*λ(i,j)^(-1) for (i,j,k) ∈ triples],
+                # [λ(i,k)^(-1)*ϱ(j,k)*λ(i,j)*ϱ(j,k)^(-1)*λ(i,j)^(-1) for (i,j,k) ∈ triples]
+                [ϱ(i,j)*ϱ(j,k)*ϱ(i,j)^(-1)*ϱ(j,k)^(-1)*ϱ(i,k)^(-1) for (i,j,k) ∈ triples],
+                [ϱ(i,j)*ϱ(j,k)^(-1)*ϱ(i,j)^(-1)*ϱ(j,k)*ϱ(i,k) for (i,j,k) ∈ triples],
+                [λ(i,j)*λ(j,k)*λ(i,j)^(-1)*λ(j,k)^(-1)*λ(i,k)^(-1) for (i,j,k) ∈ triples],
+                [λ(i,j)*λ(j,k)^(-1)*λ(i,j)^(-1)*λ(j,k)*λ(i,k) for (i,j,k) ∈ triples],
+                [ϱ(i,j)^(-1)*λ(j,k)*ϱ(i,j)*λ(j,k)^(-1)*ϱ(i,k) for (i,j,k) ∈ triples],
+                [ϱ(i,j)^(-1)*λ(j,k)^(-1)*ϱ(i,j)*λ(j,k)*ϱ(i,k)^(-1) for (i,j,k) ∈ triples],
+                [λ(i,j)^(-1)*ϱ(j,k)*λ(i,j)*ϱ(j,k)^(-1)*λ(i,k) for (i,j,k) ∈ triples],
+                [λ(i,j)^(-1)*ϱ(j,k)^(-1)*λ(i,j)*ϱ(j,k)*λ(i,k)^(-1) for (i,j,k) ∈ triples]
             )
             relations_op = vcat(
                 # [ϱ(k,l)^(-1)*ϱ(i,j)^(-1)*ϱ(k,l)*ϱ(i,j) for (i,j,k,l) ∈ quadruples],
