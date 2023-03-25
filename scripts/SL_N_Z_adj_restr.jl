@@ -11,6 +11,7 @@ using JuMP
 using SparseArrays
 using PermutationGroups
 using SymbolicWedderburn
+using IntervalArithmetic
 include(joinpath(@__DIR__, "optimizers.jl"))
 include(joinpath(@__DIR__, "utils.jl"))
 
@@ -48,7 +49,8 @@ half_basis_restr = unique!([half_basis_restr; inv.(half_basis_restr)])
 
 # Compute Laplacians over RG over the differentials' support
 Δ1, I, Δ1⁺, Δ1⁻ = LowCohomologySOS.laplacians(slN, half_basis_restr, S, sq_adj_op_ = "adj")
-I = [i ≠ j ? zero(parent(first(Δ1))) : one(parent(first(Δ1))) for i in 1:length(d0x), j in 1:length(d0x)]
+RG_star = parent(first(Δ1))
+I = [i ≠ j ? zero(RG_star) : one(RG_star) for i in 1:length(d0x), j in 1:length(d0x)]
 sq, adj, op = LowCohomologySOS.sq_adj_op(Δ1⁻, S)
 Adj = Δ1⁺+adj
 
@@ -79,3 +81,12 @@ JuMP.optimize!(sos_problem)
 λ, Q = LowCohomologySOS.get_solution(sos_problem, P, w_dec_matrix)
 # LowCohomologySOS.certify_sos_decomposition(Δ1, I, λ, Q, half_basis_restr)
 LowCohomologySOS.certify_sos_decomposition(Adj, I, λ, Q, half_basis_restr)
+
+# Let's try to find somme pattern in the solution
+RG = LowCohomologySOS.group_ring(slN,half_basis_restr,star_multiplication = false)
+summand_factors = LowCohomologySOS.sos_summand_factors(RG, Q, half_basis_restr, 0.000001, 6);
+sos_solution_heuristic = sum(Ref(@interval(1)).*ξ'*ξ for ξ in summand_factors)
+Adjx, Ix = LowCohomologySOS.embed.(identity,Adj,Ref(RG)), LowCohomologySOS.embed.(identity,I,Ref(RG))
+residual = Adjx-Ref(@interval(λ)).*Ix-sos_solution_heuristic
+l1_norm = sum(x -> norm(x, 1), residual)
+@interval(λ)-l1_norm
