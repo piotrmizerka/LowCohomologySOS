@@ -100,7 +100,7 @@ function relations(
             ϱ(i,j) = ϱ(i,j,false)
             λ(i,j) = λ(i,j,false)
 
-            relations_sq = [λ(i,j)^(-1)*ϱ(i,j)^(-1)*λ(i,j)*ϱ(i,j) for (i,j) ∈ pairs]
+            relations_sq = [λ(i,j)*ϱ(i,j)*λ(i,j)^(-1)*ϱ(i,j)^(-1) for (i,j) ∈ pairs]
             relations_adj = vcat(
                 [ϱ(i,j)*ϱ(k,j)*ϱ(i,j)^(-1)*ϱ(k,j)^(-1) for (i,j,k) ∈ triples],
                 [λ(i,j)*λ(k,j)*λ(i,j)^(-1)*λ(k,j)^(-1) for (i,j,k) ∈ triples],
@@ -121,7 +121,7 @@ function relations(
                 [λ(i,j)*λ(k,l)*λ(i,j)^(-1)*λ(k,l)^(-1) for (i,j,k,l) ∈ quadruples],
                 [λ(i,j)*ϱ(k,l)*λ(i,j)^(-1)*ϱ(k,l)^(-1) for (i,j,k,l) ∈ quadruples]
             )
-        else # wreath product action TODO: reverse the order as in the non-werath case?
+        else # wreath product action
             relations_sq = vcat(
                 [ϱ(i,j,ε)*ϱ(i,j,!ε) for (i,j) ∈ pairs for ε ∈ [true,false]],
                 [λ(i,j,ε)*λ(i,j,!ε) for (i,j) ∈ pairs for ε ∈ [true,false]],
