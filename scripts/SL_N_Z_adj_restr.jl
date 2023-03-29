@@ -74,7 +74,8 @@ w_dec_matrix = SymbolicWedderburn.WedderburnDecomposition(Float64, Σ, action, c
 # Find a numerical spectral gap
 # sos_problem, P = LowCohomologySOS.sos_problem(Δ1, I, w_dec_matrix)
 sos_problem, P = LowCohomologySOS.sos_problem(Adj, I, w_dec_matrix)
-JuMP.set_optimizer(sos_problem, scs_opt(eps = 1e-9, max_iters = 30_000))
+JuMP.set_optimizer(sos_problem, scs_opt(eps = 1e-6, max_iters = 30_000))
+JuMP.set_optimizer(sos_problem, cosmo_opt(eps = 1e-7, max_iters = 30_000))
 JuMP.optimize!(sos_problem)
 
 # Certify the numerical estimate
