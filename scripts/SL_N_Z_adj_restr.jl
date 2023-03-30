@@ -4,7 +4,6 @@ Pkg.activate(normpath(joinpath(@__DIR__, "../")))
 using LinearAlgebra
 ENV["JULIA_NUM_THREADS"] = Sys.CPU_THREADS÷2
 LinearAlgebra.BLAS.set_num_threads(Sys.CPU_THREADS÷2)
-
 using LowCohomologySOS
 using Groups
 using JuMP
@@ -20,7 +19,7 @@ const N = 4
 slN = MatrixGroups.SpecialLinearGroup{N}(Int8)
 F_sl_N_z = FreeGroup(alphabet(slN))
 S = gens(slN)
-relations = LowCohomologySOS.relations(slN, F_sl_N_z, S, true, N)
+relations = LowCohomologySOS.relations(slN, F_sl_N_z, S, true, N, "adj")
 d₁ = LowCohomologySOS.jacobian_matrix(relations, gens(F_sl_N_z))
 
 # Compute the differentials supported on ball of readius 2 in the standard gen set
@@ -75,7 +74,7 @@ w_dec_matrix = SymbolicWedderburn.WedderburnDecomposition(Float64, Σ, action, c
 # sos_problem, P = LowCohomologySOS.sos_problem(Δ1, I, w_dec_matrix)
 sos_problem, P = LowCohomologySOS.sos_problem(Adj, I, w_dec_matrix)
 JuMP.set_optimizer(sos_problem, scs_opt(eps = 1e-6, max_iters = 30_000))
-JuMP.set_optimizer(sos_problem, cosmo_opt(eps = 1e-7, max_iters = 30_000))
+# JuMP.set_optimizer(sos_problem, cosmo_opt(eps = 1e-7, max_iters = 30_000))
 JuMP.optimize!(sos_problem)
 
 # Certify the numerical estimate
