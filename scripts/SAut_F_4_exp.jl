@@ -48,8 +48,6 @@ half_basis_restr = unique!([half_basis_restr; inv.(half_basis_restr)])
 
 # Compute Laplacians over RG over the differentials' support
 Δ1, I, Δ1⁺, Δ1⁻ = LowCohomologySOS.laplacians(sautfN, half_basis_restr, S, sq_adj_op_ = "adj")
-RG_star = parent(first(Δ1))
-I = [i ≠ j ? zero(RG_star) : one(RG_star) for i in 1:length(d0x), j in 1:length(d0x)]
 sq, adj, op = LowCohomologySOS.sq_adj_op(Δ1⁻, S)
 Adj = Δ1⁺+adj
 
@@ -60,10 +58,12 @@ function wedderburn_data(basis, half_basis, S)
     constraints_basis, psd_basis = LowCohomologySOS.matrix_bases(basis, half_basis, S)
     return constraints_basis, psd_basis, Σ, actions
 end
+RG_star = parent(first(Δ1))
 constraints_basis, psd_basis, Σ, action = wedderburn_data(RG_star.basis, half_basis_restr, S)
 # there is no point of finding a solution if we don't provide invariant matrix
 for σ in Σ
     @assert LowCohomologySOS.act_on_matrix(Adj, σ, action.alphabet_perm, S) == Adj
+    # @assert LowCohomologySOS.act_on_matrix(Δ1, σ, action.alphabet_perm, S) == Δ1
     @assert LowCohomologySOS.act_on_matrix(I, σ, action.alphabet_perm, S) == I
 end
 w_dec_matrix = SymbolicWedderburn.WedderburnDecomposition(Float64, Σ, action, constraints_basis, psd_basis)
