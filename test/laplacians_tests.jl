@@ -240,18 +240,18 @@ end
         result = sum(
             2*(one(RG)-RG(t(l,j)))'*(one(RG)-RG(t(l,j)))+(one(RG)-RG(t_bar(i,l)))'*(one(RG)-RG(t_bar(i,l)))+
             (one(RG)-RG(t_bar(l,j)))'*(one(RG)-RG(t_bar(l,j)))+
-            ((RG(t(i,l)^(-1))*(one(RG)-RG(t(l,j)))))'*(RG(t(i,l)^(-1))*(one(RG)-RG(t(l,j))))+
-            ((RG(t(i,l)^(-1))*(one(RG)-RG(t(l,j)^(-1)))))'*(RG(t(i,l)^(-1))*(one(RG)-RG(t(l,j)^(-1))))+
-            ((RG(t(l,i)^(-1))*(one(RG)-RG(t(i,j)))))'*(RG(t(l,i)^(-1))*(one(RG)-RG(t(i,j))))+
-            ((RG(t(l,i)^(-1))*(one(RG)-RG(t(i,j)^(-1)))))'*(RG(t(l,i)^(-1))*(one(RG)-RG(t(i,j)^(-1))))+
-            ((RG(t(i,j)^(-1))*(one(RG)-RG(t(j,l)))))'*(RG(t(i,j)^(-1))*(one(RG)-RG(t(j,l))))+
-            ((RG(t(i,j)^(-1))*(one(RG)-RG(t(j,l)^(-1)))))'*(RG(t(i,j)^(-1))*(one(RG)-RG(t(j,l)^(-1))))+
-            ((RG(t(i,l)^(-1))*(one(RG)-RG(t_bar(l,j)^(-1)))))'*(RG(t(i,l)^(-1))*(one(RG)-RG(t_bar(l,j)^(-1))))+
-            ((RG(t(i,l)^(-1))*(one(RG)-RG(t_bar(l,j)))))'*(RG(t(i,l)^(-1))*(one(RG)-RG(t_bar(l,j))))+
-            ((RG(t(i,j)^(-1))*(one(RG)-RG(t_bar(j,l)^(-1)))))'*(RG(t(i,j)^(-1))*(one(RG)-RG(t_bar(j,l)^(-1))))+
-            ((RG(t(i,j)^(-1))*(one(RG)-RG(t_bar(j,l)))))'*(RG(t(i,j)^(-1))*(one(RG)-RG(t_bar(j,l))))+
-            ((RG(t_bar(l,i)^(-1))*(one(RG)-RG(t(i,j)^(-1)))))'*(RG(t_bar(l,i)^(-1))*(one(RG)-RG(t(i,j)^(-1))))+
-            ((RG(t_bar(l,i)^(-1))*(one(RG)-RG(t(i,j)))))'*(RG(t_bar(l,i)^(-1))*(one(RG)-RG(t(i,j))))
+            (RG(t(i,l)^(-1))*(one(RG)-RG(t(l,j))))'*(RG(t(i,l)^(-1))*(one(RG)-RG(t(l,j))))+
+            (RG(t(i,l)^(-1))*(one(RG)-RG(t(l,j)^(-1))))'*(RG(t(i,l)^(-1))*(one(RG)-RG(t(l,j)^(-1))))+
+            (RG(t(l,i)^(-1))*(one(RG)-RG(t(i,j))))'*(RG(t(l,i)^(-1))*(one(RG)-RG(t(i,j))))+
+            (RG(t(l,i)^(-1))*(one(RG)-RG(t(i,j)^(-1))))'*(RG(t(l,i)^(-1))*(one(RG)-RG(t(i,j)^(-1))))+
+            (RG(t(i,j)^(-1))*(one(RG)-RG(t(j,l))))'*(RG(t(i,j)^(-1))*(one(RG)-RG(t(j,l))))+
+            (RG(t(i,j)^(-1))*(one(RG)-RG(t(j,l)^(-1))))'*(RG(t(i,j)^(-1))*(one(RG)-RG(t(j,l)^(-1))))+
+            (RG(t(i,l)^(-1))*(one(RG)-RG(t_bar(l,j)^(-1))))'*(RG(t(i,l)^(-1))*(one(RG)-RG(t_bar(l,j)^(-1))))+
+            (RG(t(i,l)^(-1))*(one(RG)-RG(t_bar(l,j))))'*(RG(t(i,l)^(-1))*(one(RG)-RG(t_bar(l,j))))+
+            (RG(t(i,j)^(-1))*(one(RG)-RG(t_bar(j,l)^(-1))))'*(RG(t(i,j)^(-1))*(one(RG)-RG(t_bar(j,l)^(-1))))+
+            (RG(t(i,j)^(-1))*(one(RG)-RG(t_bar(j,l))))'*(RG(t(i,j)^(-1))*(one(RG)-RG(t_bar(j,l))))+
+            (RG(t_bar(l,i)^(-1))*(one(RG)-RG(t(i,j)^(-1))))'*(RG(t_bar(l,i)^(-1))*(one(RG)-RG(t(i,j)^(-1))))+
+            (RG(t_bar(l,i)^(-1))*(one(RG)-RG(t(i,j))))'*(RG(t_bar(l,i)^(-1))*(one(RG)-RG(t(i,j))))
             for l in range_no_ij
         )
         return result
