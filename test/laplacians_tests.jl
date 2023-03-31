@@ -153,7 +153,7 @@ end
 end
 
 @testset "Adj⁺ for SLₙ(ℤ)" begin
-    N = 3
+    N = 5
     G = SL(N,Int8)
     A = alphabet(G)
     eij_id = Dict(A[i] => i for i in eachindex(A))
@@ -213,6 +213,81 @@ end
                 end
             else
                 @test Δ₁⁺[s,t] == zero(RG)
+            end
+        end
+    end
+end
+
+@testset "Adj⁺ for SAut(Fₙ)" begin
+    N = 3
+    G = SAut_F(N)
+    A = alphabet(G)
+    ij_id = Dict(A[i] => i for i in eachindex(A))
+    λ(i,j) = G([ij_id[Groups.Transvection(:λ, i, j, false)]])
+    ϱ(i,j) = G([ij_id[Groups.Transvection(:ϱ, i, j, false)]])
+    S = gens(G)
+    S_inv = [S;inv.(S)]
+    half_basis, sizes = Groups.wlmetric_ball(S_inv, radius = 2)
+    Δ₁, Iₙ, Δ₁⁺, Δ₁⁻ = LowCohomologySOS.laplacians(
+        G, half_basis, S, sq_adj_op_ = "adj", twist_coeffs = false)
+    RG = parent(first(Δ₁⁺))
+
+    function ijij(i,j,τ)
+        t(i,j) = (τ == :λ ? λ(i,j) : ϱ(i,j))
+        t_bar(i,j) = (τ == :λ ? ϱ(i,j) : λ(i,j))
+        range_as_list = [i for i in 1:N]
+        range_no_ij = deleteat!(copy(range_as_list), findall(l->l∈[i,j],copy(range_as_list)))
+        result = sum(
+            2*(one(RG)-RG(t(l,j)))'*(one(RG)-RG(t(l,j)))+(one(RG)-RG(t_bar(i,l)))'*(one(RG)-RG(t_bar(i,l)))+
+            (one(RG)-RG(t_bar(l,j)))'*(one(RG)-RG(t_bar(l,j)))+
+            ((RG(t(i,l)^(-1))*(one(RG)-RG(t(l,j)))))'*(RG(t(i,l)^(-1))*(one(RG)-RG(t(l,j))))+
+            ((RG(t(i,l)^(-1))*(one(RG)-RG(t(l,j)^(-1)))))'*(RG(t(i,l)^(-1))*(one(RG)-RG(t(l,j)^(-1))))+
+            ((RG(t(l,i)^(-1))*(one(RG)-RG(t(i,j)))))'*(RG(t(l,i)^(-1))*(one(RG)-RG(t(i,j))))+
+            ((RG(t(l,i)^(-1))*(one(RG)-RG(t(i,j)^(-1)))))'*(RG(t(l,i)^(-1))*(one(RG)-RG(t(i,j)^(-1))))+
+            ((RG(t(i,j)^(-1))*(one(RG)-RG(t(j,l)))))'*(RG(t(i,j)^(-1))*(one(RG)-RG(t(j,l))))+
+            ((RG(t(i,j)^(-1))*(one(RG)-RG(t(j,l)^(-1)))))'*(RG(t(i,j)^(-1))*(one(RG)-RG(t(j,l)^(-1))))+
+            ((RG(t(i,l)^(-1))*(one(RG)-RG(t_bar(l,j)^(-1)))))'*(RG(t(i,l)^(-1))*(one(RG)-RG(t_bar(l,j)^(-1))))+
+            ((RG(t(i,l)^(-1))*(one(RG)-RG(t_bar(l,j)))))'*(RG(t(i,l)^(-1))*(one(RG)-RG(t_bar(l,j))))+
+            ((RG(t(i,j)^(-1))*(one(RG)-RG(t_bar(j,l)^(-1)))))'*(RG(t(i,j)^(-1))*(one(RG)-RG(t_bar(j,l)^(-1))))+
+            ((RG(t(i,j)^(-1))*(one(RG)-RG(t_bar(j,l)))))'*(RG(t(i,j)^(-1))*(one(RG)-RG(t_bar(j,l))))+
+            ((RG(t_bar(l,i)^(-1))*(one(RG)-RG(t(i,j)^(-1)))))'*(RG(t_bar(l,i)^(-1))*(one(RG)-RG(t(i,j)^(-1))))+
+            ((RG(t_bar(l,i)^(-1))*(one(RG)-RG(t(i,j)))))'*(RG(t_bar(l,i)^(-1))*(one(RG)-RG(t(i,j))))
+            for l in range_no_ij
+        )
+        return result
+    end
+    function ijik(i,j,k,τ,υ)
+        return 
+    end
+    function ijki(i,j,k,τ,υ)
+        return 
+    end
+    function ijjk(i,j,k,τ,υ)
+        return 
+    end
+    function ijkj(i,j,k,τ,υ)
+        return 
+    end
+
+    gen_idij = Dict(s => (A[word(s)[1]].id,A[word(s)[1]].i,A[word(s)[1]].j) for s in S)
+    for s in eachindex(S)
+        τ, i,j = gen_idij[S[s]]
+        for t in eachindex(S)
+            υ,k,l = gen_idij[S[t]]
+            if i == k && j == l && τ == υ
+                @test Δ₁⁺[s,t] == ijij(i,j,τ)
+            # elseif length(collect(Set([i,j,k,l]))) == 3
+            #     if i == k
+            #         @test Δ₁⁺[s,t] == ijik(i,j,l,τ,υ)
+            #     elseif i == l
+            #         @test Δ₁⁺[s,t] == ijki(i,j,k,τ,υ)
+            #     elseif j == k
+            #         @test Δ₁⁺[s,t] == ijjk(i,j,l,τ,υ)
+            #     elseif j == l
+            #         @test Δ₁⁺[s,t] == ijkj(i,j,k,τ,υ)
+            #     end
+            # else
+            #     @test Δ₁⁺[s,t] == zero(RG)
             end
         end
     end
