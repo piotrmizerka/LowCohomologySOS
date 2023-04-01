@@ -302,12 +302,12 @@ end
     S = gens(G)
     S_inv = [S;inv.(S)]
     half_basis, sizes = Groups.wlmetric_ball(S_inv, radius = 2)
-    F_G = FreeGroup(alphabet(G))
+    A = alphabet(G)
+    F_G = FreeGroup(A)
     RG = LowCohomologySOS.group_ring(G, half_basis, star_multiplication = false)
     quotient_hom = let source = F_G, target = G
         Groups.Homomorphism((i, F, G) -> Groups.word_type(G)([i]), source, target)
     end
-    # d1x = LowCohomologySOS.embed.(Ref(quotient_hom), d1, Ref(RG))
     gen_dict = Dict(LowCohomologySOS.determine_letter(S[i]) => gens(F_G, i) for i in eachindex(S))
     ϱ(i,j) = gen_dict[Groups.Transvection(:ϱ, i, j, false)]
     λ(i,j) = gen_dict[Groups.Transvection(:λ, i, j, false)]
@@ -317,19 +317,67 @@ end
                     for k ∈ deleteat!(copy(range_as_list), findall(k->k∈[i,j],copy(range_as_list)))]
     relations = LowCohomologySOS.relations(G, F_G, S, true, N)
     RF = LowCohomologySOS.suitable_group_ring(relations)
-    A = alphabet(G)
     ij_id = Dict(A[i] => i for i in eachindex(A))
     free_gen_id = Dict(gens(F_G,i) => i for i in eachindex(gens(F_G)))
     λ_id(i,j) = free_gen_id[F_G([ij_id[Groups.Transvection(:λ, i, j, false)]])]
     ϱ_id(i,j) = free_gen_id[F_G([ij_id[Groups.Transvection(:ϱ, i, j, false)]])]
     for (i,j,k) in triples
-        der = LowCohomologySOS.fox_derivative(RF, λ(i,j)*λ(k,j)*λ(i,j)^(-1)*λ(k,j)^(-1), λ_id(i,j))
-        proper_der = one(RF)-RF(λ(k,j))
-        @test LowCohomologySOS.embed(quotient_hom, der, RG) == LowCohomologySOS.embed(quotient_hom, proper_der, RG)
-        der = LowCohomologySOS.fox_derivative(RF, ϱ(i,j)*ϱ(k,j)*ϱ(i,j)^(-1)*ϱ(k,j)^(-1), ϱ_id(i,j))
-        proper_der = one(RF)-RF(ϱ(k,j))
-        @test LowCohomologySOS.embed(quotient_hom, der, RG) == LowCohomologySOS.embed(quotient_hom, proper_der, RG)
-        
+        for τ in [:λ,:ϱ]
+            t(i,j) = (τ == :λ ? λ(i,j) : ϱ(i,j))
+            t_bar(i,j) = (τ == :λ ? ϱ(i,j) : λ(i,j))
+            t_id(i,j) = (τ == :λ ? λ_id(i,j) : ϱ_id(i,j))
+            t_bar_id(i,j) = (τ == :λ ? ϱ_id(i,j) : λ_id(i,j))
+            # commutator rels
+            lhs = LowCohomologySOS.fox_derivative(RF, t(i,j)*t(k,j)*t(i,j)^(-1)*t(k,j)^(-1), t_id(i,j))
+            rhs = one(RF)-RF(t(k,j))
+            @test LowCohomologySOS.embed(quotient_hom, lhs, RG) == LowCohomologySOS.embed(quotient_hom, rhs, RG)
+            lhs = LowCohomologySOS.fox_derivative(RF, t(i,j)*t(k,j)*t(i,j)^(-1)*t(k,j)^(-1), t_id(k,j))
+            rhs = RF(t(i,j))-one(RF)
+            @test LowCohomologySOS.embed(quotient_hom, lhs, RG) == LowCohomologySOS.embed(quotient_hom, rhs, RG)
+            lhs = LowCohomologySOS.fox_derivative(RF, t(i,j)*t_bar(i,k)*t(i,j)^(-1)*t_bar(i,k)^(-1), t_id(i,j))
+            rhs = one(RF)-RF(t_bar(i,k))
+            @test LowCohomologySOS.embed(quotient_hom, lhs, RG) == LowCohomologySOS.embed(quotient_hom, rhs, RG)
+            lhs = LowCohomologySOS.fox_derivative(RF, t(i,j)*t_bar(i,k)*t(i,j)^(-1)*t_bar(i,k)^(-1), t_bar_id(i,k))
+            rhs = RF(t(i,j))-one(RF)
+            @test LowCohomologySOS.embed(quotient_hom, lhs, RG) == LowCohomologySOS.embed(quotient_hom, rhs, RG)
+            # pentagonal rels
+            lhs = LowCohomologySOS.fox_derivative(RF, t(i,k)*t(j,k)*t(i,j)^(-1)*t(j,k)^(-1)*t(i,j), t_id(i,j))
+            rhs = RF(t(i,j)^(-1))*(one(RF)-RF(t(j,k)))
+            @test LowCohomologySOS.embed(quotient_hom, lhs, RG) == LowCohomologySOS.embed(quotient_hom, rhs, RG)
+            lhs = LowCohomologySOS.fox_derivative(RF, t(i,k)*t(j,k)*t(i,j)^(-1)*t(j,k)^(-1)*t(i,j), t_id(j,k))
+            rhs = RF(t(i,k))-RF(t(i,j)^(-1))
+            @test LowCohomologySOS.embed(quotient_hom, lhs, RG) == LowCohomologySOS.embed(quotient_hom, rhs, RG)
+            lhs = LowCohomologySOS.fox_derivative(RF, t(i,k)*t(j,k)*t(i,j)^(-1)*t(j,k)^(-1)*t(i,j), t_id(i,k))
+            rhs = one(RF)
+            @test LowCohomologySOS.embed(quotient_hom, lhs, RG) == LowCohomologySOS.embed(quotient_hom, rhs, RG)
+            lhs = LowCohomologySOS.fox_derivative(RF, t(i,k)^(-1)*t(j,k)^(-1)*t(i,j)^(-1)*t(j,k)*t(i,j), t_id(i,j))
+            rhs = RF(t(i,j)^(-1))*(one(RF)-RF(t(j,k)^(-1)))
+            @test LowCohomologySOS.embed(quotient_hom, lhs, RG) == LowCohomologySOS.embed(quotient_hom, rhs, RG)
+            lhs = LowCohomologySOS.fox_derivative(RF, t(i,k)^(-1)*t(j,k)^(-1)*t(i,j)^(-1)*t(j,k)*t(i,j), t_id(j,k))
+            rhs = (RF(t(i,j)^(-1))-RF(t(i,k)^(-1)))*RF(t(j,k)^(-1))
+            @test LowCohomologySOS.embed(quotient_hom, lhs, RG) == LowCohomologySOS.embed(quotient_hom, rhs, RG)
+            lhs = LowCohomologySOS.fox_derivative(RF, t(i,k)^(-1)*t_bar(j,k)^(-1)*t(i,j)^(-1)*t(j,k)*t(i,j), t_id(i,k))
+            rhs = -RF(t(i,k)^(-1))
+            @test LowCohomologySOS.embed(quotient_hom, lhs, RG) == LowCohomologySOS.embed(quotient_hom, rhs, RG)
+            lhs = LowCohomologySOS.fox_derivative(RF, t(i,k)*t_bar(j,k)^(-1)*t(i,j)*t_bar(j,k)*t(i,j)^(-1), t_id(i,j))
+            rhs = RF(t(i,k)*t_bar(j,k)^(-1))-one(RF)
+            @test LowCohomologySOS.embed(quotient_hom, lhs, RG) == LowCohomologySOS.embed(quotient_hom, rhs, RG)
+            lhs = LowCohomologySOS.fox_derivative(RF, t(i,k)*t_bar(j,k)^(-1)*t(i,j)*t_bar(j,k)*t(i,j)^(-1), t_bar_id(j,k))
+            rhs = (RF(t(i,j))-RF(t(i,k)))*RF(t_bar(j,k)^(-1))
+            @test LowCohomologySOS.embed(quotient_hom, lhs, RG) == LowCohomologySOS.embed(quotient_hom, rhs, RG)
+            lhs = LowCohomologySOS.fox_derivative(RF, t(i,k)*t_bar(j,k)^(-1)*t(i,j)*t_bar(j,k)*t(i,j)^(-1), t_id(i,k))
+            rhs = one(RF)
+            @test LowCohomologySOS.embed(quotient_hom, lhs, RG) == LowCohomologySOS.embed(quotient_hom, rhs, RG)
+            lhs = LowCohomologySOS.fox_derivative(RF, t(i,k)^(-1)*t_bar(j,k)*t(i,j)*t_bar(j,k)^(-1)*t(i,j)^(-1), t_id(i,j))
+            rhs = RF(t(i,k)^(-1)*t_bar(j,k))-one(RF)
+            @test LowCohomologySOS.embed(quotient_hom, lhs, RG) == LowCohomologySOS.embed(quotient_hom, rhs, RG)
+            lhs = LowCohomologySOS.fox_derivative(RF, t(i,k)^(-1)*t_bar(j,k)*t(i,j)*t_bar(j,k)^(-1)*t(i,j)^(-1), t_bar_id(j,k))
+            rhs = RF(t(i,k)^(-1))-RF(t(i,j))
+            @test LowCohomologySOS.embed(quotient_hom, lhs, RG) == LowCohomologySOS.embed(quotient_hom, rhs, RG)
+            lhs = LowCohomologySOS.fox_derivative(RF, t(i,k)^(-1)*t_bar(j,k)*t(i,j)*t_bar(j,k)^(-1)*t(i,j)^(-1), t_id(i,k))
+            rhs = -RF(t(i,k)^(-1))
+            @test LowCohomologySOS.embed(quotient_hom, lhs, RG) == LowCohomologySOS.embed(quotient_hom, rhs, RG)
+        end
     end
 end
 
