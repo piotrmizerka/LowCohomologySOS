@@ -1,6 +1,3 @@
-SL(n, R) = MatrixGroups.SpecialLinearGroup{n}(R)
-SAut_F(n) = Groups.SpecialAutomorphismGroup(FreeGroup(n))
-
 @testset "relations for SL(n,ℤ) and SAut(Fₙ)" begin
 
     @testset "symmetric group actions" begin
@@ -219,7 +216,7 @@ end
 end
 
 @testset "Adj⁺ for SAut(Fₙ)" begin
-    N = 3
+    N = 4
     G = SAut_F(N)
     A = alphabet(G)
     ij_id = Dict(A[i] => i for i in eachindex(A))
@@ -231,6 +228,7 @@ end
     Δ₁, Iₙ, Δ₁⁺, Δ₁⁻ = LowCohomologySOS.laplacians(
         G, half_basis, S, sq_adj_op_ = "adj", twist_coeffs = false)
     RG = parent(first(Δ₁⁺))
+    sq_h(ξ) = ξ'*ξ
 
     function ijij(i,j,τ)
         t(i,j) = (τ == :λ ? λ(i,j) : ϱ(i,j))
@@ -238,22 +236,13 @@ end
         range_as_list = [i for i in 1:N]
         range_no_ij = deleteat!(copy(range_as_list), findall(l->l∈[i,j],copy(range_as_list)))
         result = sum(
-            2*(one(RG)-RG(t(l,j)))'*(one(RG)-RG(t(l,j)))+(one(RG)-RG(t_bar(i,l)))'*(one(RG)-RG(t_bar(i,l)))+
-            (one(RG)-RG(t_bar(l,j)))'*(one(RG)-RG(t_bar(l,j)))+
-            (RG(t(i,l)^(-1))*(one(RG)-RG(t(l,j))))'*(RG(t(i,l)^(-1))*(one(RG)-RG(t(l,j))))+
-            (RG(t(i,l)^(-1))*(one(RG)-RG(t(l,j)^(-1))))'*(RG(t(i,l)^(-1))*(one(RG)-RG(t(l,j)^(-1))))+
-            (RG(t(l,i)^(-1))*(one(RG)-RG(t(i,j))))'*(RG(t(l,i)^(-1))*(one(RG)-RG(t(i,j))))+
-            (RG(t(l,i)^(-1))*(one(RG)-RG(t(i,j)^(-1))))'*(RG(t(l,i)^(-1))*(one(RG)-RG(t(i,j)^(-1))))+
-            (RG(t(i,j)^(-1))*(one(RG)-RG(t(j,l))))'*(RG(t(i,j)^(-1))*(one(RG)-RG(t(j,l))))+
-            (RG(t(i,j)^(-1))*(one(RG)-RG(t(j,l)^(-1))))'*(RG(t(i,j)^(-1))*(one(RG)-RG(t(j,l)^(-1))))+
-            (RG(t(i,l)^(-1))*(one(RG)-RG(t_bar(l,j)^(-1))))'*(RG(t(i,l)^(-1))*(one(RG)-RG(t_bar(l,j)^(-1))))+
-            (RG(t(i,l)^(-1))*(one(RG)-RG(t_bar(l,j))))'*(RG(t(i,l)^(-1))*(one(RG)-RG(t_bar(l,j))))+
-            (RG(t(i,j)^(-1))*(one(RG)-RG(t_bar(j,l)^(-1))))'*(RG(t(i,j)^(-1))*(one(RG)-RG(t_bar(j,l)^(-1))))+
-            (RG(t(i,j)^(-1))*(one(RG)-RG(t_bar(j,l))))'*(RG(t(i,j)^(-1))*(one(RG)-RG(t_bar(j,l))))+
-            (RG(t_bar(l,i)^(-1))*(one(RG)-RG(t(i,j)^(-1))))'*(RG(t_bar(l,i)^(-1))*(one(RG)-RG(t(i,j)^(-1))))+
-            (RG(t_bar(l,i)^(-1))*(one(RG)-RG(t(i,j))))'*(RG(t_bar(l,i)^(-1))*(one(RG)-RG(t(i,j))))
+            2*sq_h(one(RG)-RG(t(l,j)))+sq_h(one(RG)-RG(t_bar(i,l)))+sq_h(one(RG)-RG(t_bar(l,j)))+
+            sq_h(RG(t(i,j)^(-1))*(one(RG)-RG(t(j,l))))+sq_h(RG(t(i,j)^(-1))*(one(RG)-RG(t(j,l)^(-1))))+
+            sq_h(RG(t(l,j))-RG(t(l,i)^(-1)))+sq_h((RG(t(l,i)^(-1))-RG(t(l,j)^(-1)))*RG(t(i,j)^(-1)))+
+            sq_h(RG(t(i,l)*t_bar(j,l)^(-1))-one(RG))+sq_h(RG(t(i,l)^(-1)*t_bar(j,l))-one(RG))+
+            sq_h((RG(t_bar(l,i))-RG(t_bar(l,j)))*RG(t(i,j)^(-1)))+sq_h(RG(t_bar(l,j)^(-1))-RG(t_bar(l,i)))
             for l in range_no_ij
-        )
+        )+4*(N-2)*one(RG)
         return result
     end
     function ijik(i,j,k,τ,υ)
