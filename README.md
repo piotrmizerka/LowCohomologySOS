@@ -44,7 +44,7 @@ First, we must run Julia in the project's folder (we assume that we are in the L
 
 ```julia --project=.```
 
-Next, we have to set up the proper environment for the srcipt (that is, install, if needed, all the necessary packages, etc.):
+Next, we have to set up the proper environment for the srcipt (that is, install, if needed, all the necessary packages, etc.). To do this, run the following in the already running Julia:
 
 ```using Pkg; Pkg.instantiate()```
 
