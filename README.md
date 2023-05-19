@@ -30,6 +30,30 @@ $$
 ### Note: replication for [2207.02783](https://arxiv.org/abs/2207.02783) has been moved to a separate branch [2207.02783](https://github.com/piotrmizerka/LowCohomologySOS/tree/2207.02783).
 Script [SL_3_Z_Delta_1.jl](./scripts/SL_3_Z_Delta_1.jl) provides a proof of the existence of $\lambda\geq 0.32$ such that $\Delta_1-\lambda I_6$ is a sum of squares for the Steinberg presentation of $\operatorname{SL}_3(\mathbb{Z})$ on six generators (defined in Section 2 of [2207.02783](https://arxiv.org/abs/2207.02783)).
 
+The version of Julia we used is 1.8.2 (it should work on 1.7.2 as well).
+
+### Cloning the proper branch of the github repository
+
+A specific branch of this repository has to be cloned. This can be done by issuing the following commands in the terminal:
+
+1. ```git clone https://github.com/piotrmizerka/LowCohomologySOS.git```
+2. ```cd LowCohomologySOS```
+3. ```git checkout 2207.02783```
+
+### Setting up the environment
+First, we must run Julia in the project's folder (we assume that we are in the LowCohomologySOS folder as in the step before):
+
+```julia --project=.```
+
+Next, we have to set up the proper environment for the srcipt (that is, install, if needed, all the necessary packages, etc.):
+
+```using Pkg; Pkg.instantiate()```
+
+### Running the script
+Now we are ready to run the main script. To do this run the following in the already running Julia session:
+
+```include("./scripts/SL_3_Z_Delta_1.jl")```
+
 The running time of the script will be approximately 3 hours on a standard laptop computer.
 
 ## Citing
