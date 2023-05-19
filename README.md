@@ -51,7 +51,7 @@ Next, we have to set up the proper environment for the srcipt (that is, install,
 ### Running the script
 Now we are ready to run the main script. To do this run the following in the already running Julia session:
 
-```include("./script/SL_3_Z_Delta_1.jl")```
+```include("./scripts/SL_3_Z_Delta_1.jl")```
 
 The running time of the script will be approximately 3 hours on a standard laptop computer.
 
