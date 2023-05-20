@@ -22,8 +22,7 @@ $$
 $$
 
 
-## The computation for $\operatorname{SL}_3(\mathbb{Z})$
-
+## The computation for $\text{SL}_3(\mathbb{Z})$
 
 ## Replication for [2207.02783](https://arxiv.org/abs/2207.02783)
 
