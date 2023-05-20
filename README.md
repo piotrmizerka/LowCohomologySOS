@@ -29,7 +29,7 @@ $$
 
 Script [SL_3_Z_Delta_1.jl](./scripts/SL_3_Z_Delta_1.jl) provides a proof of the existence of $\lambda\geq 0.32$ such that $\Delta_1-\lambda I_6$ is a sum of squares for the Steinberg presentation of $\operatorname{SL}_3(\mathbb{Z})$ on six generators (defined in Section 2 of [2207.02783](https://arxiv.org/abs/2207.02783)).
 
-The version of Julia we used is 1.8.2 (it should work on 1.7.2 as well).
+The version of Julia we used is 1.8.3 (it should work on 1.7.2 as well).
 
 ### Cloning the proper branch of the github repository
 
