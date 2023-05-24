@@ -21,38 +21,47 @@ $$
 \Delta_1-\lambda I_n=M_1^*M_1+\ldots+M_l^*M_l.
 $$
 
+# Replication details for [2207.02783](https://arxiv.org/abs/2207.02783)
 
-## The computation for $\text{SL}_3(\mathbb{Z})$
+For the computations we used julia in version `1.8.3` but in principle any later version should work.
 
-## Replication for [2207.02783](https://arxiv.org/abs/2207.02783)
+## Obtaining code
+To obtain the code first clone this repository via
+```bash
+git clone https://github.com/piotrmizerka/LowCohomologySOS.git
+```
+and checkout to the correct branch
+```bash
+cd LowCohomologySOS
+git checkout 2207.02783
+```
 
-Script [SL_3_Z_Delta_1.jl](./scripts/SL_3_Z_Delta_1.jl) provides a proof of the existence of $\lambda\geq 0.32$ such that $\Delta_1-\lambda I_6$ is a sum of squares for the Steinberg presentation of $\text{SL}_3(\mathbb{Z})$ on six generators (defined in Section 2 of [2207.02783](https://arxiv.org/abs/2207.02783)).
+## Setting up the environment
+First, run julia in `LowCohomologySOS` folder
+```bash
+julia --project=.
+```
+Next, to set up the proper environment for the replication run in julia REPL
+```julia
+julia> using Pkg; Pkg.instantiate()
+```
+This command installs and precompiles, if needed, all the necessary dependences,
+so it may take a while.
+Note that this step needs to be executed only once per installation.
 
-The version of Julia we used is 1.8.3 (it should work on 1.7.2 as well).
+## Running actual replication
+We wish to prove that for for the Steinberg presentation of $\textsl{SL}_3(\mathbb{Z})$
+on six generators (as defined in Section 2 of [2207.02783](https://arxiv.org/abs/2207.02783))
+$\Delta_1-\lambda I_6$ is a sum of squares for some $\lambda\geq 0.32$.
 
-### Cloning the proper branch of the github repository
+We provide a script which performs the necessary optimization to find such sum of squares decomposition.
 
-A specific branch of this repository has to be cloned. This can be done by issuing the following commands in the terminal:
+As before the following command needs to be executed in `LowCohomologySOS` folder:
+```bash
+julia --project=. ./scripts/SL_3_Z_Delta_1.jl
+```
 
-1. ```git clone https://github.com/piotrmizerka/LowCohomologySOS.git```
-2. ```cd LowCohomologySOS```
-3. ```git checkout 2207.02783```
-
-### Setting up the environment
-First, we must run Julia in the project's folder (we assume that we are in the LowCohomologySOS folder as in the step before):
-
-```julia --project=.```
-
-Next, we have to set up the proper environment for the srcipt (that is, install, if needed, all the necessary packages, etc.). To do this, run the following in the already running Julia:
-
-```using Pkg; Pkg.instantiate()```
-
-### Running the script
-Now we are ready to run the main script. To do this run the following in the already running Julia session:
-
-```include("./scripts/SL_3_Z_Delta_1.jl")```
-
-The running time of the script will be approximately 3 hours on a standard laptop computer.
+The running time of the script will be approximately `3` hours on a standard laptop computer.
 
 ## Citing
 If you use any code from this repository, or you find reading through the code enlightening please cite [2207.02783](https://arxiv.org/abs/2207.02783) as
