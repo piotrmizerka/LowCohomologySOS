@@ -50,7 +50,7 @@ so it may take a while.
 Note that this step needs to be executed only once per installation.
 
 ## Running actual replication
-We wish to prove that for for the Steinberg presentation of $\textsl{SL}_3(\mathbb{Z})$
+We wish to prove that for for the Steinberg presentation of $\text{SL}_3(\mathbb{Z})$
 on six generators (as defined in Section 2 of [2207.02783](https://arxiv.org/abs/2207.02783))
 $\Delta_1-\lambda I_6$ is a sum of squares for some $\lambda\geq 0.32$.
 
@@ -61,7 +61,7 @@ As before the following command needs to be executed in `LowCohomologySOS` folde
 julia --project=. ./scripts/SL_3_Z_Delta_1.jl
 ```
 
-The running time of the script will be approximately `3` hours on a standard laptop computer.
+The running time of the script will be approximately `2` hours on a standard laptop computer.
 
 ## Citing
 If you use any code from this repository, or you find reading through the code enlightening please cite [2207.02783](https://arxiv.org/abs/2207.02783) as
