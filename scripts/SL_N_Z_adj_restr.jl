@@ -19,7 +19,7 @@ const N = 4
 slN = MatrixGroups.SpecialLinearGroup{N}(Int8)
 F_sl_N_z = FreeGroup(alphabet(slN))
 S = gens(slN)
-relations = LowCohomologySOS.relations(slN, F_sl_N_z, S, true, N, "adj")
+relations = LowCohomologySOS.relations(slN, F_sl_N_z, S, true, N, "adj_op")
 d₁ = LowCohomologySOS.jacobian_matrix(relations, gens(F_sl_N_z))
 
 # Compute the differentials supported on ball of readius 2 in the standard gen set
@@ -47,11 +47,10 @@ end
 half_basis_restr = unique!([half_basis_restr; inv.(half_basis_restr)])
 
 # Compute Laplacians over RG over the differentials' support
-Δ1, I, Δ1⁺, Δ1⁻ = LowCohomologySOS.laplacians(slN, half_basis_restr, S, sq_adj_op_ = "adj")
+Δ1, I, Δ1⁺, Δ1⁻ = LowCohomologySOS.laplacians(slN, half_basis_restr, S, sq_adj_op_ = "adj_op")
 RG_star = parent(first(Δ1))
-I = [i ≠ j ? zero(RG_star) : one(RG_star) for i in 1:length(d0x), j in 1:length(d0x)]
 sq, adj, op = LowCohomologySOS.sq_adj_op(Δ1⁻, S)
-Adj = Δ1⁺+adj
+Adj_Op = Δ1⁺+adj+op
 
 # Symmetrize the problem using Wedderburn to accelerate the computations ##############
 function wedderburn_data(basis, half_basis, S)
@@ -63,30 +62,17 @@ end
 constraints_basis, psd_basis, Σ, action = wedderburn_data(parent(first(I)).basis, half_basis_restr, S);
 # there is no point of finding a solution if we don't provide invariant matrix
 for σ in Σ
-    # @assert LowCohomologySOS.act_on_matrix(Δ1, σ, action.alphabet_perm, S) == Δ1
-    @assert LowCohomologySOS.act_on_matrix(Adj, σ, action.alphabet_perm, S) == Adj
+    @assert LowCohomologySOS.act_on_matrix(Adj_Op, σ, action.alphabet_perm, S) == Adj_Op
     @assert LowCohomologySOS.act_on_matrix(I, σ, action.alphabet_perm, S) == I
 end
 w_dec_matrix = SymbolicWedderburn.WedderburnDecomposition(Float64, Σ, action, constraints_basis, psd_basis)
 #################
 
 # Find a numerical spectral gap
-# sos_problem, P = LowCohomologySOS.sos_problem(Δ1, I, w_dec_matrix)
-sos_problem, P = LowCohomologySOS.sos_problem(Adj, I, w_dec_matrix)
-JuMP.set_optimizer(sos_problem, scs_opt(eps = 1e-6, max_iters = 30_000))
-# JuMP.set_optimizer(sos_problem, cosmo_opt(eps = 1e-7, max_iters = 30_000))
+sos_problem, P = LowCohomologySOS.sos_problem(Adj_Op, I, w_dec_matrix)
+JuMP.set_optimizer(sos_problem, scs_opt(eps = 1e-6, max_iters = 20_000))
 JuMP.optimize!(sos_problem)
 
 # Certify the numerical estimate
 λ, Q = LowCohomologySOS.get_solution(sos_problem, P, w_dec_matrix)
-# LowCohomologySOS.certify_sos_decomposition(Δ1, I, λ, Q, half_basis_restr)
-LowCohomologySOS.certify_sos_decomposition(Adj, I, λ, Q, half_basis_restr)
-
-# Let's try to find somme pattern in the solution
-RG = LowCohomologySOS.group_ring(slN,half_basis_restr,star_multiplication = false)
-summand_factors = LowCohomologySOS.sos_summand_factors(RG, Q, half_basis_restr, 0.000001, 6);
-sos_solution_heuristic = sum(Ref(@interval(1)).*ξ'*ξ for ξ in summand_factors)
-Adjx, Ix = LowCohomologySOS.embed.(identity,Adj,Ref(RG)), LowCohomologySOS.embed.(identity,I,Ref(RG))
-residual = Adjx-Ref(@interval(λ)).*Ix-sos_solution_heuristic
-l1_norm = sum(x -> norm(x, 1), residual)
-@interval(λ)-l1_norm
+LowCohomologySOS.certify_sos_decomposition(Adj_Op, I, λ, Q, half_basis_restr)

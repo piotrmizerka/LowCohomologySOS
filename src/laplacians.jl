@@ -161,6 +161,8 @@ function relations(
         return relations_adj
     elseif sq_adj_op_ == "op"
         return relations_op
+    elseif sq_adj_op_ == "adj_op"
+        return vcat(relations_adj, relations_op)
     end
     return vcat(relations_sq, relations_adj, relations_op)
 end
