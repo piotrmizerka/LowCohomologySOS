@@ -70,4 +70,4 @@ Instead of running the whole computation, one can use the precomputed solution i
 ```bash
 julia --project=. ./scripts/sl3_adj_precom/SL_3_Z_adj_cert.jl
 ```
-The running time of the script will be approximately `1` minute on a standard laptop computer.
+The running time of the script will be approximately `2` minutes on a standard laptop computer.
