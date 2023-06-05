@@ -24,11 +24,9 @@ $$
 \Delta_1-\lambda I_n=M_1^*M_1+\ldots+M_l^*M_l.
 $$
 
-# Replication details for [2207.02783](https://arxiv.org/abs/2207.02783)
+# Replication details for [TO FILL](TO FILL)
 
-### Note: replication for [2207.02783](https://arxiv.org/abs/2207.02783) has been moved to a separate branch [2207.02783](https://github.com/piotrmizerka/LowCohomologySOS/tree/2207.02783).
-
-For the computations we used julia in version `1.8.3` but in principle any later version should work.
+For the computations we used julia in version `1.7.2` but in principle any later version should work.
 
 ## Obtaining code
 To obtain the code first clone this repository via
@@ -38,7 +36,7 @@ git clone https://github.com/piotrmizerka/LowCohomologySOS.git
 and checkout to the correct branch
 ```bash
 cd LowCohomologySOS
-git checkout 2207.02783
+git checkout sln_induction
 ```
 
 ## Setting up the environment
@@ -55,29 +53,21 @@ so it may take a while.
 Note that this step needs to be executed only once per installation.
 
 ## Running actual replication
-We wish to prove that for for the Steinberg presentation of $\text{SL}_3(\mathbb{Z})$
-on six generators (as defined in Section 2 of [2207.02783](https://arxiv.org/abs/2207.02783))
-$\Delta_1-\lambda I_6$ is a sum of squares for some $\lambda\geq 0.32$.
+We wish to prove that for the Steinberg presentation of $\text{SL}_3(\mathbb{Z})$
+on six generators (as defined in Section 3 of [TO FILL](TO FILL))
+$\text{Adj}_3-\lambda I_6$ is a sum of squares for some $\lambda\geq 0.217$.
 
 We provide a script which performs the necessary optimization to find such sum of squares decomposition.
 
 As before the following command needs to be executed in `LowCohomologySOS` folder:
 ```bash
-julia --project=. ./scripts/SL_3_Z_Delta_1.jl
+julia --project=. ./scripts/SL_3_Z_adj.jl
 ```
 
 The running time of the script will be approximately `2` hours on a standard laptop computer.
 
-## Citing
-If you use any code from this repository, or you find reading through the code enlightening please cite [2207.02783](https://arxiv.org/abs/2207.02783) as
+Instead of running the whole computation, one can use the precomputed solution instead. In order to run the script providing rigorous mathematical proof (see the Section 3.2 of [2207.02783](https://arxiv.org/abs/2207.02783)) that $\text{Adj}_3-0.217 I_6$ is a sum of squares, execute the following command in `LowCohomologySOS` folder:
 ```bash
-@misc{https://doi.org/10.48550/arxiv.2207.02783,
-  doi = {10.48550/ARXIV.2207.02783},  
-  url = {https://arxiv.org/abs/2207.02783},  
-  author = {Kaluba, Marek and Mizerka, Piotr and Nowak, Piotr W.},  
-  keywords = {Group Theory (math.GR), Operator Algebras (math.OA), FOS: Mathematics, FOS: Mathematics},  
-  title = {Spectral gap for the cohomological Laplacian of $\operatorname{SL}_3(\mathbb{Z})$},
-  publisher = {arXiv},  
-  year = {2022},  
-  copyright = {arXiv.org perpetual, non-exclusive license}
-}
+julia --project=. ./scripts/sl3_adj_precom/SL_3_Z_adj_cert.jl
+```
+The running time of the script will be approximately `1` minute on a standard laptop computer.
