@@ -26,7 +26,6 @@ Groups = "0.7"
 GroupsCore = "0.4.0"
 JuMP = "1.0"
 SCS = "1.1"
-StarAlgebras = "0.1.7"
 
 [extras]
 Logging = "56ddb016-857b-54e1-b83d-db4d58db5568"
