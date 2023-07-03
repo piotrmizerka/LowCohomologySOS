@@ -1,5 +1,5 @@
-using SCS
 using COSMO
+using SCS
 
 function scs_opt(;
     accel = 10,
