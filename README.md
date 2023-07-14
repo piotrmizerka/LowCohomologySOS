@@ -56,7 +56,7 @@ $\Delta_1-\lambda I_6$ is a sum of squares for some $\lambda\geq 0.32$.
 
 We provide a script which performs the necessary optimization to find such sum of squares decomposition.
 
-As before the following command needs to be executed in `LowCohomologySOS` folder:
+As before the following command needs to be executed in the terminal in `LowCohomologySOS` folder:
 ```bash
 julia --project=. ./scripts/SL_3_Z_Delta_1.jl
 ```
