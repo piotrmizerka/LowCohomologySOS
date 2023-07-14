@@ -42,7 +42,7 @@ git checkout 2207.02783
 ```
 
 ## Setting up the environment
-If the replication code was downloaded from [here](https://drive.google.com/file/d/1QQHcgeXda9X-YCRw8vKPBgGDWHE8-KRn/view?usp=sharing), there shall be no need to do this step. Otherwise, first run julia in `LowCohomologySOS` folder
+First, run julia in the terminal in `LowCohomologySOS` folder
 ```bash
 julia --project=.
 ```
