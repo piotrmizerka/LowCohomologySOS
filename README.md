@@ -26,7 +26,7 @@ $$
 For the computations we used julia in version `1.8.3` but in principle any later version should work.
 
 ## Obtaining code
-To obtain the code first clone this repository via
+To obtain the code for the replication, you can either download it directly from [here](https://drive.google.com/file/d/1QQHcgeXda9X-YCRw8vKPBgGDWHE8-KRn/view?usp=sharing), or use git for this. In the latter case, first clone this repository via
 ```bash
 git clone https://github.com/piotrmizerka/LowCohomologySOS.git
 ```
@@ -37,7 +37,7 @@ git checkout 2207.02783
 ```
 
 ## Setting up the environment
-First, run julia in `LowCohomologySOS` folder
+If the replication code was downloaded from [here](https://drive.google.com/file/d/1QQHcgeXda9X-YCRw8vKPBgGDWHE8-KRn/view?usp=sharing), there shall be no need to do this step. Otherwise, first run julia in `LowCohomologySOS` folder
 ```bash
 julia --project=.
 ```
