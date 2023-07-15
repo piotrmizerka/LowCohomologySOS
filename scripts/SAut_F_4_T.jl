@@ -17,9 +17,60 @@ using SymbolicWedderburn
 include(joinpath(@__DIR__, "optimizers.jl"))
 
 const N = 4
-const half_radius = 3
+const half_radius = 2
 sautfN = Groups.SpecialAutomorphismGroup(FreeGroup(N))
-RG, S, sizes = @time PropertyT.group_algebra(sautfN, halfradius=half_radius, twisted=true)
+S = [gens(sautfN);inv.(gens(sautfN))]
+ball2, sizes = Groups.wlmetric_ball(S,radius=2)
+function transvection_from_string(gen_str)
+    splitted = split(gen_str,"/")
+    i, j = parse(Int,splitted[1]), parse(Int,splitted[2])
+    if i>0 && j>0
+        return (Groups.Transvection(:ϱ, i, j, false), false)
+    elseif i<0 && j<0
+        return (Groups.Transvection(:λ, -i, -j, false), false)
+    elseif i<0 && j>0
+        return (Groups.Transvection(:λ, -i, j, false), true)
+    else
+        return (Groups.Transvection(:ϱ, i, -j, false), true)
+    end
+end
+function ball_3_elts(G, path_3_ball) # TODO!!!
+    read = open(path_3_ball)
+    lines = readlines(read)
+    trans_dict = Dict(LowCohomologySOS.determine_letter(s) => s for s in S)
+    temp_result = [one(G)]
+    for line in lines
+        transvections = split(line,", ")
+        pop!(transvections)
+        elt = one(G)
+        for transx in transvections
+            trans, inv = transvection_from_string(transx)
+            gen = (inv ? trans_dict[trans]^(-1) : trans_dict[trans])
+            elt *= gen
+        end
+        push!(temp_result,elt)
+    end
+    close(read)
+    P = PermGroup(perm"(1,2)", Perm(circshift(1:N, -1)))
+    Σ = Groups.Constructions.WreathProduct(PermGroup(perm"(1,2)"), P)
+    A = alphabet(G)
+    alphabet_perm = LowCohomologySOS.AlphabetPermutation(
+        Dict(
+            σ => PermutationGroups.Perm([A[LowCohomologySOS._conj(l, σ)] for l in A.letters]) for
+            σ in Σ
+        ),
+    )
+    result = [one(G)]
+    for g in temp_result
+        for σ in Σ
+            push!(result,SymbolicWedderburn.action(alphabet_perm,σ,g))
+        end
+    end
+    return unique!([result; inv.(result)])
+end
+additional_support = ball_3_elts(sautfN,"/Users/piotrmizerka/Desktop/postdoc_warsaw/support.dat") # the path to the downloaded (from Zenodo) 3-ball support of M. Nitsche, has to be changed
+support = unique!([ball2;additional_support])
+RG = LowCohomologySOS.group_ring(sautfN,support,star_multiplication=true)
 
 wedderburn_decomposition = let RG = RG, N = N
     G = StarAlgebras.object(RG)
