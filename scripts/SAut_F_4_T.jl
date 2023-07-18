@@ -20,7 +20,8 @@ const N = 4
 const half_radius = 2
 sautfN = Groups.SpecialAutomorphismGroup(FreeGroup(N))
 S = [gens(sautfN);inv.(gens(sautfN))]
-ball2, sizes = Groups.wlmetric_ball(S,radius=2)
+ball2, sizes = Groups.wlmetric_ball(S,radius=half_radius) # actually, no need to compute ball2 here,
+# since it turns out to be contained in the additional_support from M. Nitsche
 function transvection_from_string(gen_str)
     splitted = split(gen_str,"/")
     i, j = parse(Int,splitted[1]), parse(Int,splitted[2])
@@ -34,7 +35,7 @@ function transvection_from_string(gen_str)
         return (Groups.Transvection(:ϱ, i, -j, false), true)
     end
 end
-function ball_3_elts(G, path_3_ball) # TODO!!!
+function ball_3_elts(G, path_3_ball)
     read = open(path_3_ball)
     lines = readlines(read)
     trans_dict = Dict(LowCohomologySOS.determine_letter(s) => s for s in S)
@@ -83,7 +84,7 @@ wedderburn_decomposition = let RG = RG, N = N
         Σ,
         act,
         basis(RG),
-        StarAlgebras.Basis{UInt32}(@view basis(RG)[1:sizes[half_radius]]),
+        StarAlgebras.Basis{UInt32}(@view basis(RG)[1:length(support)]),
     )
 end
 
