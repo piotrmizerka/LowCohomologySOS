@@ -69,7 +69,7 @@ function ball_3_elts(G, path_3_ball)
     end
     return unique!([result; inv.(result)])
 end
-additional_support = ball_3_elts(sautfN,"./scripts/M_Nitsche_support.dat") # the path to the downloaded (from Zenodo) 3-ball support of M. Nitsche, has to be changed
+additional_support = ball_3_elts(sautfN,joinpath(@__DIR__, "./M_Nitsche_support.dat")) # the path to the downloaded (from Zenodo) 3-ball support of M. Nitsche, has to be changed
 support = unique!([ball2;additional_support])
 RG = LowCohomologySOS.group_ring(sautfN,support,star_multiplication=true)
 
