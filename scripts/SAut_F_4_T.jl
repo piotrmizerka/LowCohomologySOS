@@ -95,12 +95,12 @@ eoi = Δ^2 # we don't have to untwist the coeffs since Δ is hermitian
     eoi, 
     order_unit,
     wedderburn_decomposition,
-    # upper_bound=UPPER_BOUND,
+    upper_bound=0.1,
     augmented=true,
     show_progress=true
 )
 
-JuMP.set_optimizer(sos_problem, scs_opt(eps = 1e-7, max_iters = 100_000))
+JuMP.set_optimizer(sos_problem, scs_opt(eps = 1e-7, max_iters = 1_000_000))
 JuMP.optimize!(sos_problem)
 
 λ, Q = LowCohomologySOS.get_solution(sos_problem, P, wedderburn_decomposition)
