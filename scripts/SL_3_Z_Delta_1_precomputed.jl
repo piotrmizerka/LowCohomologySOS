@@ -47,13 +47,13 @@ end
 
 solution = deserialize("./scripts/sl_3_z_precomputed.sjl")
 
-spectral_gap_interval = LowCohomologySOS.certify_sos_decomposition(
+certified, spectral_gap_interval = LowCohomologySOS.certify_sos_decomposition(
     Δ₁,
     Iₙ,
     solution[:λ],
     solution[:Q],
     half_basis,
 )
-if spectral_gap_interval.lo>0
+if certified
     @info "Certified with λ (interval atithmetic): " spectral_gap_interval
 end
