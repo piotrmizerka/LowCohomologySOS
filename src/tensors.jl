@@ -112,7 +112,7 @@ Base.@propagate_inbounds function Base.getindex(
     bm::BinaryMatrix,
     i::Integer,
     j::Integer,
-) where {N}
+)
     li = LinearIndices(bm)
     idx = li[i,j]
 

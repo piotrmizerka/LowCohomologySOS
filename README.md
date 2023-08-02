@@ -63,6 +63,12 @@ julia --project=. ./scripts/SL_3_Z_Delta_1.jl
 
 The running time of the script will be approximately `2` hours on a standard laptop computer.
 
+Alternatively, you can run the script which uses the precomputed solution (stored in the file "sl_3_z_precomputed.sjl") and provides rigorous proof (certification) of the result. In order to do this, the following command needs to be executed in the terminal in `LowCohomologySOS` folder:
+```bash
+julia --project=. ./scripts/SL_3_Z_Delta_1_precomputed.jl
+```
+The running time of the script will be approximately `2` minutes on a standard laptop computer.
+
 ## Citing
 If you use any code from this repository, or you find reading through the code enlightening please cite [2207.02783](https://arxiv.org/abs/2207.02783) as
 ```bash
