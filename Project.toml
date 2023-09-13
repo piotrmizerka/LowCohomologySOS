@@ -4,6 +4,7 @@ authors = "piotrmizerka@impan.pl"
 version = "0.0.1"
 
 [deps]
+COSMO = "1e616198-aa4e-51ec-90a2-23f7fbd31d8d"
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 Groups = "5d8bd718-bd84-11e8-3b40-ad14f4a32557"
 GroupsCore = "d5909c97-4eac-4ecc-a3dc-fdd0858a4120"
@@ -25,7 +26,7 @@ Groups = "0.7"
 GroupsCore = "0.4.0"
 JuMP = "1.0"
 SCS = "1.1"
-StarAlgebras = "0.1.7"
+StarAlgebras = "=0.1.7"
 
 [extras]
 Logging = "56ddb016-857b-54e1-b83d-db4d58db5568"

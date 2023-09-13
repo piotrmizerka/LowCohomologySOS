@@ -1,17 +1,14 @@
 using Revise
 using Pkg
-Pkg.activate(normpath(joinpath(@__DIR__, "../")))
-using LinearAlgebra
-ENV["JULIA_NUM_THREADS"] = Sys.CPU_THREADS÷2
-LinearAlgebra.BLAS.set_num_threads(Sys.CPU_THREADS÷2)
+Pkg.activate(normpath(joinpath(@__DIR__, "./")))
 
 using LowCohomologySOS
 using Groups
 using SymbolicWedderburn
 using PermutationGroups
 
-include(joinpath(@__DIR__, "optimizers.jl"))
-include(joinpath(@__DIR__, "utils.jl"))
+include(joinpath(@__DIR__, "./scripts/optimizers.jl"))
+include(joinpath(@__DIR__, "./scripts/utils.jl"))
 
 function group_data(half_radius, N, wreath_action)
     SAut_F(n) = Groups.SpecialAutomorphismGroup(FreeGroup(n))
@@ -44,51 +41,34 @@ function wedderburn_data(basis, half_basis, S)
     return constraints_basis, psd_basis, Σ, actions
 end
 
-const half_radius = 2;
 const N = 4;
-const wreath_action = true;
+const wreath_action = false;
+
+half_radius = 1;
 
 SAut_F_N, basis, half_basis, S = group_data(half_radius, N, wreath_action)
 
-Δ₁, Iₙ, Δ₁⁺, Δ₁⁻ = LowCohomologySOS.laplacians(SAut_F_N, half_basis, S, sq_adj_op_ = "adj")
+Δ₁, Iₙ, Δ₁⁺, Δ₁⁻ = LowCohomologySOS.laplacians(SAut_F_N, half_basis, S, sq_adj_op_ = "op")
 sq, adj, op = LowCohomologySOS.sq_adj_op(Δ₁⁻, S)
 
-Adj = Δ₁⁺+adj
+Op = Δ₁⁺+op
 
 constraints_basis, psd_basis, Σ, action = wedderburn_data(basis, half_basis, S);
 
 # there is no point of finding a solution if we don't provide invariant matrix
 for σ in Σ
-    @assert LowCohomologySOS.act_on_matrix(Adj, σ, action.alphabet_perm, S) == Adj
+    @assert LowCohomologySOS.act_on_matrix(Op, σ, action.alphabet_perm, S) == Op
     @assert LowCohomologySOS.act_on_matrix(Iₙ, σ, action.alphabet_perm, S) == Iₙ
 end
-
-SymbolicWedderburn._int_type(::Type{<:SymbolicWedderburn.InducedActionHomomorphism}) = UInt32
 
 @time begin
     @info "Wedderburn:"
     w_dec_matrix = SymbolicWedderburn.WedderburnDecomposition(Float64, Σ, action, constraints_basis, psd_basis)
 end
 
-@time begin
-    sos_problem = LowCohomologySOS.sos_problem(
-        M, 
-        Iₙ,
-        w_dec_matrix,
-        0.7
-    )
-end
+sos_problem, P = LowCohomologySOS.sos_problem(Op, Iₙ, w_dec_matrix, 0.05)
+JuMP.set_optimizer(sos_problem, scs_opt(eps = 1e-9, max_iters = 5000))
+JuMP.optimize!(sos_problem)
 
-SAut_F_N_data = (
-    M = Adj,
-    order_unit = Iₙ,
-    half_basis = half_basis
-)
-
-solve_in_loop(
-    sos_problem,
-    w_dec_matrix,
-    logdir = "./LowCohomologySOS/logs",
-    optimizer = scs_opt(eps = 1e-9, max_iters = 10_000),
-    data = SAut_F_N_data
-)
+λ, Q = LowCohomologySOS.get_solution(sos_problem, P, w_dec_matrix)
+LowCohomologySOS.certify_sos_decomposition(Op, Iₙ, λ, Q, half_basis)

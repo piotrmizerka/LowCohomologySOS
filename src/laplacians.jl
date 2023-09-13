@@ -32,7 +32,13 @@ function laplacians(
     end
 
     relationsx = relations(G, F_G, S, symmetric_action, N, sq_adj_op_)
-    return LowCohomologySOS.spectral_gap_elements(quotient_hom, relationsx, half_basis, twist_coeffs = twist_coeffs)
+
+    # check if relations are trivial in G
+    for r in relationsx
+        @assert quotient_hom(r) == one(G)
+    end
+
+    return spectral_gap_elements(quotient_hom, relationsx, half_basis, twist_coeffs = twist_coeffs)
 end
 
 # relations for G = SL(n,ℤ), SAut(Fₙ) for symmetric and wreath actions
@@ -86,6 +92,7 @@ function relations(
         # Theorem 2.8. Note that our convention assumes the automorphism composition order reversed with respect to Gersten's.
         # Therefore, the order of letters in the relators had to be reversed as well (earlier, we had to change Gertsen's symbols E_a_b
         # to the ϱ and λ notation used in https://annals.math.princeton.edu/2021/193-2/p03).
+        # For sure we can change the order of symbols in commutator rels (that is, square and op).
         ϱ(i,j, ε) = gen_dict[Groups.Transvection(:ϱ, i, j, ε)]
         λ(i,j, ε) = gen_dict[Groups.Transvection(:λ, i, j, ε)]
 
@@ -93,12 +100,13 @@ function relations(
             ϱ(i,j) = ϱ(i,j,false)
             λ(i,j) = λ(i,j,false)
 
-            relations_sq = [λ(i,j)^(-1)*ϱ(i,j)^(-1)*λ(i,j)*ϱ(i,j) for (i,j) ∈ pairs]
+            relations_sq = [λ(i,j)*ϱ(i,j)*λ(i,j)^(-1)*ϱ(i,j)^(-1) for (i,j) ∈ pairs]
+            # relations_sq = [λ(i,j)^(-1)*ϱ(i,j)^(-1)*λ(i,j)*ϱ(i,j) for (i,j) ∈ pairs]
             relations_adj = vcat(
-                [ϱ(i,j)^(-1)*ϱ(k,j)^(-1)*ϱ(i,j)*ϱ(k,j) for (i,j,k) ∈ triples],
-                [λ(i,j)^(-1)*λ(k,j)^(-1)*λ(i,j)*λ(k,j) for (i,j,k) ∈ triples],
-                [λ(i,j)^(-1)*ϱ(i,k)^(-1)*λ(i,j)*ϱ(i,k) for (i,j,k) ∈ triples],
-                [λ(i,j)^(-1)*ϱ(k,j)^(-1)*λ(i,j)*ϱ(k,j) for (i,j,k) ∈ triples],
+                [ϱ(i,j)*ϱ(k,j)*ϱ(i,j)^(-1)*ϱ(k,j)^(-1) for (i,j,k) ∈ triples],
+                [λ(i,j)*λ(k,j)*λ(i,j)^(-1)*λ(k,j)^(-1) for (i,j,k) ∈ triples],
+                [λ(i,j)*ϱ(i,k)*λ(i,j)^(-1)*ϱ(i,k)^(-1) for (i,j,k) ∈ triples],
+                [λ(i,j)*ϱ(k,j)*λ(i,j)^(-1)*ϱ(k,j)^(-1) for (i,j,k) ∈ triples],
 
                 [ϱ(i,k)^(-1)*ϱ(j,k)^(-1)*ϱ(i,j)^(-1)*ϱ(j,k)*ϱ(i,j) for (i,j,k) ∈ triples],
                 [ϱ(i,k)*ϱ(j,k)*ϱ(i,j)^(-1)*ϱ(j,k)^(-1)*ϱ(i,j) for (i,j,k) ∈ triples],
@@ -110,9 +118,9 @@ function relations(
                 [λ(i,k)^(-1)*ϱ(j,k)*λ(i,j)*ϱ(j,k)^(-1)*λ(i,j)^(-1) for (i,j,k) ∈ triples]
             )
             relations_op = vcat(
-                [ϱ(k,l)^(-1)*ϱ(i,j)^(-1)*ϱ(k,l)*ϱ(i,j) for (i,j,k,l) ∈ quadruples],
-                [λ(k,l)^(-1)*λ(i,j)^(-1)*λ(k,l)*λ(i,j) for (i,j,k,l) ∈ quadruples],
-                [λ(k,l)^(-1)*ϱ(i,j)^(-1)*λ(k,l)*ϱ(i,j) for (i,j,k,l) ∈ quadruples]
+                [ϱ(i,j)*ϱ(k,l)*ϱ(i,j)^(-1)*ϱ(k,l)^(-1) for (i,j,k,l) ∈ quadruples],
+                [λ(i,j)*λ(k,l)*λ(i,j)^(-1)*λ(k,l)^(-1) for (i,j,k,l) ∈ quadruples],
+                [λ(i,j)*ϱ(k,l)*λ(i,j)^(-1)*ϱ(k,l)^(-1) for (i,j,k,l) ∈ quadruples]
             )
         else # wreath product action
             relations_sq = vcat(
@@ -154,6 +162,8 @@ function relations(
         return relations_adj
     elseif sq_adj_op_ == "op"
         return relations_op
+    elseif sq_adj_op_ == "adj_op"
+        return vcat(relations_adj, relations_op)
     end
     return vcat(relations_sq, relations_adj, relations_op)
 end

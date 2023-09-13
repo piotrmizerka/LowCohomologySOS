@@ -69,6 +69,9 @@ function spectral_gap_elements(
     twist_coeffs = true
 )
     @assert !isempty(relations)
+    for r in relations
+        @assert h(r) == one(parent(h(r)))
+    end
     
     G = parent(h(first(relations))) # target of h
 

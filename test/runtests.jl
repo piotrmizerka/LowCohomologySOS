@@ -30,6 +30,9 @@ function test_homomorphism(hom)
     @test all(hom(g*h) == hom(g)*hom(h) for g in gens(F) for h in gens(F))
 end
 
+SL(n, R) = MatrixGroups.SpecialLinearGroup{n}(R)
+SAut_F(n) = Groups.SpecialAutomorphismGroup(FreeGroup(n))
+
 @testset "LowCohomologySOS" begin
     include("group_rings_tests.jl")
     include("fox_derivatives_tests.jl")

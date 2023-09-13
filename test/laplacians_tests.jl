@@ -1,6 +1,3 @@
-SL(n, R) = MatrixGroups.SpecialLinearGroup{n}(R)
-SAut_F(n) = Groups.SpecialAutomorphismGroup(FreeGroup(n))
-
 @testset "relations for SL(n,ℤ) and SAut(Fₙ)" begin
 
     @testset "symmetric group actions" begin
@@ -47,30 +44,30 @@ SAut_F(n) = Groups.SpecialAutomorphismGroup(FreeGroup(n))
             r12, r13, r21, r23, r31, r32, l12, l13, l21, l23, l31, l32 = gens(F_G)
 
             commutator_relations = [
-                r32^(-1) * r12^(-1) * r32 * r12,
-                r23^(-1) * r13^(-1) * r23 * r13,
-                r31^(-1) * r21^(-1) * r31 * r21,
-                r13^(-1) * r23^(-1) * r13 * r23,
-                r21^(-1) * r31^(-1) * r21 * r31,
-                r12^(-1) * r32^(-1) * r12 * r32,
-                l32^(-1) * l12^(-1) * l32 * l12,
-                l23^(-1) * l13^(-1) * l23 * l13,
-                l31^(-1) * l21^(-1) * l31 * l21,
-                l13^(-1) * l23^(-1) * l13 * l23,
-                l21^(-1) * l31^(-1) * l21 * l31,
-                l12^(-1) * l32^(-1) * l12 * l32,
-                l32^(-1) * r12^(-1) * l32 * r12,
-                l23^(-1) * r13^(-1) * l23 * r13,
-                l31^(-1) * r21^(-1) * l31 * r21,
-                l13^(-1) * r23^(-1) * l13 * r23,
-                l21^(-1) * r31^(-1) * l21 * r31,
-                l12^(-1) * r32^(-1) * l12 * r32,
-                l12^(-1) * r12^(-1) * l12 * r12,
-                l13^(-1) * r13^(-1) * l13 * r13,
-                l21^(-1) * r21^(-1) * l21 * r21,
-                l23^(-1) * r23^(-1) * l23 * r23,
-                l31^(-1) * r31^(-1) * l31 * r31,
-                l31^(-1) * r31^(-1) * l31 * r31
+                r32 * r12 * r32^(-1) * r12^(-1),
+                r23 * r13 * r23^(-1) * r13^(-1),
+                r31 * r21 * r31^(-1) * r21^(-1),
+                r13 * r23 * r13^(-1) * r23^(-1),
+                r21 * r31 * r21^(-1) * r31^(-1),
+                r12 * r32 * r12^(-1) * r32^(-1),
+                l32 * l12 * l32^(-1) * l12^(-1),
+                l23 * l13 * l23^(-1) * l13^(-1),
+                l31 * l21 * l31^(-1) * l21^(-1),
+                l13 * l23 * l13^(-1) * l23^(-1),
+                l21 * l31 * l21^(-1) * l31^(-1),
+                l12 * l32 * l12^(-1) * l32^(-1),
+                l32 * r12 * l32^(-1) * r12^(-1),
+                l23 * r13 * l23^(-1) * r13^(-1),
+                l31 * r21 * l31^(-1) * r21^(-1),
+                l13 * r23 * l13^(-1) * r23^(-1),
+                l21 * r31 * l21^(-1) * r31^(-1),
+                l12 * r32 * l12^(-1) * r32^(-1),
+                l12 * r12 * l12^(-1) * r12^(-1),
+                l13 * r13 * l13^(-1) * r13^(-1),
+                l21 * r21 * l21^(-1) * r21^(-1),
+                l23 * r23 * l23^(-1) * r23^(-1),
+                l31 * r31 * l31^(-1) * r31^(-1),
+                l31 * r31 * l31^(-1) * r31^(-1)
             ]
 
             @test issubset(commutator_relations, relations)
@@ -149,5 +146,138 @@ end
             star_conj_test(SAut_F(3), true)
         end
 
+    end
+end
+
+@testset "Adj⁺ for SLₙ(ℤ)" begin
+    N = 5
+    G = SL(N,Int8)
+    A = alphabet(G)
+    eij_id = Dict(A[i] => i for i in eachindex(A))
+    e(i,j) = G([eij_id[MatrixGroups.ElementaryMatrix{N}(i,j,Int8(1))]])
+    S = gens(G)
+    S_inv = [S;inv.(S)]
+    half_basis, sizes = Groups.wlmetric_ball(S_inv, radius = 2)
+    Δ₁, Iₙ, Δ₁⁺, Δ₁⁻ = LowCohomologySOS.laplacians(
+        G, half_basis, S, sq_adj_op_ = "adj", twist_coeffs = false)
+    RG = parent(first(Δ₁⁺))
+
+    function ijij(i,j)
+        range_as_list = [i for i in 1:N]
+        range_no_ij = deleteat!(copy(range_as_list), findall(l->l∈[i,j],copy(range_as_list)))
+
+        result = 2*sum(
+            (one(RG)-RG(e(i,l)))'*(one(RG)-RG(e(i,l)))+
+            (one(RG)-RG(e(l,j)))'*(one(RG)-RG(e(l,j)))
+        for l in range_no_ij)+
+        sum(
+            (one(RG)-RG(e(i,l)*e(j,l)))'*(one(RG)-RG(e(i,l)*e(j,l)))+
+            (RG(e(l,i))-RG(e(l,j)))'*(RG(e(l,i))-RG(e(l,j)))
+        for l in range_no_ij)+
+        (N-2)*one(RG)
+
+        return result
+    end
+    function ijik(i,j,k)
+        return 2*(one(RG)-RG(e(i,k)))'*(RG(e(i,j))-one(RG))-(one(RG)-RG(e(i,k)*e(j,k)))'-(one(RG)-RG(e(i,j)*e(k,j)))
+    end
+    function ijki(i,j,k)
+        return (RG(e(k,i))-RG(e(k,j)))'*(one(RG)-RG(e(k,j)*e(i,j)))
+    end
+    function ijjk(i,j,k)
+        return (one(RG)-RG(e(i,k)*e(j,k)))'*(RG(e(i,j))-RG(e(i,k)))
+    end
+    function ijkj(i,j,k)
+        return 2*(one(RG)-RG(e(k,j)))'*(RG(e(i,j))-one(RG))-(RG(e(k,i))-RG(e(k,j)))'-(RG(e(i,k))-RG(e(i,j)))
+    end
+
+    gen_ij = Dict(s => (A[word(s)[1]].i,A[word(s)[1]].j) for s in S)
+    for s in eachindex(S)
+        i,j = gen_ij[S[s]]
+        for t in eachindex(S)
+            k,l = gen_ij[S[t]]
+            if i == k && j == l
+                @test Δ₁⁺[s,t] == ijij(i,j)
+            elseif length(collect(Set([i,j,k,l]))) == 3
+                if i == k
+                    @test Δ₁⁺[s,t] == ijik(i,j,l)
+                elseif i == l
+                    @test Δ₁⁺[s,t] == ijki(i,j,k)
+                elseif j == k
+                    @test Δ₁⁺[s,t] == ijjk(i,j,l)
+                elseif j == l
+                    @test Δ₁⁺[s,t] == ijkj(i,j,k)
+                end
+            else
+                @test Δ₁⁺[s,t] == zero(RG)
+            end
+        end
+    end
+end
+
+@testset "Adj⁺ for SAut(Fₙ)" begin
+    N = 4
+    G = SAut_F(N)
+    A = alphabet(G)
+    ij_id = Dict(A[i] => i for i in eachindex(A))
+    λ(i,j) = G([ij_id[Groups.Transvection(:λ, i, j, false)]])
+    ϱ(i,j) = G([ij_id[Groups.Transvection(:ϱ, i, j, false)]])
+    S = gens(G)
+    S_inv = [S;inv.(S)]
+    half_basis, sizes = Groups.wlmetric_ball(S_inv, radius = 2)
+    Δ₁, Iₙ, Δ₁⁺, Δ₁⁻ = LowCohomologySOS.laplacians(
+        G, half_basis, S, sq_adj_op_ = "adj", twist_coeffs = false)
+    RG = parent(first(Δ₁⁺))
+    sq_h(ξ) = ξ'*ξ
+
+    function ijij(i,j,τ)
+        t(i,j) = (τ == :λ ? λ(i,j) : ϱ(i,j))
+        t_bar(i,j) = (τ == :λ ? ϱ(i,j) : λ(i,j))
+        range_as_list = [i for i in 1:N]
+        range_no_ij = deleteat!(copy(range_as_list), findall(l->l∈[i,j],copy(range_as_list)))
+        result = sum(
+            2*sq_h(one(RG)-RG(t(l,j)))+sq_h(one(RG)-RG(t_bar(i,l)))+sq_h(one(RG)-RG(t_bar(l,j)))+
+            sq_h(RG(t(i,j)^(-1))*(one(RG)-RG(t(j,l))))+sq_h(RG(t(i,j)^(-1))*(one(RG)-RG(t(j,l)^(-1))))+
+            sq_h(RG(t(l,j))-RG(t(l,i)^(-1)))+sq_h((RG(t(l,i)^(-1))-RG(t(l,j)^(-1)))*RG(t(i,j)^(-1)))+
+            sq_h(RG(t(i,l)*t_bar(j,l)^(-1))-one(RG))+sq_h(RG(t(i,l)^(-1)*t_bar(j,l))-one(RG))+
+            sq_h((RG(t_bar(l,i))-RG(t_bar(l,j)))*RG(t(i,j)^(-1)))+sq_h(RG(t_bar(l,j)^(-1))-RG(t_bar(l,i)))
+            for l in range_no_ij
+        )+4*(N-2)*one(RG)
+        return result
+    end
+    function ijik(i,j,k,τ,υ)
+        return 
+    end
+    function ijki(i,j,k,τ,υ)
+        return 
+    end
+    function ijjk(i,j,k,τ,υ)
+        return 
+    end
+    function ijkj(i,j,k,τ,υ)
+        return 
+    end
+
+    gen_idij = Dict(s => (A[word(s)[1]].id,A[word(s)[1]].i,A[word(s)[1]].j) for s in S)
+    for s in eachindex(S)
+        τ, i,j = gen_idij[S[s]]
+        for t in eachindex(S)
+            υ,k,l = gen_idij[S[t]]
+            if i == k && j == l && τ == υ
+                @test Δ₁⁺[s,t] == ijij(i,j,τ)
+            # elseif length(collect(Set([i,j,k,l]))) == 3
+            #     if i == k
+            #         @test Δ₁⁺[s,t] == ijik(i,j,l,τ,υ)
+            #     elseif i == l
+            #         @test Δ₁⁺[s,t] == ijki(i,j,k,τ,υ)
+            #     elseif j == k
+            #         @test Δ₁⁺[s,t] == ijjk(i,j,l,τ,υ)
+            #     elseif j == l
+            #         @test Δ₁⁺[s,t] == ijkj(i,j,k,τ,υ)
+            #     end
+            # else
+            #     @test Δ₁⁺[s,t] == zero(RG)
+            end
+        end
     end
 end
