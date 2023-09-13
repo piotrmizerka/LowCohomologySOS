@@ -38,7 +38,7 @@ function laplacians(
         @assert quotient_hom(r) == one(G)
     end
 
-    return LowCohomologySOS.spectral_gap_elements(quotient_hom, relationsx, half_basis, twist_coeffs = twist_coeffs)
+    return spectral_gap_elements(quotient_hom, relationsx, half_basis, twist_coeffs = twist_coeffs)
 end
 
 # relations for G = SL(n,ℤ), SAut(Fₙ) for symmetric and wreath actions
@@ -101,6 +101,7 @@ function relations(
             λ(i,j) = λ(i,j,false)
 
             relations_sq = [λ(i,j)*ϱ(i,j)*λ(i,j)^(-1)*ϱ(i,j)^(-1) for (i,j) ∈ pairs]
+            # relations_sq = [λ(i,j)^(-1)*ϱ(i,j)^(-1)*λ(i,j)*ϱ(i,j) for (i,j) ∈ pairs]
             relations_adj = vcat(
                 [ϱ(i,j)*ϱ(k,j)*ϱ(i,j)^(-1)*ϱ(k,j)^(-1) for (i,j,k) ∈ triples],
                 [λ(i,j)*λ(k,j)*λ(i,j)^(-1)*λ(k,j)^(-1) for (i,j,k) ∈ triples],
