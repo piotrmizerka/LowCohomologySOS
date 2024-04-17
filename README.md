@@ -24,7 +24,7 @@ $$
 \Delta_1-\lambda I_n=M_1^*M_1+\ldots+M_l^*M_l.
 $$
 
-# Replication details for [TO FILL](TO FILL)
+# Replication details for [2404.10287](https://arxiv.org/abs/2404.10287)
 
 For the computations we used julia in version `1.7.2` but in principle any later version should work.
 
@@ -54,7 +54,7 @@ Note that this step needs to be executed only once per installation.
 
 ## Running actual replication
 We wish to prove that for the Steinberg presentation of $\text{SL}_3(\mathbb{Z})$
-on six generators (as defined in Section 3 of [TO FILL](TO FILL))
+on six generators (as defined in Section 3 of [2404.10287](https://arxiv.org/abs/2404.10287))
 $\text{Adj}_3-\lambda I_6$ is a sum of squares for some $\lambda\geq 0.217$.
 
 We provide a script which performs the necessary optimization to find such sum of squares decomposition.
