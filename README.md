@@ -26,7 +26,7 @@ $$
 
 # Replication details for [2404.10287](https://arxiv.org/abs/2404.10287)
 
-For the computations we used julia in version `1.7.2` but in principle any later version should work.
+For the computations we used julia in version `1.8.3` but in principle any later version should work.
 
 ## Obtaining code
 To obtain the code first clone this repository via
