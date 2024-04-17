@@ -36,7 +36,7 @@ git clone https://github.com/piotrmizerka/LowCohomologySOS.git
 and checkout to the correct branch
 ```bash
 cd LowCohomologySOS
-git checkout sln_induction
+git checkout 2404.10287
 ```
 
 ## Setting up the environment
