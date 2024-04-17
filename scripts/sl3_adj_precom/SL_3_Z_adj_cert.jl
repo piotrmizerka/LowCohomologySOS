@@ -2,9 +2,10 @@ using LinearAlgebra
 ENV["JULIA_NUM_THREADS"] = Sys.CPU_THREADS÷2
 LinearAlgebra.BLAS.set_num_threads(Sys.CPU_THREADS÷2)
 
-using LowCohomologySOS
 using Groups
 using JuMP
+using LowCohomologySOS
+
 include(joinpath(@__DIR__, "../optimizers.jl"))
 include(joinpath(@__DIR__, "../utils.jl"))
 

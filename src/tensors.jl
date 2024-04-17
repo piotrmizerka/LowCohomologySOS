@@ -112,12 +112,9 @@ Base.@propagate_inbounds function Base.getindex(
     bm::BinaryMatrix,
     i::Integer,
     j::Integer,
-) where {N}
+)
     li = LinearIndices(bm)
     idx = li[i,j]
-
-    # TODO:
-    # return isnothing(searchsorted(bm.nzeros, idx)) ? zero(bm.val) : bm.val
 
     return idx ∈ bm.nzeros ? bm.val : zero(bm.val)
 end

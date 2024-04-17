@@ -1,35 +1,27 @@
 module LowCohomologySOS
 
-using LinearAlgebra
-using IntervalArithmetic
-
-using StarAlgebras
-using GroupsCore
+using Dates
 using Groups
-
-using SymbolicWedderburn
-using PermutationGroups
+using GroupsCore
+using IntervalArithmetic
 using Kronecker
+using LinearAlgebra
+using Logging
+using PermutationGroups
+using PropertyT
+using Serialization
+using SparseArrays
+using StarAlgebras
+using SymbolicWedderburn
 
 import JuMP
 import JuMP.MOI
 
-using PropertyT
-
-using Dates
-using Serialization
-using Logging
-
-using SparseArrays
-
-include("tensors.jl")
-include("group_rings.jl")
-include("fox_derivatives.jl")
-include("positive_approx.jl")
 include("certification.jl")
-include("symmetrization.jl")
-include("positive_approx_symmetrized.jl")
-include("laplacians.jl")
-include("embeddings.jl")
+include("decompositions_parts.jl")
+include("fox_derivatives.jl")
+include("group_rings.jl")
+include("positive_approx.jl")
+include("tensors.jl")
 
 end

@@ -36,34 +36,3 @@ function certify_sos_decomposition(
 
     return result.lo > 0, result
 end
-
-function spectral_gaps_certification(
-    h,
-    relations,
-    half_basis,
-    S = gens(parent(first(relations)));
-    optimizer,
-)
-    solution = spectral_gaps_approximated(
-        h,
-        relations,
-        half_basis,
-        S;
-        optimizer = optimizer,
-    )
-    @info "Termination status: " solution.termination_status
-
-    @info "Approximated λ: " solution.λ
-
-    certified_sgap = certify_sos_decomposition(
-        solution.laplacian,
-        solution.unit,
-        solution.λ,
-        solution.Q,
-        half_basis,
-    )
-
-    @info "Certified λ (interval atithmetic): " certified_sgap
-
-    return solution.termination_status, certified_sgap
-end

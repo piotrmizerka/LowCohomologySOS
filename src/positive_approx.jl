@@ -112,32 +112,3 @@ function get_solution(m::JuMP.Model)
     end
     return λ, Q
 end
-
-function spectral_gaps_approximated(
-    h,
-    relations::AbstractVector{<:FPGroupElement},
-    half_basis,
-    S = gens(parent(first(relations)));
-    optimizer,
-)
-    Δ₁x, Iₙ, Δ₁⁺x, Δ₁⁻x = spectral_gap_elements(h, relations, half_basis, S = S)
-
-    Δ₁_sos_problem = sos_problem(Δ₁x, Iₙ)
-
-    JuMP.set_optimizer(Δ₁_sos_problem, optimizer)
-    JuMP.optimize!(Δ₁_sos_problem)
-
-    status = JuMP.termination_status(Δ₁_sos_problem)
-
-    λ, Q = get_solution(Δ₁_sos_problem)
-
-    solution = (
-        laplacian = Δ₁x,
-        unit = Iₙ,
-        termination_status = status,
-        λ = λ,
-        Q = Q
-    )
-
-    return solution
-end

@@ -1,14 +1,14 @@
-using StarAlgebras
 using Groups
-using Test
-using LowCohomologySOS
 using IntervalArithmetic
-using SymbolicWedderburn
+using LowCohomologySOS
 using PermutationGroups
+using StarAlgebras
+using SymbolicWedderburn
+using Test
 
-import Logging
 import JuMP
 import JuMP.MOI
+import Logging
 
 include(joinpath(@__DIR__, "..", "scripts", "optimizers.jl"))
 
@@ -31,16 +31,14 @@ function test_homomorphism(hom)
 end
 
 @testset "LowCohomologySOS" begin
+
     include("group_rings_tests.jl")
     include("fox_derivatives_tests.jl")
-    include("symmetrization_tests.jl")
     include("positive_approx_tests.jl")
-    include("positive_approx_symmetrized_tests.jl")
     include("certification_tests.jl")
     include("integration_tests.jl")
-    include("laplacians_tests.jl")
-    include("embeddings_tests.jl")
 
     include("Δ1_SL3Z.jl")
     include("Klein_group_script.jl")
+    
 end
