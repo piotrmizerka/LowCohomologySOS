@@ -87,3 +87,54 @@ If you use any code from this repository, or you find reading through the code e
   year = {2022},  
   copyright = {arXiv.org perpetual, non-exclusive license}
 }
+```
+
+# Replication details for [2404.10287](https://arxiv.org/abs/2404.10287)
+
+### Note: replication for [2404.10287](https://arxiv.org/abs/2404.10287) has been moved to a separate branch [2404.10287](https://github.com/piotrmizerka/LowCohomologySOS/tree/2404.10287).
+
+For the computations we used julia in version `1.8.3` but in principle any later version should work.
+
+## Obtaining code
+To obtain the code first clone this repository via
+```bash
+git clone https://github.com/piotrmizerka/LowCohomologySOS.git
+```
+and checkout to the correct branch
+```bash
+cd LowCohomologySOS
+git checkout 2404.10287
+```
+
+## Setting up the environment
+First, run julia in `LowCohomologySOS` folder
+```bash
+julia --project=.
+```
+Next, to set up the proper environment for the replication run in julia REPL
+```julia
+julia> using Pkg; Pkg.instantiate()
+```
+This command installs and precompiles, if needed, all the necessary dependences,
+so it may take a while.
+Note that this step needs to be executed only once per installation.
+
+## Running actual replication
+We wish to prove that for the Steinberg presentation of $\text{SL}_3(\mathbb{Z})$
+on six generators (as defined in Section 3 of [2404.10287](https://arxiv.org/abs/2404.10287))
+$\text{Adj}_3-\lambda I_6$ is a sum of squares for some $\lambda\geq 0.217$.
+
+We provide a script which performs the necessary optimization to find such sum of squares decomposition.
+
+As before the following command needs to be executed in `LowCohomologySOS` folder:
+```bash
+julia --project=. ./scripts/SL_3_Z_adj.jl
+```
+
+The running time of the script will be approximately `2` hours on a standard laptop computer.
+
+Instead of running the whole computation, one can use the precomputed solution instead. In order to run the script providing rigorous mathematical proof (see the Section 3.2 of [2207.02783](https://arxiv.org/abs/2207.02783)) that $\text{Adj}_3-0.217 I_6$ is a sum of squares, execute the following command in `LowCohomologySOS` folder:
+```bash
+julia --project=. ./scripts/sl3_adj_precom/SL_3_Z_adj_cert.jl
+```
+The running time of the script will be approximately `2` minutes on a standard laptop computer.
