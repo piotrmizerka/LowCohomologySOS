@@ -11,8 +11,7 @@ function _conj(
     t::Groups.Transvection,
     x::Groups.Constructions.WreathProductElement,
 )
-    tσ = _conj(t, inv(x.p))
-    # tσ = _conj(t, x.p) why not that one??
+    tσ = _conj(t, x.p)
     dual_id = ifelse(t.id == :ϱ, :λ, :ϱ)
     dual_inv = ifelse(t.inv, false, true)
     new_id = isone(x.n.elts[t.i]) ? t.id : dual_id

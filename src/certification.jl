@@ -67,3 +67,30 @@ function spectral_gaps_certification(
 
     return solution.termination_status, certified_sgap
 end
+
+# Additional function allowing to view the supporting summand factors of soses.
+# Not meeded for major computations - for now just to view the pattern hopefully.
+function sos_summand_factors(RG::StarAlgebra, Q::AbstractMatrix, support, cutoff, no_digits)
+    result = []
+    mn = LinearAlgebra.checksquare(Q)
+    m = length(support)
+    n = div(mn,m)
+    x = kron(Matrix(I, n, n), [RG(s) for s in support])
+    for i in 1:m
+        Qi = [Q[(i-1)*n+k,s] for k in 1:n, s in 1:mn]
+        summand_factor = Qi * x
+        summand_factor_red = [0.0*zero(RG) for k in 1:n, l in 1:n]
+        for k in 1:n
+            for l in 1:n
+                for s in 1:m
+                    if abs(summand_factor[k,l](support[s])) > cutoff
+                        coeff = round(summand_factor[k,l](support[s]),digits = no_digits)
+                        summand_factor_red[k,l] += coeff*RG(support[s])
+                    end
+                end
+            end
+        end
+        push!(result,summand_factor_red)
+    end
+    return result
+end

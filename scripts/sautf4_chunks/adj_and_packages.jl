@@ -1,6 +1,6 @@
 using Revise
 using Pkg
-Pkg.activate(normpath(joinpath(@__DIR__, "../")))
+Pkg.activate(normpath(joinpath(@__DIR__, "../../")))
 using LinearAlgebra
 ENV["JULIA_NUM_THREADS"] = Sys.CPU_THREADS÷2
 LinearAlgebra.BLAS.set_num_threads(Sys.CPU_THREADS÷2)
@@ -10,8 +10,8 @@ using Groups
 using SymbolicWedderburn
 using PermutationGroups
 
-include(joinpath(@__DIR__, "optimizers.jl"))
-include(joinpath(@__DIR__, "utils.jl"))
+include(joinpath(@__DIR__, "../optimizers.jl"))
+include(joinpath(@__DIR__, "../utils.jl"))
 
 function group_data(half_radius, N, wreath_action)
     SAut_F(n) = Groups.SpecialAutomorphismGroup(FreeGroup(n))
@@ -54,41 +54,3 @@ SAut_F_N, basis, half_basis, S = group_data(half_radius, N, wreath_action)
 sq, adj, op = LowCohomologySOS.sq_adj_op(Δ₁⁻, S)
 
 Adj = Δ₁⁺+adj
-
-constraints_basis, psd_basis, Σ, action = wedderburn_data(basis, half_basis, S);
-
-# there is no point of finding a solution if we don't provide invariant matrix
-for σ in Σ
-    @assert LowCohomologySOS.act_on_matrix(Adj, σ, action.alphabet_perm, S) == Adj
-    @assert LowCohomologySOS.act_on_matrix(Iₙ, σ, action.alphabet_perm, S) == Iₙ
-end
-
-SymbolicWedderburn._int_type(::Type{<:SymbolicWedderburn.InducedActionHomomorphism}) = UInt32
-
-@time begin
-    @info "Wedderburn:"
-    w_dec_matrix = SymbolicWedderburn.WedderburnDecomposition(Float64, Σ, action, constraints_basis, psd_basis)
-end
-
-@time begin
-    sos_problem = LowCohomologySOS.sos_problem(
-        M, 
-        Iₙ,
-        w_dec_matrix,
-        0.7
-    )
-end
-
-SAut_F_N_data = (
-    M = Adj,
-    order_unit = Iₙ,
-    half_basis = half_basis
-)
-
-solve_in_loop(
-    sos_problem,
-    w_dec_matrix,
-    logdir = "./LowCohomologySOS/logs",
-    optimizer = scs_opt(eps = 1e-9, max_iters = 10_000),
-    data = SAut_F_N_data
-)
